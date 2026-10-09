@@ -1,36 +1,37 @@
-# 流程圖核對與詳細說明
+# 架構圖核對與閱讀說明
 
-核對日期：2026-09-24。依據目前工作區程式作靜態檢查，未因此重新執行長時間訓練。簡報第 38–42 頁將整體流程拆成可逐頁說明的內容。
+核對日期：2026-10-10。架構 HTML／JSON 已依目前程式更新；此次未啟動或修改訓練。舊簡報中的架構頁不會因 HTML 更新而自動同步。
 
-## 執行順序
+## 課程驅動的執行順序
 
-1. `retry.m` 讀取選定的模型 profile；新實驗建立於 `+trainingmodels/<model>/runs/<experiment>/`。保存 `model.json`、`control.json` 與 `model_source/`。續訓沿用既有實驗設定，並檢查模型與快照。
-2. PowerShell supervisor 啟動獨立 MATLAB 程序，執行 `runtime/checkpoint_attempt.m`。它選擇有效 checkpoint、準備 overrides，呼叫 `training.m` 取得 agent 建立與驗證回呼，再執行 `runtime/training_engine.m`。
-3. 訓練引擎建立新 agent，或恢復存檔中的 agent 與訓練歷史；驗證相容性，建立平行池並訓練。
-4. 預設每 100 回合存檔，每個程序最多追加 1,000 回合。正常返回後保存 `Agent_Final` 與對應歷史，再判斷最近 50 回合平均 reward 是否達 2,900。達標才保存成功模型並發布成功狀態；正常結束本身不代表達標。
-5. 未達標時，下一個程序從已保存進度繼續。尚未保存的進度可能遺失，亂數、路徑與部分環境狀態重新初始化，並非完整狀態重播。
+1. `configs/lab_gpu6.json` 指定硬體、存檔與重試參數，引用 `curricula/progressive_v1.json`。課程指定模型、軌跡、風場、過關條件與各階段預算；模型定義仍在 `+trainingmodels/`。
+2. `retry.m` 新建 `experiments/<課程 JSON 檔名>/runs/<實驗 ID>/`，保存 control、curriculum、軌跡、model 與 model_source 快照。非課程實驗保留模型目錄分類；resume 依完整實驗路徑原位接續。
+3. PowerShell supervisor 啟動 `checkpoint_attempt.m`。它選取有效 checkpoint，透過 `training.m` 取得模型建立／驗證回呼，並用 `trainingcurriculum.prepare` 檢查課程歷史、取得目前階段環境。課程結束或預算暫停時不啟動 engine。
+4. `training_engine.m` 載入原 agent 與訓練歷史或建立新 agent；建立 pool，讓 workers 執行 `FAFA_Simulation.slx`。同一課程跨階段沿用 agent，沒有重新初始化網路。
+5. 實驗室設定每 100 回合存 checkpoint、每段最多追加 1000 回合。段落結束保存 Agent_Final，再按該階段保存的歷史判斷；達標於下一個 attempt 切換階段，預算用盡則依 on_limit 處理。最後階段達標才發布課程成功。
+6. 課程模式不採舊的全實驗 reward >=2900 成功規則。progressive_v1 每階段結合最低回合數、連續三個 100 回合區間 reward 與步數指標；這些門檻仍待長期驗證。
 
-## worker 重試條件
+## Worker 與失敗恢復
 
-**2026-10-09 更新：** 下述 6 → 4 → 2 是 pool 整體失敗後的 supervisor 備援。現在優先用 `[minWorkers,workers]` 在同一次建池取得可用數量（預設 1–6），成功後同一 attempt 直接訓練；WorkerRandomSeeds 與保存的 numWorkers 跟隨實際 pool 大小。下限由 retry 的 minWorkers 設定，舊 control.json 預設 1。部分連線但整個 pool 建立失敗仍不能開始訓練。
+- lab_gpu6 目標 6、最低 1，使用 parpool 的數量範圍；只有成功返回的 pool 才能訓練。「Connected to 5 of 6」不是已可使用的 5-worker pool。
+- pool 建立失敗後，後續 attempt 依 lab_gpu6 的 4 → 2 → 1 備援重建。不是保留未完成的部分連線。一般 retry 預設備援仍為 [4 2]，不要混淆設定檔與函式預設。
+- 成功建池後，下一段恢復目標數量。狀態中的 running 只代表程序執行中；Pool ready 與 Episode 日誌才證明後續進展。
+- 預設啟動逾時 600 秒、日誌無活動逾時 1800 秒；連續無進度失敗達上限便暫停。STOP 中止程序，保留已保存 checkpoint，不會額外先保存尚未完成的回合。
 
-- 預設目標為 6 個 worker。只有已進入平行池啟動階段、但未取得 pool-ready 證據的失敗才觸發 6 → 4 → 2 降級；更早的載入失敗不等同建池失敗。
-- 降級是在下一個 attempt 重建 pool，不是保留前次連上的部分 worker。
-- 成功建池後，下一段恢復目標 worker 數。每回合診斷記錄實際 worker 數。
-- 預設啟動逾時 600 秒、日誌無活動逾時 1,800 秒。耗盡備援數量後，連續 3 次無進度失敗會暫停。使用者 STOP 仍可中止；只保留已保存進度。
+## 實驗、圖表與遷移
 
-## 本次修正與閱讀限制
+- 診斷存於實驗 diagnostics／attempt 目錄。`plot_training_rewards.py` 讀 stdout 回合資料，讀 curriculum_state.json 的實際分界，產生有 Stage 標籤的 reward 圖。灰線是 attempt，橘線是 stage。
+- `export_training_report.py` 產生可分享的小型 report.json；learning_health 是匯出時計算的規則式診斷，沒有持續監控、自動停訓或回滾。完整 checkpoint 仍需另行保留。
+- `migrate_training_session.ps1` 只接受已停止、可取得排他鎖的實驗；複製全部資料、比對 SHA256、修正新副本控制路徑，保留原件。`verify_training_session.m` 讀回有效 PPO checkpoint 與階段位置，不啟動訓練；之後以 retry(resume=新位置) 接續。
+- 歷史日誌中的舊路徑不重寫。不能同時續跑新舊副本，不能在活動訓練時搬移或改 runtime。
 
-- 圖中的診斷位置已改成 `<experiment>/diagnostics/`；checkpoint 為 `<experiment>/checkpoints/`。舊 `sessions/`、根目錄 `training_diagnostics/` 為相容既有實驗的路徑。
-- `training.m` 的角色是提供模型回呼；由單次程序呼叫它。選取 checkpoint 與實際載入 agent 是不同步驟。
-- 模型快照包含模型程式，排除訓練輸出，不包含整套 runtime。執行中的實驗仍會受 runtime 修改影響。
-- 架構圖是控制與資料關係的摘要，箭頭不全是函式呼叫。HTML 圖例中的 Database 表示保存的資料檔案，並未使用資料庫服務。
-- Average reward 下滑與回合縮短為觀察結果；尚未確認因果。保守更新 profile 的建立測試不能當作長時間訓練改善的證據。
+## 圖的抽象範圍與證據
 
-## 程式對照
-
-入口與模型：`retry.m`、`training.m`、`+trainingmodels/load_profile.m`。
-
-執行與恢復：`runtime/checkpoint_attempt.m`、`runtime/training_engine.m`、`runtime/checkpoint_select_agent.m`、`runtime/checkpoint_save_final.m`、`runtime/checkpoint_mark_success.m`。
-
-監控與 worker：`runtime/checkpoint_supervisor.ps1`、`runtime/checkpoint_watchdog.ps1`、`runtime/checkpoint_open_pool.m`、`runtime/checkpoint_worker_diagnostics.ps1`。
+- 箭頭表示主要控制／資料關係，不全是函式呼叫；課程規劃器會將階段環境回傳給 attempt，圖中省略返回箭頭。引擎段末另呼叫 outcome 判斷條件。
+- 「診斷、曲線與精簡報告」將資料與離線工具合併呈現：supervisor 收集日誌，但不會自動啟動畫圖或匯出報告。Database 圖例表示檔案資料，不是資料庫服務。
+- 模型快照不包含整套 runtime；同一實驗不是任意版本執行程式的完整封裝。獨立 evaluator、最佳評估模型選擇、退步自動回滾尚未實作。
+- 對照來源：retry.m、training.m、configs/lab_gpu6.json、curricula/progressive_v1.json、+trainingcurriculum/prepare.m 與 outcome.m、runtime/checkpoint_supervisor.ps1、runtime/training_engine.m、migrate_training_session.ps1、verify_training_session.m、plot_training_rewards.py。
+- 本次使用 archify 技能產生 architecture 類型 HTML；繁體中文內容，固定 Viewer UI 與 HTML 語系為英文。
+- architecture-receipt.json：9/9 靜態 artifact 檢查通過，composition 0 errors／0 warnings，包含 specification 與 artifact SHA256／bytes。
+- architecture.visual-check.json：真實 Chrome 對 1440×900、1600×1000、1920×1080、2048×1320 的測量均無水平或垂直溢出；明暗截圖已產生。
+- 人工影像檢閱：檢查四張端點尺寸的明暗截圖，節點、箭頭、卡片與圖例未見裁切或遮擋；此判斷獨立於自動收據的 visualReview=pending，未改寫該欄位。

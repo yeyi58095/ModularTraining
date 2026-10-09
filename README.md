@@ -2,6 +2,8 @@
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
+[互動架構圖](docs/architecture.html)（2026-10-10 更新）：課程設定、實驗快照、訓練與續訓、遷移和診斷；詳細語意與驗證見 [架構說明](docs/architecture-notes.md)。
+
 ## JSON 分階段訓練
 
 新課程實驗按計畫存入 `experiments/<課程 JSON 檔名>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/curriculum-layout.md)。

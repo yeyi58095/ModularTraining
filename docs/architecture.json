@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "ModularTraining 程式架構",
+    "title": "ModularTraining：課程與實驗架構",
     "quality_profile": "showcase",
     "viewBox": [
       1380,
@@ -13,9 +13,9 @@
     {
       "id": "profiles",
       "type": "backend",
-      "label": "模型定義",
-      "sublabel": "+trainingmodels/",
-      "tag": "PPO · LSTM / MLP · 調參版本",
+      "label": "課程、模型與硬體設定",
+      "sublabel": "curricula/ · configs/",
+      "tag": "課程指定 +trainingmodels/ 模型",
       "pos": [
         40,
         60
@@ -28,9 +28,9 @@
     {
       "id": "snapshot",
       "type": "database",
-      "label": "實驗設定與模型快照",
-      "sublabel": "model.json · model_source/",
-      "tag": "control.json：執行參數",
+      "label": "每次實驗的獨立快照",
+      "sublabel": "curriculum.json · model.json",
+      "tag": "軌跡、模型原始碼與 control.json",
       "pos": [
         380,
         60
@@ -43,9 +43,9 @@
     {
       "id": "adapter",
       "type": "backend",
-      "label": "模型介面",
-      "sublabel": "training.m",
-      "tag": "回傳 factory / validator 回呼",
+      "label": "課程階段規劃器",
+      "sublabel": "+trainingcurriculum/",
+      "tag": "依存檔歷史檢查條件與階段預算",
       "pos": [
         720,
         60
@@ -59,8 +59,8 @@
       "id": "entry",
       "type": "frontend",
       "label": "MATLAB 入口",
-      "sublabel": "retry(model=…, workers=6)",
-      "tag": "新實驗或 resume",
+      "sublabel": "retry(curriculum=…) / resume",
+      "tag": "新建按課程分類；續訓沿用指定位置",
       "pos": [
         40,
         270
@@ -90,7 +90,7 @@
       "type": "backend",
       "label": "單次訓練程序",
       "sublabel": "checkpoint_attempt.m",
-      "tag": "每次使用新的 MATLAB",
+      "tag": "training.m 提供模型回呼",
       "pos": [
         720,
         270
@@ -118,9 +118,9 @@
     {
       "id": "diagnostics",
       "type": "database",
-      "label": "每次實驗的診斷紀錄",
-      "sublabel": "<實驗>/diagnostics/",
-      "tag": "episode / worker / 錯誤日誌",
+      "label": "診斷、曲線與精簡報告",
+      "sublabel": "plot_training_rewards.py",
+      "tag": "stage 分界 · export_training_report.py",
       "pos": [
         380,
         500
@@ -159,6 +159,21 @@
         280,
         86
       ]
+    },
+    {
+      "id": "migration",
+      "type": "backend",
+      "label": "已停止實驗的遷移",
+      "sublabel": "migrate_training_session.ps1",
+      "tag": "完整複製與雜湊驗證；保留原件",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        260,
+        86
+      ]
     }
   ],
   "connections": [
@@ -166,7 +181,7 @@
       "id": "read-profile",
       "from": "profiles",
       "to": "entry",
-      "label": "選擇模型",
+      "label": "選用計畫",
       "labelDy": 70
     },
     {
@@ -179,7 +194,7 @@
       "id": "load-snapshot",
       "from": "snapshot",
       "to": "adapter",
-      "label": "讀取快照"
+      "label": "讀取課程"
     },
     {
       "id": "launch-monitor",
@@ -200,7 +215,7 @@
       "id": "inject-model",
       "from": "attempt",
       "to": "adapter",
-      "label": "取得模型回呼",
+      "label": "準備階段",
       "labelDy": 0
     },
     {
@@ -235,31 +250,37 @@
       "to": "diagnostics",
       "label": "收集紀錄",
       "labelDy": 70
+    },
+    {
+      "id": "resume-copy",
+      "from": "migration",
+      "to": "entry",
+      "label": "驗證後原模型續訓"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "更換模型，不改監控",
+      "title": "以課程管理實驗",
       "items": [
-        "新實驗：+trainingmodels/<模型>/runs/<實驗>/。",
-        "模型快照供續訓核對；runtime 不在快照內。"
+        "experiments/<課程>/runs/<實驗>/；模型是課程參數。",
+        "舊位置可原位續訓；遷移後由新位置接續。"
       ]
     },
     {
       "dot": "amber",
-      "title": "每段重新爭取 6 個 worker",
+      "title": "建池成功後才開始訓練",
       "items": [
-        "僅平行池啟動失敗時，新 attempt 改試 4 → 2。",
-        "平行池成功後，下一段恢復目標 6；失敗上限仍生效。"
+        "lab_gpu6：最多 6、最低 1；失敗後備援 4 → 2 → 1。",
+        "已連線部分 workers 不等於可用 pool；STOP 保留已存檔進度。"
       ]
     },
     {
       "dot": "emerald",
-      "title": "分段保存，達標才結束",
+      "title": "按階段條件前進",
       "items": [
-        "預設每 100 回合存檔、每 1000 回合重啟並接續。",
-        "最近 50 回合平均 reward ≥ 2900 → Agent_Success.mat。"
+        "每 100 回合存檔；每段最多 1000 回合後檢查課程。",
+        "達標換階段、耗盡預算暫停；退步診斷不會自動回滾。"
       ]
     }
   ]
