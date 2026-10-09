@@ -30,14 +30,14 @@ isResume = strlength(string(opt.resume)) > 0;
 plan=[];
 if strlength(string(opt.curriculum))>0
     assert(~isResume,'Curriculum:Immutable','Resume uses the saved curriculum; do not supply a new plan.');
-    planFile=char(java.io.File(char(opt.curriculum)).getCanonicalPath());
+    planFile=projectPath(root,opt.curriculum);
     plan=trainingcurriculum.load_plan(planFile,true);
     assert(strlength(string(opt.model))==0 || strcmp(opt.model,plan.model), ...
         'Curriculum:Model','model must match the curriculum model.');
     opt.model=plan.model;
 end
 if isResume
-    folder = char(java.io.File(char(opt.resume)).getCanonicalPath());
+    folder = projectPath(root,opt.resume);
     assert(isfile(fullfile(folder,'model.json')) && isfile(fullfile(folder,'control.json')), ...
         'Modular:ResumeFolder','Resume requires a ModularTraining session folder with model.json and control.json.');
     spec = jsondecode(fileread(fullfile(folder,'model.json')));
@@ -152,6 +152,16 @@ if opt.start
 end
 fprintf('Model: %s\nSession: %s\nDiagnostics: %s\n',spec.name,folder,info.diagnosticDir);
 fprintf('To stop: create an empty STOP file in this session folder.\n');
+end
+
+function resolved = projectPath(root,value)
+% Java's process working directory can differ from MATLAB's Current Folder.
+% Anchor relative inputs before canonicalizing; preserve absolute inputs.
+value=char(value);
+if ~java.io.File(value).isAbsolute()
+    value=fullfile(root,value);
+end
+resolved=char(java.io.File(value).getCanonicalPath());
 end
 
 function writeJson(file,value)

@@ -68,3 +68,4 @@
 - 使用者本次明確要求 commit／上傳這批訓練方案，並準備遠端 6 workers＋GPU 設定；不在本機測試此組合或啟動正式訓練。
 - `configs/lab_gpu6.json` 保存 retry 參數，使用 progressive_v1 課程、workers=6、minWorkers=1、device=gpu；仍維持當次有 n 個可用就先用 n 個的策略。操作步驟見 `docs/lab-start.md`。
 - 執行參數 JSON 透過 jsondecode 與 namedargs2cell 傳入 retry；在專案根目錄執行。不要將硬體參數混入嚴格驗證的 curriculum schema。
+- 實驗室回報 Java 將相對課程路徑解析到 System32；retry 已改為先從自身專案根目錄建立絕對路徑，再 canonicalize，resume 同樣處理。不要直接以 java.io.File(relative).getCanonicalPath() 解析使用者路徑。原 CPU 短測用絕對路徑，未涵蓋這項啟動差異。

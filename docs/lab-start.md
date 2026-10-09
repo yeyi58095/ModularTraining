@@ -12,6 +12,8 @@ git pull --ff-only
 
 MATLAB 的 Current Folder 切到這份 ModularTraining 根目錄。以下所有相對路徑均以此為基準，不使用宿舍的絕對路徑。
 
+`retry` 的相對 curriculum／resume 路徑固定以 retry.m 所在專案根目錄解析，不依賴 Java 的程序工作目錄（Windows 有時為 System32）。MATLAB 的 fileread 設定檔指令仍需在上述 Current Folder 執行。
+
 ## 新實驗：直接啟動
 
 ```matlab
