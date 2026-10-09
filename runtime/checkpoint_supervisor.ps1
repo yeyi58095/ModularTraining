@@ -150,9 +150,18 @@ try {
             if ([double]$cfg.$key -lt 1 -or [double]$cfg.$key -ne [int]$cfg.$key) { throw "Invalid positive integer: $key" }
         }
         $targetWorkers = [int]$cfg.numWorkers
+        $minimumWorkers = 1
+        if ($null -ne $cfg.minWorkers) {
+            $minimum = [double]$cfg.minWorkers
+            if ([double]::IsNaN($minimum) -or [double]::IsInfinity($minimum) -or
+                $minimum -lt 1 -or $minimum -gt $targetWorkers -or $minimum -ne [Math]::Floor($minimum)) {
+                throw 'minWorkers must be an integer between 1 and numWorkers.'
+            }
+            $minimumWorkers = [int]$minimum
+        }
         $fallback = @(4,2)
         if ($null -ne $cfg.fallbackWorkers) { $fallback = @($cfg.fallbackWorkers) }
-        $workerPlan = @(Get-WorkerPlan $targetWorkers $fallback)
+        $workerPlan = @(Get-WorkerPlan $targetWorkers $fallback | Where-Object { $_ -ge $minimumWorkers })
         if ($previousTarget -ne $targetWorkers -or $workerIndex -ge $workerPlan.Count) { $workerIndex = 0 }
         $previousTarget = $targetWorkers
         $requestedWorkers = $workerPlan[$workerIndex]
@@ -170,17 +179,18 @@ try {
         $candidates = @(Get-Candidates)
         $beforeNewest = if ($candidates.Count) { $candidates[0] } else { '' }
         $payload = @{attempt=$attempt; attemptDir=$attemptDir; scriptDir=$scriptDir; sessionDir=$sessionDir;
-            resumeCandidates=$candidates; numWorkers=$requestedWorkers; targetWorkers=$targetWorkers; checkpointEvery=$cfg.checkpointEvery;
+            resumeCandidates=$candidates; numWorkers=$requestedWorkers; minWorkers=$minimumWorkers; targetWorkers=$targetWorkers; checkpointEvery=$cfg.checkpointEvery;
             episodesPerProcess=$cfg.episodesPerProcess; targetReward=$cfg.targetReward;
             averageWindow=$cfg.averageWindow; trainingDevice=$cfg.trainingDevice}
         if ($null -ne $cfg.modularRoot) {
             $payload.modularRoot = [string]$cfg.modularRoot
         }
+        if ($null -ne $cfg.curriculumEnabled) { $payload.curriculumEnabled = [bool]$cfg.curriculumEnabled }
         $attemptConfig = Join-Path $attemptDir 'attempt.json'
         [IO.File]::WriteAllText($attemptConfig, ($payload | ConvertTo-Json -Depth 5), $utf8)
         $expression = "addpath('$($scriptDir.Replace("'","''"))'); checkpoint_attempt('$($attemptConfig.Replace("'","''"))');"
         $arguments = '-batch "' + $expression + '"'
-        Write-Status 'running' "Starting attempt $attempt with $requestedWorkers workers (target=$targetWorkers); resume=$beforeNewest"
+        Write-Status 'running' "Starting attempt $attempt with $minimumWorkers..$requestedWorkers workers (target=$targetWorkers); resume=$beforeNewest"
         $child = Start-Process -FilePath $matlabExe -ArgumentList $arguments -WorkingDirectory $scriptDir `
             -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $attemptDir 'stdout.log') `
             -RedirectStandardError (Join-Path $attemptDir 'stderr.log')
@@ -265,6 +275,10 @@ try {
         $resultFile = Join-Path $attemptDir 'result.json'
         $result = $null
         if (Test-Path -LiteralPath $resultFile) { $result = Get-Content -LiteralPath $resultFile -Raw | ConvertFrom-Json }
+        if ($exitCode -eq 0 -and $null -ne $result -and $result.pause) {
+            Write-Status 'paused' "Curriculum stage $($result.stageId) reached its episode budget without passing; saved progress retained."
+            break
+        }
         if ($exitCode -eq 0 -and $null -ne $result -and $result.success) {
             if (-not (Test-Path -LiteralPath $result.successAgent -PathType Leaf)) {
                 throw 'Attempt reported success but Agent_Success.mat is missing.'
@@ -279,7 +293,11 @@ try {
             $provenance = @{attempt=$attempt; averageReward=$result.averageReward;
                 sourceAgent=$result.successAgent; successAgent=$successAgent; completed=[DateTime]::Now.ToString('o')}
             [IO.File]::WriteAllText((Join-Path $sessionDir 'success.json'), ($provenance | ConvertTo-Json), $utf8)
-            Write-Status 'success' "Target met: average reward=$($result.averageReward); agent=$successAgent"
+            if ($result.curriculumDecision -eq 'complete') {
+                Write-Status 'success' "Curriculum completed: reason=$($result.curriculumReason); agent=$successAgent"
+            } else {
+                Write-Status 'success' "Target met: average reward=$($result.averageReward); agent=$successAgent"
+            }
             break
         }
         $afterCandidates = @(Get-Candidates)

@@ -4,7 +4,9 @@ function info = retry(varargin)
 % start=false prepares a reviewable session without launching MATLAB processes.
 p = inputParser;
 p.addParameter('model',""); p.addParameter('resume',"");
+p.addParameter('curriculum',"");
 p.addParameter('workers',6); p.addParameter('fallbackWorkers',[4 2]);
+p.addParameter('minWorkers',1);
 p.addParameter('checkpointEvery',100); p.addParameter('episodesPerProcess',1000);
 p.addParameter('targetReward',2900); p.addParameter('averageWindow',50);
 p.addParameter('device',"gpu"); p.addParameter('maxAttempts',0);
@@ -25,12 +27,26 @@ end
 oldPath = path; pathGuard = onCleanup(@() path(oldPath)); %#ok<NASGU>
 addpath(root,'-begin');
 isResume = strlength(string(opt.resume)) > 0;
+plan=[];
+if strlength(string(opt.curriculum))>0
+    assert(~isResume,'Curriculum:Immutable','Resume uses the saved curriculum; do not supply a new plan.');
+    planFile=char(java.io.File(char(opt.curriculum)).getCanonicalPath());
+    plan=trainingcurriculum.load_plan(planFile,true);
+    assert(strlength(string(opt.model))==0 || strcmp(opt.model,plan.model), ...
+        'Curriculum:Model','model must match the curriculum model.');
+    opt.model=plan.model;
+end
 if isResume
     folder = char(java.io.File(char(opt.resume)).getCanonicalPath());
     assert(isfile(fullfile(folder,'model.json')) && isfile(fullfile(folder,'control.json')), ...
         'Modular:ResumeFolder','Resume requires a ModularTraining session folder with model.json and control.json.');
     spec = jsondecode(fileread(fullfile(folder,'model.json')));
     cfg = jsondecode(fileread(fullfile(folder,'control.json')));
+    if isfile(fullfile(folder,'curriculum.json')), cfg.curriculumEnabled=true; end
+    if isfield(cfg,'curriculumEnabled') && cfg.curriculumEnabled
+        savedPlan=trainingcurriculum.load_plan(fullfile(folder,'curriculum.json'),true);
+        assert(strcmp(savedPlan.model,spec.name),'Curriculum:Model','Saved plan/model mismatch.');
+    end
     if strlength(string(opt.model)) > 0
         assert(strcmp(opt.model,spec.name),'Modular:ModelMismatch', ...
             'Resume uses model %s. Use a new experiment to change architecture.',spec.name);
@@ -45,14 +61,14 @@ else
     spec = trainingmodels.load_profile(name);
     assert(strcmp(spec.name,name) && strcmp(spec.algorithm,'PPO'), ...
         'Modular:Profile','Profile name must match its filename; this runtime currently supports PPO.');
-    cfg = struct();
+    cfg = struct('curriculumEnabled',~isempty(plan));
     sessions = fullfile(root,'+trainingmodels',name,'runs');
     if ~isfolder(sessions), mkdir(sessions); end
     [~,tag]=fileparts(tempname(sessions));
     % Model name is already in the parent path; do not repeat it (Windows limits).
     folder=fullfile(sessions,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' tag]);
 end
-keys = {'workers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
+keys = {'workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
     'averageWindow','device','maxAttempts','maxNoProgressFailures','retryDelaySeconds', ...
     'startupTimeoutSeconds','stallTimeoutSeconds','licenseRetryDelaySeconds'};
 for k=1:numel(keys)
@@ -61,10 +77,12 @@ for k=1:numel(keys)
     if strcmp(key,'device'), dest='trainingDevice'; end
     if ~isResume || ~ismember(key,p.UsingDefaults), cfg.(dest)=opt.(key); end
 end
-for key={'numWorkers','checkpointEvery','episodesPerProcess','averageWindow'}
+if ~isfield(cfg,'minWorkers'), cfg.minWorkers=1; end % Legacy control.json.
+for key={'numWorkers','minWorkers','checkpointEvery','episodesPerProcess','averageWindow'}
     validateattributes(cfg.(key{1}),{'numeric'},{'scalar','integer','positive','finite'});
 end
 validateattributes(cfg.fallbackWorkers,{'numeric'},{'integer','positive','finite'});
+assert(cfg.minWorkers<=cfg.numWorkers,'Modular:WorkerRange','minWorkers must not exceed workers.');
 for key={'maxAttempts','maxNoProgressFailures'}
     validateattributes(cfg.(key{1}),{'numeric'},{'scalar','integer','nonnegative','finite'});
 end
@@ -72,6 +90,10 @@ for key={'retryDelaySeconds','startupTimeoutSeconds','stallTimeoutSeconds','lice
     validateattributes(cfg.(key{1}),{'numeric'},{'scalar','nonnegative','finite'});
 end
 validateattributes(cfg.targetReward,{'numeric'},{'scalar','finite'});
+if isfield(cfg,'curriculumEnabled') && cfg.curriculumEnabled
+    assert(ismember('targetReward',p.UsingDefaults),'Curriculum:Criteria', ...
+        'Curriculum completion uses advance_when in the saved JSON, not targetReward.');
+end
 assert(any(strcmp(cfg.trainingDevice,{'cpu','gpu'})),'Modular:Device','device must be cpu or gpu.');
 assert(cfg.episodesPerProcess>=max(cfg.checkpointEvery,cfg.averageWindow), ...
     'Modular:Segment','episodesPerProcess must cover checkpointEvery and averageWindow.');
@@ -82,6 +104,7 @@ lock=System.IO.File.Open(fullfile(folder,'supervisor.lock'), ...
 lockGuard=onCleanup(@() lock.Dispose());
 if ~isResume
     writeJson(fullfile(folder,'model.json'),spec);
+    if ~isempty(plan), trainingcurriculum.snapshot(plan,planFile,folder); end
     snapshot=fullfile(folder,'model_source'); mkdir(snapshot);
     % Copy source only: model folders now also contain potentially large runs.
     source = fullfile(root,'+trainingmodels');

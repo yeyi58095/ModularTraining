@@ -8,6 +8,7 @@ warning('on', 'all');
 %% User settings
 resumeAgentFile = ""; % Full path to Agent100.mat or Agent_Final.mat; "" = new
 numWorkers = 6; % Original script's intended local pool size
+minWorkers = 1;
 checkpointEvery = 100;
 maxEpisodes = 50000; % Additional episodes in this invocation when resuming
 trainingDevice = "gpu"; % For a NEW agent; use "cpu" if no supported GPU is available
@@ -24,12 +25,13 @@ outputRoot = "";
 poolDiagnosticDir = "";
 agentFactory = [];
 agentValidator = [];
+curriculumContext = [];
 % Entrypoint/automatic supervisor supplies only these known settings.
 if exist('checkpointOverrides', 'var') && isstruct(checkpointOverrides)
-    allowed = {'resumeAgentFile','numWorkers','checkpointEvery','maxEpisodes', ...
+    allowed = {'resumeAgentFile','numWorkers','minWorkers','checkpointEvery','maxEpisodes', ...
         'trainingDevice','fastRestart','targetReward','averageWindow', ...
         'trainingPlots','baseSeed','closePoolOnExit','outputRoot','poolDiagnosticDir', ...
-        'agentFactory','agentValidator'};
+        'agentFactory','agentValidator','curriculumContext'};
     for settingIndex = 1:numel(allowed)
         settingName = allowed{settingIndex};
         if isfield(checkpointOverrides, settingName)
@@ -38,6 +40,7 @@ if exist('checkpointOverrides', 'var') && isstruct(checkpointOverrides)
     end
 end
 validateattributes(numWorkers, {'numeric'}, {'scalar','integer','positive'});
+validateattributes(minWorkers, {'numeric'}, {'scalar','integer','positive','<=',numWorkers});
 validateattributes(checkpointEvery, {'numeric'}, {'scalar','integer','positive'});
 validateattributes(maxEpisodes, {'numeric'}, {'scalar','integer','positive'});
 
@@ -305,12 +308,16 @@ fclose(fid);
 dq = parallel.pool.DataQueue;
 logListener = afterEach(dq, @(event) writeWorkerLog(event, windLogFile, memoryLogFile));
 randomstart_stage2([], dq, true);
-env.ResetFcn = @(in) randomstart_stage2(in, dq, false);
+environmentConfig=[];
+if ~isempty(curriculumContext), environmentConfig=curriculumContext.environment; end
+env.ResetFcn = @(in) randomstart_stage2(in, dq, false, environmentConfig);
 
 %% Local process pool (same six-worker intent as the original script)
 pool = gcp('nocreate');
+requestedWorkers = numWorkers;
 if ~isempty(pool) && (~isa(pool, 'parallel.ProcessPool') || ...
-        pool.NumWorkers ~= numWorkers || ~isa(pool.Cluster, 'parallel.cluster.Local'))
+        pool.NumWorkers < minWorkers || pool.NumWorkers > numWorkers || ...
+        ~isa(pool.Cluster, 'parallel.cluster.Local'))
     % Do not discard unrelated running parfeval work.
     if ~isempty(pool.FevalQueue.RunningFutures) || ~isempty(pool.FevalQueue.QueuedFutures)
         error('Training:PoolBusy', 'Existing pool has active work; finish it before training.');
@@ -319,8 +326,10 @@ if ~isempty(pool) && (~isa(pool, 'parallel.ProcessPool') || ...
     pool = [];
 end
 if isempty(pool)
-    pool = checkpoint_open_pool(numWorkers, poolDiagnosticDir);
+    pool = checkpoint_open_pool(numWorkers, poolDiagnosticDir, minWorkers);
 end
+% WorkerRandomSeeds and all downstream options must match the actual pool.
+numWorkers = pool.NumWorkers;
 % Workers share the local filesystem. Attach script for local helper callbacks.
 addAttachedFiles(pool, {[mfilename('fullpath') '.m']});
 updateAttachedFiles(pool);
@@ -347,11 +356,17 @@ trainingOpts = rlTrainingOptions( ...
     "Plots", trainingPlots ...
 );
 trainingOpts.ParallelizationOptions.Mode = "sync";
+if ~isempty(curriculumContext)
+    % Stage decisions are made only after the segment is saved. Do not let
+    % whole-experiment reward history trigger the legacy global success rule.
+    trainingOpts.StopTrainingCriteria = "EpisodeCount";
+    trainingOpts.StopTrainingValue = resumeEpisode + maxEpisodes;
+end
 trainingOpts.ParallelizationOptions.WorkerRandomSeeds = baseSeed + (1:numWorkers);
 trainingOpts.ParallelizationOptions.TransferBaseWorkspaceVariables = "on";
 % Runtime queue callbacks are rebuilt each run, not stored in MAT checkpoints.
 optionsForDisk = trainingOpts;
-save(fullfile(runLogDir, 'TrainingOptions.mat'), 'optionsForDisk', 'numWorkers', ...
+save(fullfile(runLogDir, 'TrainingOptions.mat'), 'optionsForDisk', 'numWorkers', 'requestedWorkers', 'minWorkers', ...
     'resumeAgentFile', 'fastRestart', '-v7.3');
 trainingOpts.ParallelizationOptions.SetupFcn = @() parallelWorkerState("setup", workerConfig, []);
 trainingOpts.ParallelizationOptions.CleanupFcn = @() parallelWorkerState("cleanup", workerConfig, []);
@@ -386,8 +401,13 @@ training_stage2.TrainingOptions = optionsForDisk;
 checkpoint_save_final(fullfile(saveDir,'Agent_Final.mat'),Agent_Stage2,training_stage2);
 copyfile(fullfile(saveDir,'Agent_Final.mat'),fullfile(runLogDir,'Agent_Final.mat'));
 save(fullfile(saveDir, 'TrainingResults.mat'), 'training_stage2', '-v7.3');
-successSummary = checkpoint_mark_success(saveDir, training_stage2.EpisodeReward, ...
-    targetReward, averageWindow);
+if isempty(curriculumContext)
+    successSummary = checkpoint_mark_success(saveDir, training_stage2.EpisodeReward, ...
+        targetReward, averageWindow);
+else
+    successSummary = trainingcurriculum.outcome(curriculumContext,training_stage2.EpisodeReward, ...
+        training_stage2.EpisodeSteps,fullfile(saveDir,'Agent_Final.mat'));
+end
 fprintf('Training stopped normally. Saved in:\n%s\n', saveDir);
 %% Helper Functions
 function result = trainWithPoolCleanup(agent, environment, options, pool, closeOnExit)
@@ -453,7 +473,7 @@ function restoreWorkerFilesystem(previousFolder, previousPath, previousFileConfi
     path(previousPath);
 end
 
-function in = randomstart_stage2(in, dq, resetState)
+function in = randomstart_stage2(in, dq, resetState, environmentConfig)
     % Path-generation helpers read the global trajectory settings.
     persistent lastwaypoints lastvelocity localEpisodeCounter
     if resetState
@@ -463,29 +483,31 @@ function in = randomstart_stage2(in, dq, resetState)
         return;
     end
 
+    legacyEnvironment=nargin<4 || isempty(environmentConfig);
+    if legacyEnvironment
+        environmentConfig=struct('trajectory',struct('type','random','refresh_every_worker_episodes',10), ...
+            'wind',struct('east_mps',[-3 3],'north_mps',[-3 3],'turbulence',[0 2]));
+    end
     if isempty(localEpisodeCounter)
         localEpisodeCounter = 0;
-        % [lastwaypoints, lastvelocity] = createFixedPath();  % Use a fixed path
-        [lastwaypoints, lastvelocity] = createPath_Stage2();    % Use a random path
-        displayPath(lastwaypoints, localEpisodeCounter);
-
-    end
-
-    if isempty(lastwaypoints)
-        % [lastwaypoints, lastvelocity] = createFixedPath();  % Use a fixed path
-        [lastwaypoints, lastvelocity] = createPath_Stage2();    % Use a random path
-        displayPath(lastwaypoints, localEpisodeCounter);
+        if legacyEnvironment
+            % Preserve the old random-number sequence for non-curriculum runs.
+            [lastwaypoints,lastvelocity]=createPath_Stage2();
+            displayPath(lastwaypoints,localEpisodeCounter);
+        end
     end
 
     mdl = "FAFA_Simulation";
 
-    % Update the path every 10 episodes.
-    pathUpdateFrequency = 10;
+    pathUpdateFrequency = Inf;
+    if strcmp(environmentConfig.trajectory.type,'random')
+        pathUpdateFrequency=environmentConfig.trajectory.refresh_every_worker_episodes;
+    end
 
     % Random wind disturbance, different for each episode.
-    wind_E0 = randi([-3 3],1,1);
-    wind_N0 = randi([-3 3],1,1);
-    wind_turbulance_value0 = randi([0 2],1,1);
+    wind_E0 = randi(environmentConfig.wind.east_mps(:)',1,1);
+    wind_N0 = randi(environmentConfig.wind.north_mps(:)',1,1);
+    wind_turbulance_value0 = randi(environmentConfig.wind.turbulence(:)',1,1);
 
     try
         t = getCurrentTask(); wid = t.ID;
@@ -512,10 +534,19 @@ function in = randomstart_stage2(in, dq, resetState)
     in = setVariable(in, "wind_N0", wind_N0, "Workspace", mdl);
     in = setVariable(in, "wind_turbulance_value0", wind_turbulance_value0, "Workspace", mdl);
 
-    if mod(localEpisodeCounter, pathUpdateFrequency) == 0
-        % [lastwaypoints, lastvelocity] = createFixedPath();  % Use a fixed path
-        [lastwaypoints, lastvelocity] = createPath_Stage2();    % Use a random path
-        fprintf('[Stage2] Worker %d, local episode %d: new path (%d waypoints)\n', ...
+    if isempty(lastwaypoints) || (isfinite(pathUpdateFrequency) && mod(localEpisodeCounter, pathUpdateFrequency)==0)
+        switch environmentConfig.trajectory.type
+            case 'fixed_builtin'
+                [lastwaypoints,lastvelocity]=createFixedPath();
+            case 'mat'
+                lastwaypoints=environmentConfig.trajectory.waypoints;
+                lastvelocity=environmentConfig.trajectory.velocity;
+            case 'random'
+                [lastwaypoints,lastvelocity]=createPath_Stage2();
+            otherwise
+                error('Curriculum:Trajectory','Unknown trajectory type.');
+        end
+        fprintf('[Trajectory] Worker %d, local episode %d: new path (%d waypoints)\n', ...
                 wid, localEpisodeCounter + 1, size(lastwaypoints, 1));
         displayPath(lastwaypoints, localEpisodeCounter + 1);
     end

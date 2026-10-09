@@ -5,7 +5,7 @@
 - 使用者於 2026-10-09 確認，本專案是**複製**出來的，不是搬移；原資料夾仍存在。
 - 原始來源：`D:\daniel\GradSchool\0-Beginner\Paper\Flower\Deep Reinforcement Learning\ModularTraining`。
 - 現在的獨立專案：`D:\daniel\GradSchool\0-Beginner\ModularTraining`，位置在 Flower 所在的 Paper 資料夾之外。
-- 使用者希望 ModularTraining 成為獨立的新專案，未來會 push 到 GitHub。目前這項規劃不代表已授權建立遠端儲存庫或 push。
+- 使用者於 2026-10-09 告知已自行將此獨立專案放上 GitHub；本機也已有 Git repository。這不代表授權代理自行 commit 或 push。
 - Flower 提供研究背景與原始實作參考；不要將其路徑當成本專案的執行依賴，也不要假設兩邊後續仍同步。
 - 使用者已授權讀取 `D:\daniel\GradSchool\0-Beginner\Paper\Flower`。此授權不包含修改來源資料夾。
 
@@ -33,3 +33,24 @@
 - 分享報告不等於搬移可續訓實驗。跨機續訓要另行確認 checkpoint 與 control.json 路徑，尤其 diagnosticDir 可能仍指向舊電腦。
 - 匯出器獨立於 runtime，不修改訓練或自動停訓；當下程式指紋不能當作歷史執行版本的證明。
 - 架構審視、限制與本次工作紀錄見 `docs/review-2026-10-09.md`；分享方式見 `reports/README.md`。
+
+## Worker 與學習退步處理（2026-10-09 後續）
+
+- 使用者希望同一段訓練立即使用可用的 n 個 MATLAB workers，而非只在下一次 attempt 降級。
+- `retry(workers=6,minWorkers=1)` 現在以 `[minWorkers,workers]` 範圍建立 pool；成功取得 n 個後，在同一 attempt 使用 n 個，seed 數量亦依實際 pool 大小。`minWorkers=workers` 可要求固定數量。
+- 範圍建池不等於保留未完成的連線；pool 整體建立失敗／卡住時仍走 supervisor 的失敗恢復與 watchdog。fallbackWorkers 作為失敗後的上限備援，不得低於 minWorkers。
+- `learning_health.py` 在匯出報告時依連續區間計算疑似退步，預設只診斷，不自動停訓、回滾或改超參數。單次匯出不會持續監控。
+- 預設門檻是待驗證的工程規則，不能當成 PPO 故障或 learning rate 過大的證明。策略及實作範圍見 `docs/learning-health.md`。
+- 本機修改不會自動同步實驗室；更新實驗室 runtime 前應先確認該副本沒有活動訓練。
+
+## JSON 分階段課程（2026-10-09）
+
+- 使用者確認階段之間沿用同一個 agent，只改軌跡與訓練條件；模型放在 JSON 最外層。不要擅自把階段切換改成重新初始化模型。
+- 新入口：`retry(curriculum="curricula/fixed_to_random.json",start=false)` 可建立計畫與輸入快照；`curriculum_plan(...)` 只檢查設定。使用者未授權啟動正式訓練。
+- 支援內建固定路徑、MAT 軌跡和 random 軌跡。兩個 MAT 輸入的模板是 `curricula/two_mat_then_random.example.json`；使用者尚未提供實際軌跡1／軌跡2，不能假設檔案存在或變數格式相容。
+- 條件支援 all/any、階段回合數、平均 reward／steps 及達指定步數比例；詳見 `docs/curriculum.md`。範例門檻只是示範，不是已驗證的論文復現參數。
+- 條件只使用 checkpoint 保存的歷史，在存檔邊界切換；`max_episodes` 是當階段預算，`on_limit=pause` 保存後暫停，只有明確指定 advance 才按預算換階段。
+- 每個實驗保存 `curriculum.json`、`curriculum_assets/`、`curriculum_state.json`、`curriculum_outcome.json`。已有 checkpoint 卻遺失階段狀態時拒絕猜測，不可隨意刪除狀態或改寫課程快照。
+- 課程模式的過關條件以 JSON 為準，不接受另外傳入 targetReward；既有非課程實驗維持原流程。不要把既有普通實驗直接改旗標當成課程實驗。
+- `+trainingcurriculum/` 屬執行程式，與 runtime 一樣不得在活動訓練期間修改。MAT 輸入不會自動納入 Git，沿用原忽略規則。
+- 已通過合成歷史、入口假引擎、設定與報告測試；尚未跑真實 Simulink 平行訓練的跨階段驗證。

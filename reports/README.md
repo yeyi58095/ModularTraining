@@ -32,3 +32,16 @@ python export_training_report.py "實驗資料夾" --machine lab --from-episode 
 
 匯出後可檢查 `git status --short` 與 `git diff -- reports/`，再由使用者決定 commit／push。
 這個資料夾不能用來續訓；checkpoint 搬移是另一項操作。
+
+## 規則式學習退步診斷
+
+每次匯出額外產生 `learning_health`。預設以連續 1000 回合為完整、不重疊區間；先前最佳區間平均至少 500，且後續連續 5 段平均低於它的 50% 才標記 `suspected_regression`。短暫下跌為 `watch`；早期低 reward 或資料不足為 `insufficient_evidence`。`no_regression_detected` 不代表已學好。
+缺回合會重置低迷連續次數；未滿區間保留為 pending_records，不混進完整區間判斷。以 latest_completed_window 的 episode 範圍判讀時效。
+
+```powershell
+python export_training_report.py "實驗資料夾" --machine lab --regression-window 1000 --regression-patience 5 --regression-ratio 0.5 --regression-min-reference 500
+```
+
+這些是可調的工程門檻，尚未用實驗室真實資料校準。診斷一律看完整歷史，不受 `--from-episode`／`--to-episode` 的圖表聚焦範圍影響。只在執行匯出時更新，不自動輪詢、推播、停訓或回滾。處理策略見 [learning-health.md](../docs/learning-health.md)。
+
+JSON 課程實驗會額外記錄 `curriculum.stage_index`／`stage_start_episode`，learning_health 只看當前階段，避免跨難度比較；缺少或無法解析階段狀態時不計算退步訊號。其餘全期趨勢與聚焦區間仍保留。這裡的健康檢查使用日誌觀測，並非規劃器用來換階段的 checkpoint 判斷。

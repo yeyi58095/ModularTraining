@@ -15,10 +15,11 @@ import re
 import statistics
 
 from plot_training_rewards import log_files, read_episodes, select_session
+from learning_health import assess_learning
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1_500_000
-CONTROL_KEYS = ("numWorkers", "fallbackWorkers", "checkpointEvery", "episodesPerProcess",
+CONTROL_KEYS = ("numWorkers", "minWorkers", "fallbackWorkers", "checkpointEvery", "episodesPerProcess",
                 "targetReward", "averageWindow", "trainingDevice", "maxAttempts",
                 "maxNoProgressFailures", "startupTimeoutSeconds", "stallTimeoutSeconds")
 MODEL_KEYS = ("schemaVersion", "lstmUnits", "actorHidden", "criticHidden", "meanHidden",
@@ -115,7 +116,7 @@ def fingerprint(paths, base):
     return result
 
 
-def export_report(session, machine, diagnostics=None, first=None, last=None):
+def export_report(session, machine, diagnostics=None, first=None, last=None, health_options=None):
     warnings = []
     rows, duplicates, used = read_episodes(session)
     invalid = sum(not all(math.isfinite(r[k]) for k in ("reward", "average_reward", "q0"))
@@ -123,6 +124,20 @@ def export_report(session, machine, diagnostics=None, first=None, last=None):
     rows = [r for r in rows if all(math.isfinite(r[k]) for k in ("reward", "average_reward", "q0"))]
     if not rows:
         raise ValueError("No complete finite episode records found; no report was written.")
+    curriculum = None
+    health_rows = rows
+    if (session / "curriculum.json").is_file():
+        state = read_json(session / "curriculum_state.json", warnings)
+        start, index = state.get("start_episode"), state.get("stage_index")
+        if type(start) is int and start >= 0 and type(index) is int and index >= 1:
+            curriculum = dict(stage_index=index, stage_start_episode=start)
+            health_rows = [row for row in rows if row["episode"] > start]
+        else:
+            curriculum = dict(state="unknown")
+            health_rows = []
+            warnings.append("curriculum_state_unknown:learning_health_not_evaluated")
+    health = assess_learning(health_rows, **(health_options or {}))
+    health["scope"] = "current_curriculum_stage" if curriculum is not None else "whole_experiment"
     model = read_json(session / "model.json", warnings)
     control = read_json(session / "control.json", warnings)
     control_settings = settings(control, CONTROL_KEYS)
@@ -190,11 +205,12 @@ def export_report(session, machine, diagnostics=None, first=None, last=None):
     snapshot_paths = list((source / "+trainingmodels").glob("*.m"))
     snapshot_paths += list((source / "+trainingmodels").glob("*/*.m"))
     local_paths = [ROOT / name for name in ("retry.m", "training.m", "export_training_report.py",
-                                          "plot_training_rewards.py")]
+                                          "plot_training_rewards.py", "learning_health.py")]
     local_paths += list((ROOT / "runtime").glob("*.m")) + list((ROOT / "runtime").glob("*.ps1"))
     local_paths += list((ROOT / "runtime").glob("*.slx"))
     local_paths += list((ROOT / "+trainingmodels").glob("*.m"))
     local_paths += list((ROOT / "+trainingmodels").glob("*/*.m"))
+    local_paths += list((ROOT / "+trainingcurriculum").glob("*.m"))
     if not snapshot_paths:
         warnings.append("missing:model_source snapshot")
     model_name = model.get("name", "unknown")
@@ -206,7 +222,7 @@ def export_report(session, machine, diagnostics=None, first=None, last=None):
     report = dict(schema_version=1, machine=machine, session_id=session.name,
                   exported_at_utc=datetime.now(timezone.utc).isoformat(), model=model_name,
                   model_settings=settings(model, MODEL_KEYS), control_settings=control_settings,
-                  status=state, episode_count=len(rows), first_episode=rows[0]["episode"],
+                  status=state, curriculum=curriculum, learning_health=health, episode_count=len(rows), first_episode=rows[0]["episode"],
                   last_episode=rows[-1]["episode"], duplicate_lines_replaced=duplicates,
                   missing_episodes=rows[-1]["episode"] - rows[0]["episode"] + 1 - len(rows),
                   nonfinite_records_excluded=invalid, attempts_with_data=used,
@@ -239,6 +255,10 @@ def main():
     parser.add_argument("--diagnostics", type=Path, help="Explicit legacy diagnostics folder; never follows control.json paths")
     parser.add_argument("--from-episode", type=int)
     parser.add_argument("--to-episode", type=int)
+    parser.add_argument("--regression-window", type=int, default=1000)
+    parser.add_argument("--regression-patience", type=int, default=5)
+    parser.add_argument("--regression-ratio", type=float, default=0.5)
+    parser.add_argument("--regression-min-reference", type=float, default=500)
     parser.add_argument("--output", type=Path, help="Default: reports/<machine>/<session>/report.json")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}", args.machine):
@@ -253,7 +273,10 @@ def main():
         output = output.expanduser().resolve()
         if output.suffix != ".json" or output.is_relative_to(session):
             raise ValueError("Output must be a .json file outside the source experiment.")
-        report = export_report(session, args.machine, args.diagnostics, args.from_episode, args.to_episode)
+        health_options = dict(window=args.regression_window, patience=args.regression_patience,
+                              ratio=args.regression_ratio, min_reference=args.regression_min_reference)
+        assess_learning([], **health_options) # Validate before reading large logs.
+        report = export_report(session, args.machine, args.diagnostics, args.from_episode, args.to_episode, health_options)
         payload = (json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
         if len(payload) > MAX_BYTES:
             raise ValueError("Report exceeds 1.5 MB safety limit; no report was written.")
@@ -262,6 +285,7 @@ def main():
         temporary.write_bytes(payload)
         temporary.replace(output)
         print(f"Read: {session}\nReport: {output}\nBytes: {len(payload):,}; episodes: {report['episode_count']:,}")
+        print(f"Learning health: {report['learning_health']['state']} (advisory only)")
         return 0
     except (OSError, ValueError) as exc:
         parser.exit(1, f"Error: {exc}\n")

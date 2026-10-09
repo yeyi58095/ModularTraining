@@ -6,6 +6,8 @@ for name=profiles
     spec=trainingmodels.load_profile(name);
     assert(strcmp(spec.name,name));
     info=retry(model=name,device="cpu",start=false);
+    config=jsondecode(fileread(fullfile(info.sessionDir,'control.json')));
+    assert(config.minWorkers==1 && config.numWorkers==6);
     assert(strcmp(fileparts(info.sessionDir),fullfile(root,'+trainingmodels',name,'runs')));
     assert(strcmp(info.diagnosticDir,fullfile(info.sessionDir,'diagnostics')));
     saved=fullfile(info.sessionDir,'model_source','+trainingmodels');
@@ -26,11 +28,17 @@ try, retry(resume=info.sessionDir,model="ppo_lstm128",start=false); catch e, rej
 assert(rejected);
 % Simulate legacy control files that only define diagnosticRoot.
 file=fullfile(info.sessionDir,'control.json');
-cfg=jsondecode(fileread(file)); cfg=rmfield(cfg,'diagnosticDir');
+cfg=jsondecode(fileread(file)); cfg=rmfield(cfg,{'diagnosticDir','minWorkers'});
 cfg.diagnosticRoot=fullfile(root,'training_diagnostics');
 fid=fopen(file,'w'); fprintf(fid,'%s',jsonencode(cfg)); fclose(fid);
 legacy=retry(resume=info.sessionDir,start=false);
 [~,tag]=fileparts(info.sessionDir);
 assert(strcmp(legacy.diagnosticDir,fullfile(cfg.diagnosticRoot,tag)));
+config=jsondecode(fileread(file)); assert(config.minWorkers==1);
+retry(resume=info.sessionDir,workers=4,minWorkers=2,start=false);
+config=jsondecode(fileread(file)); assert(config.minWorkers==2 && config.numWorkers==4);
+rejected=false;
+try, retry(resume=info.sessionDir,workers=1,start=false); catch e, rejected=strcmp(e.identifier,'Modular:WorkerRange'); end
+assert(rejected);
 fprintf('PASS: model folders, separate runs, source-only snapshots, resume, legacy diagnostics, invalid models.\n');
 end

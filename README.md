@@ -1,6 +1,23 @@
 # ModularTraining
 
-此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護，未來預計上傳 GitHub。執行不需要原 Flower 資料夾。
+此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
+
+## JSON 分階段訓練
+
+用設定檔描述「固定／MAT 軌跡 → 下一條軌跡 → random」，沿用同一個 agent。模型只指定一次，各階段自行設定風場、過關條件與回合預算。
+
+```matlab
+% 只檢查，不啟動訓練：
+plan = curriculum_plan("curricula/fixed_to_random.json");
+% 保存設定與輸入快照，供檢查；仍不啟動：
+info = retry(curriculum="curricula/fixed_to_random.json",start=false);
+% 準備好之後再自行執行：
+% info = retry(resume=info.sessionDir,workers=6,minWorkers=1);
+```
+
+可參考 [固定→random 範例](curricula/fixed_to_random.json) 或 [軌跡1→軌跡2→random 模板](curricula/two_mat_then_random.example.json)。後者需要自行提供 MAT；可先用 `curriculum_plan(...,checkFiles=false)` 檢查格式。
+例如 all 組合「本階段至少 5000 回合」與「最近三段各 100 回合平均 reward 都 >=2500」。到達 max_episodes 仍未通過時可指定保存後暫停，不把耗盡預算誤當學會。
+條件在存檔邊界判斷，依 checkpoint 歷史計算；原本不帶 curriculum 的呼叫維持既有行為。完整格式、MAT 限制與續訓語意見 [課程設定說明](docs/curriculum.md)。目前通過合成與入口測試，尚未進行真實訓練跨階段驗證。
 
 ## 宿舍／實驗室分享精簡紀錄
 
@@ -46,8 +63,16 @@ runInfo = retry(model="ppo_lstm128", workers=6);
 % runInfo = retry(model="ppo_mlp", workers=6, device="cpu");
 ```
 
-每次新啟動產生 `+trainingmodels/<模型名稱>/runs/<時間_唯一碼>/`。預設使用 GPU、每 100 回合存檔、每 1000 回合重啟程序，最近 50 回合平均 reward >= 2900 時保存 Agent_Success.mat 並結束。
-workers 是每段目標，啟動失敗依 `fallbackWorkers=[4 2]` 降級；下一段重新嘗試目標數量。這不保證修復授權問題。
+每次新啟動產生 `+trainingmodels/<模型名稱>/runs/<時間_唯一碼>/`。預設使用 GPU、每 100 回合存檔、每 1000 回合重啟程序。非課程模式在最近 50 回合平均 reward >=2900 時保存 Agent_Success.mat 並結束；課程模式則依 JSON 的階段條件完成。
+`workers` 是每段的 worker 上限，`minWorkers` 預設 1。建池使用 `[minWorkers, workers]`，成功取得範圍內的 n 個後，**同一段直接以 n 個訓練**，seed 數量與診斷亦使用實際數量。下一段仍重新嘗試目標上限。
+這使用 MATLAB 的範圍建池，不會把失敗 pool 的部分連線當作可用 pool。若整個建池失敗或卡住，仍由 supervisor／watchdog 恢復，下一次依 `fallbackWorkers=[4 2]` 降低上限（排除小於 minWorkers 的備援值）。不保證修復 worker 授權／連線問題。
+
+```matlab
+runInfo = retry(model="ppo_lstm128",workers=6,minWorkers=1); % 可用 1–6 個
+% minWorkers=2：至少 2 個；minWorkers=6：要求剛好 6 個
+```
+
+舊 control.json 缺少 minWorkers 時採用 1；已有此值的續訓沿用原設定，除非顯式覆寫。降 workers 時請同步確認 minWorkers 不超過新上限。
 
 ```matlab
 runInfo = retry(model="ppo_lstm128",workers=6,fallbackWorkers=[4 2], ...
@@ -145,6 +170,10 @@ ModularTraining/
 只需要把整個 ModularTraining 資料夾加入 Git 並同步，不需要更動舊 Simulink 資料夾。
 
 ## 驗證
+
+`tests/test_worker_range.m`：用模擬 pool API 驗證目標 6／可用 3 時同一次呼叫成功，及下限、失敗診斷與舊呼叫相容；不啟動真實 pool。
+`tests/test_learning_health.py`：驗證持續退步、恢復、早期低 reward、單次尖峰及缺回合。
+精簡報告新增 `learning_health`，每次匯出會計算規則式診斷；不是背景監控，不會自動修改訓練。預設每 1000 回合一段，連續 5 段低於先前最佳完整區間平均的 50%，且參考平均至少 500 時標記疑似退步。詳見 [處理策略](docs/learning-health.md)。
 
 `tests/test_model_layout.m`：不啟動訓練，驗證模型分類、每次訓練的獨立路徑、快照排除成果、續訓及舊版診斷路徑相容性。
 

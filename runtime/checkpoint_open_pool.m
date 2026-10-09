@@ -1,7 +1,11 @@
-function pool = checkpoint_open_pool(numWorkers, diagnosticDir)
+function pool = checkpoint_open_pool(numWorkers, diagnosticDir, minWorkers)
 % Record facts before starting workers, including failures that never return.
+    if nargin < 3, minWorkers = 1; end
+    validateattributes(numWorkers,{'numeric'},{'scalar','integer','positive','finite'});
+    validateattributes(minWorkers,{'numeric'},{'scalar','integer','positive','finite','<=',numWorkers});
     cluster = parcluster('local');
-    info = struct('requestedWorkers',numWorkers,'release',version('-release'), ...
+    info = struct('requestedWorkers',numWorkers,'minimumWorkers',minWorkers, ...
+        'release',version('-release'), ...
         'matlabRoot',matlabroot,'profile',cluster.Profile, ...
         'clusterMatlabRoot',cluster.ClusterMatlabRoot, ...
         'jobStorageLocation',cluster.JobStorageLocation, ...
@@ -9,7 +13,9 @@ function pool = checkpoint_open_pool(numWorkers, diagnosticDir)
     writeJson(diagnosticDir,'pool_starting.json',info);
     started = tic;
     try
-        pool = parpool(cluster,numWorkers);
+        % Accept a successful smaller pool in THIS attempt. A failed pool is
+        % not usable and still requires the supervisor's recovery path.
+        pool = parpool(cluster,[minWorkers numWorkers]);
     catch err
         info.elapsedSeconds = toc(started);
         info.identifier = err.identifier;
@@ -20,6 +26,8 @@ function pool = checkpoint_open_pool(numWorkers, diagnosticDir)
     info.actualWorkers = pool.NumWorkers;
     info.elapsedSeconds = toc(started);
     writeJson(diagnosticDir,'pool_ready.json',info);
+    fprintf('Pool ready: %d workers (requested up to %d, minimum %d).\n', ...
+        pool.NumWorkers,numWorkers,minWorkers);
 end
 
 function writeJson(folder,name,value)

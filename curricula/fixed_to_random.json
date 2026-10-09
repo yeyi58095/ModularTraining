@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "model": "ppo_lstm128",
+  "stages": [
+    {
+      "id": "fixed_warmup",
+      "trajectory": {
+        "type": "fixed_builtin"
+      },
+      "wind": {
+        "east_mps": [
+          -1,
+          1
+        ],
+        "north_mps": [
+          -1,
+          1
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 5000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 1200
+          }
+        ]
+      },
+      "max_episodes": 23000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_paths",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          -3,
+          3
+        ],
+        "north_mps": [
+          -3,
+          3
+        ],
+        "turbulence": [
+          0,
+          2
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 5000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2750
+          }
+        ]
+      },
+      "max_episodes": 75000,
+      "on_limit": "pause"
+    }
+  ]
+}

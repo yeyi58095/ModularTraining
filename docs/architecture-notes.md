@@ -12,6 +12,8 @@
 
 ## worker 重試條件
 
+**2026-10-09 更新：** 下述 6 → 4 → 2 是 pool 整體失敗後的 supervisor 備援。現在優先用 `[minWorkers,workers]` 在同一次建池取得可用數量（預設 1–6），成功後同一 attempt 直接訓練；WorkerRandomSeeds 與保存的 numWorkers 跟隨實際 pool 大小。下限由 retry 的 minWorkers 設定，舊 control.json 預設 1。部分連線但整個 pool 建立失敗仍不能開始訓練。
+
 - 預設目標為 6 個 worker。只有已進入平行池啟動階段、但未取得 pool-ready 證據的失敗才觸發 6 → 4 → 2 降級；更早的載入失敗不等同建池失敗。
 - 降級是在下一個 attempt 重建 pool，不是保留前次連上的部分 worker。
 - 成功建池後，下一段恢復目標 worker 數。每回合診斷記錄實際 worker 數。

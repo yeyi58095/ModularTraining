@@ -90,6 +90,16 @@ class Reports(unittest.TestCase):
         with self.assertRaises(ValueError):
             report.export_report(self.session, "dorm")
 
+    def test_curriculum_health_uses_current_stage_only(self):
+        self.log(1, "".join(episode(n, 2000 if n <= 10 else 100) for n in range(1, 71)))
+        (self.session / "curriculum.json").write_text('{}')
+        (self.session / "curriculum_state.json").write_text('{"stage_index":2,"start_episode":10}')
+        data = report.export_report(self.session, "lab", health_options={"window": 10, "patience": 3})
+        self.assertEqual(data['learning_health']['state'], 'insufficient_evidence')
+        self.assertEqual(data['learning_health']['scope'], 'current_curriculum_stage')
+        self.assertEqual(data['curriculum']['stage_index'], 2)
+        self.assertEqual(data['learning_health']['completed_windows'], 6)
+
     @unittest.skipUnless(shutil.which("git"), "Git required for ignore-rule verification")
     def test_gitignore_allows_only_report_payload(self):
         repo = Path(self.temp.name) / "ignore_fixture"
