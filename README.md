@@ -4,6 +4,10 @@
 
 ## JSON 分階段訓練
 
+新課程實驗按計畫存入 `experiments/<課程 JSON 檔名>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/curriculum-layout.md)。
+
+已停止的舊實驗可用 `migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
+
 用設定檔描述「固定／MAT 軌跡 → 下一條軌跡 → random」，沿用同一個 agent。模型只指定一次，各階段自行設定風場、過關條件與回合預算。
 
 ```matlab
@@ -17,7 +21,7 @@ info = retry(curriculum="curricula/fixed_to_random.json",start=false);
 
 可參考 [固定→random 範例](curricula/fixed_to_random.json) 或 [軌跡1→軌跡2→random 模板](curricula/two_mat_then_random.example.json)。後者需要自行提供 MAT；可先用 `curriculum_plan(...,checkFiles=false)` 檢查格式。
 例如 all 組合「本階段至少 5000 回合」與「最近三段各 100 回合平均 reward 都 >=2500」。到達 max_episodes 仍未通過時可指定保存後暫停，不把耗盡預算誤當學會。
-條件在存檔邊界判斷，依 checkpoint 歷史計算；原本不帶 curriculum 的呼叫維持既有行為。完整格式、MAT 限制與續訓語意見 [課程設定說明](docs/curriculum.md)。目前通過合成與入口測試，尚未進行真實訓練跨階段驗證。
+條件在存檔邊界判斷，依 checkpoint 歷史計算；原本不帶 curriculum 的呼叫維持既有行為。完整格式、MAT 限制與續訓語意見 [課程設定說明](docs/curriculum.md)。已完成 CPU／1 worker 三階段真實短測，詳見 [驗證紀錄](docs/validation-2026-10-09.md)。
 
 ## 宿舍／實驗室分享精簡紀錄
 
@@ -37,6 +41,8 @@ python export_training_report.py "實驗資料夾" --machine lab --from-episode 
 分享報告不能代替 checkpoint 續訓；複製實驗跨機續訓前需檢查 `control.json` 的 `diagnosticDir` 等路徑。
 
 ## 訓練 Reward 圖表
+
+橘色點劃線與 Episode 軸下方的 Stage 標籤顯示實際課程分界；灰色虛線仍表示 attempt 邊界。階段來自實驗的課程狀態快照，不以 reward 變化猜測。
 
 從專案根目錄執行：
 

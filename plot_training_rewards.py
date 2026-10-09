@@ -6,17 +6,19 @@ Examples:
   python plot_training_rewards.py +trainingmodels/ppo_lstm128/runs/SESSION_NAME
   python plot_training_rewards.py SESSION_PATH --watch 60
 
-With no path, select the newest session in this project's model runs or sessions.
+With no path, select the newest session in curriculum experiments, model runs or sessions.
 Logs are only read. The original Flower project is not required.
 If an episode is repeated after a restart, the latest attempt takes precedence.
 """
 
 import argparse
 import csv
+import json
 from datetime import datetime
 from pathlib import Path
 import re
 import time
+import warnings
 
 
 NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
@@ -49,6 +51,9 @@ def select_session(path):
         return root
     candidates = []
     children = list(root.iterdir())
+    # New plan-oriented layout; also accept experiments/ or a plan directory.
+    children.extend(root.glob("experiments/*/runs/*"))
+    children.extend(root.glob("*/runs/*"))
     # Project root: search model run folders and the legacy sessions folder.
     models = root / "+trainingmodels"
     if models.is_dir():
@@ -56,13 +61,13 @@ def select_session(path):
             runs = model / "runs"
             if runs.is_dir():
                 children.extend(runs.iterdir())
-        legacy = root / "sessions"
-        if legacy.is_dir():
-            children.extend(legacy.iterdir())
+    legacy = root / "sessions"
+    if legacy.is_dir():
+        children.extend(legacy.iterdir())
     # A model directory may also be supplied directly.
     if (root / "runs").is_dir():
         children.extend((root / "runs").iterdir())
-    for child in children:
+    for child in set(children):
         if child.is_dir():
             logs = log_files(child)
             if logs:
@@ -97,6 +102,61 @@ def read_episodes(session):
                 matched = True
         used_attempts += matched
     return [episodes[k] for k in sorted(episodes)], duplicates, used_attempts
+
+
+def read_stages(session):
+    """Use saved curriculum boundaries only, never infer stages from rewards."""
+    plan_file = session / "curriculum.json"
+    state_file = session / "curriculum_state.json"
+    if not plan_file.is_file() or not state_file.is_file():
+        return []
+    try:
+        plan = json.loads(plan_file.read_text(encoding="utf-8-sig"))
+        state = json.loads(state_file.read_text(encoding="utf-8-sig"))
+        index = state["stage_index"]
+        stages = plan["stages"]
+        completed = state["completed"]
+        if not isinstance(index, int) or not 1 <= index <= len(stages):
+            raise ValueError("Invalid stage index")
+        if len(completed) != index - 1:
+            raise ValueError("Incomplete stage history")
+        result = []
+        boundary = 0
+        for i, item in enumerate(completed):
+            end = item["end_episode"]
+            if (item["id"] != stages[i]["id"] or item["start_episode"] != boundary
+                    or not isinstance(end, int) or end <= boundary):
+                raise ValueError("Invalid stage boundary")
+            result.append({"index": i + 1, "id": item["id"], "start": boundary})
+            boundary = end
+        if state["start_episode"] != boundary:
+            raise ValueError("Current stage start disagrees with history")
+        result.append({"index": index, "id": stages[index - 1]["id"], "start": boundary})
+        return result
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
+        # A writer may be replacing the state during --watch. Retry next refresh.
+        warnings.warn(f"Stage labels unavailable; reward plot still updated: {exc}")
+        return []
+
+
+def annotate_stages(ax, stages, first_episode, last_episode):
+    visible = [s for s in stages if s["start"] < last_episode]
+    for i, stage in enumerate(visible):
+        boundary = stage["start"] + 0.5  # between N and N+1, not on either episode
+        if stage["index"] > 1 and boundary >= first_episode:
+            ax.axvline(boundary, color="#b45309", linewidth=1.4, linestyle="-.",
+                       label="Stage transition" if not any(
+                           s["index"] > 1 and s["start"] + 0.5 >= first_episode
+                           for s in visible[:i]) else None)
+        next_start = visible[i + 1]["start"] if i + 1 < len(visible) else last_episode
+        if next_start < first_episode:
+            continue
+        position = max(boundary, first_episode)
+        label = f"Stage {stage['index']}\n{stage['id']}"
+        ax.annotate(label, xy=(position, 0), xycoords=ax.get_xaxis_transform(),
+                    xytext=(3, -40 - (i % 2) * 30), textcoords="offset points",
+                    ha="left", va="top", fontsize=8, color="#92400e",
+                    annotation_clip=False)
 
 
 def draw(session, output, plt):
@@ -136,6 +196,7 @@ def draw(session, output, plt):
             f"{attempts} attempts with data | Latest average: {latest['average_reward']:,.2f}",
             loc="left", fontsize=15, pad=14)
         ax.set_xlabel("Episode")
+        annotate_stages(ax, read_stages(session), x[0], x[-1])
         ax.set_ylabel("Reward")
         ax.grid(axis="y", alpha=0.18)
         ax.legend(loc="upper left", framealpha=0.9)

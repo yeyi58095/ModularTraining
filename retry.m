@@ -62,10 +62,16 @@ else
     assert(strcmp(spec.name,name) && strcmp(spec.algorithm,'PPO'), ...
         'Modular:Profile','Profile name must match its filename; this runtime currently supports PPO.');
     cfg = struct('curriculumEnabled',~isempty(plan));
-    sessions = fullfile(root,'+trainingmodels',name,'runs');
+    if ~isempty(plan)
+        [~,planName]=fileparts(planFile);
+        sessions=fullfile(root,'experiments',planName,'runs');
+        cfg.curriculumName=planName;
+    else
+        sessions=fullfile(root,'+trainingmodels',name,'runs');
+    end
     if ~isfolder(sessions), mkdir(sessions); end
     [~,tag]=fileparts(tempname(sessions));
-    % Model name is already in the parent path; do not repeat it (Windows limits).
+    % Keep experiment IDs short for Windows MAT/HDF5 path limits.
     folder=fullfile(sessions,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' tag]);
 end
 keys = {'workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...

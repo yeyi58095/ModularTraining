@@ -13,14 +13,14 @@
 
 - 路徑應從程式／專案所在位置推導，避免硬編碼本機絕對路徑或依賴 Flower 的相對位置。
 - 訓練入口是 `retry.m`；模型定義在 `+trainingmodels/`，獨立執行引擎在 `runtime/`。
-- 新實驗資料在 `+trainingmodels/<模型>/runs/<實驗>/`。複製的舊設定可能包含來源絕對路徑，續訓前需確認其指向。
+- 新課程實驗資料在 `experiments/<課程 JSON 檔名>/runs/<實驗>/`；非課程與既有實驗保留 `+trainingmodels/<模型>/runs/<實驗>/`。複製的舊設定可能包含來源絕對路徑，續訓前需確認其指向。
 - 不要擅自啟動、終止訓練或修改活動中的 runtime。
 - 準備 GitHub 時遵循 `.gitignore`，不要自動納入訓練成果、checkpoint、日誌或快取。
 
 ## Reward 畫圖工具
 
 - 根目錄的 `plot_training_rewards.py` 移植自 Flower 的 `Deep Reinforcement Learning/Simulink/plot_training_rewards.py`。
-- 已調整為搜尋本專案模型的 `runs/` 與舊 `sessions/`，無須讀取 Flower。
+- 已調整為搜尋本專案 `experiments/<課程>/runs/`、模型的 `runs/` 與舊 `sessions/`，無須讀取 Flower。
 - 使用 Python 與 matplotlib，讀取實驗內 `attempt_*/stdout.log`，輸出 `reward_history.png` 與 `.csv`。
 - 相同 episode 重複出現時採用較新 attempt 的紀錄；`--watch` 定期更新圖表，不控制訓練程序。
 
@@ -69,3 +69,11 @@
 - `configs/lab_gpu6.json` 保存 retry 參數，使用 progressive_v1 課程、workers=6、minWorkers=1、device=gpu；仍維持當次有 n 個可用就先用 n 個的策略。操作步驟見 `docs/lab-start.md`。
 - 執行參數 JSON 透過 jsondecode 與 namedargs2cell 傳入 retry；在專案根目錄執行。不要將硬體參數混入嚴格驗證的 curriculum schema。
 - 實驗室回報 Java 將相對課程路徑解析到 System32；retry 已改為先從自身專案根目錄建立絕對路徑，再 canonicalize，resume 同樣處理。不要直接以 java.io.File(relative).getCanonicalPath() 解析使用者路徑。原 CPU 短測用絕對路徑，未涵蓋這項啟動差異。
+
+## 課程分類與活動實驗保留（2026-10-10）
+
+- 使用者希望以課程管理實驗、模型為課程參數。新 curriculum 實驗按 JSON 檔名存入 experiments；同名計畫共用分類但各有唯一實驗 ID。
+- 實驗室的 20261009_201547 實驗仍在舊目錄且使用者希望保留；禁止為結構調整而搬移或修改活動實驗。續訓始終依指定目錄原位進行。
+- 畫圖新增由 curriculum_state.json 讀取的橘色 stage 分界與軸下方標籤；灰線為 attempt。可單獨更新 Python 畫圖檔並重啟畫圖工具，完整執行程式更新則等訓練退出後進行。
+- 操作與備份限制見 docs/curriculum-layout.md；此次只做無訓練驗證，不代表遠端模型已備份或可安全搬移。
+- 使用者後續回報實驗室 attempt 8 已 STOP，並要求把此次模型接續到新架構、上傳修改。migrate_training_session.ps1 僅對已停止且可取得鎖的實驗完整複製與逐檔 SHA256 驗證，原件保留；新副本的控制路徑修正，歷史紀錄不改寫。verify_training_session 在 MATLAB 唯讀檢查可用 checkpoint 及階段位置後，才由使用者 retry(resume=新位置)。不得在兩份副本同時續訓。
