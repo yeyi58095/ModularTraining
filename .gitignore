@@ -1,0 +1,35 @@
+# Local experiments: never sync checkpoints or full diagnostics through Git.
+sessions/
++trainingmodels/*/runs/
+training_diagnostics/
+runtime/training_runs_parallel_checkpointed/
+checkpoints/
+attempt_*/
+*.log
+*.mat
+reward_history.png
+reward_history.csv
+
+# MATLAB / Simulink generated files (keep source .m and .slx).
+slprj/
+*.slxc
+*.asv
+*.autosave
+*_rtw/
+
+# Python and verification output.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+tests/output/
+
+# Share only the bounded exporter output, not arbitrary files under reports.
+/reports/*
+!/reports/README.md
+!/reports/*/
+/reports/*/*
+!/reports/*/*/
+/reports/*/*/*
+!/reports/*/*/report.json

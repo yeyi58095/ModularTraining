@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ModularTraining 程式架構",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1380,
+      650
+    ]
+  },
+  "components": [
+    {
+      "id": "profiles",
+      "type": "backend",
+      "label": "模型定義",
+      "sublabel": "+trainingmodels/",
+      "tag": "PPO · LSTM / MLP · 調參版本",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "snapshot",
+      "type": "database",
+      "label": "實驗設定與模型快照",
+      "sublabel": "model.json · model_source/",
+      "tag": "control.json：執行參數",
+      "pos": [
+        380,
+        60
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "adapter",
+      "type": "backend",
+      "label": "模型介面",
+      "sublabel": "training.m",
+      "tag": "回傳 factory / validator 回呼",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "entry",
+      "type": "frontend",
+      "label": "MATLAB 入口",
+      "sublabel": "retry(model=…, workers=6)",
+      "tag": "新實驗或 resume",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "supervisor",
+      "type": "backend",
+      "label": "外部監控程序",
+      "sublabel": "checkpoint_supervisor.ps1",
+      "tag": "PowerShell · 重試與逾時",
+      "pos": [
+        380,
+        270
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "attempt",
+      "type": "backend",
+      "label": "單次訓練程序",
+      "sublabel": "checkpoint_attempt.m",
+      "tag": "每次使用新的 MATLAB",
+      "pos": [
+        720,
+        270
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "PPO 訓練引擎",
+      "sublabel": "runtime/training_engine.m",
+      "tag": "建立環境 · 呼叫 train",
+      "pos": [
+        1060,
+        270
+      ],
+      "size": [
+        280,
+        86
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "type": "database",
+      "label": "每次實驗的診斷紀錄",
+      "sublabel": "<實驗>/diagnostics/",
+      "tag": "episode / worker / 錯誤日誌",
+      "pos": [
+        380,
+        500
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "checkpoints",
+      "type": "database",
+      "label": "模型與訓練進度",
+      "sublabel": "<實驗>/checkpoints/",
+      "tag": "Agent_Final / Agent_Success",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        260,
+        86
+      ]
+    },
+    {
+      "id": "pool",
+      "type": "backend",
+      "label": "平行模擬環境",
+      "sublabel": "checkpoint_open_pool.m",
+      "tag": "worker 執行 FAFA_Simulation.slx",
+      "pos": [
+        1060,
+        500
+      ],
+      "size": [
+        280,
+        86
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "read-profile",
+      "from": "profiles",
+      "to": "entry",
+      "label": "選擇模型",
+      "labelDy": 70
+    },
+    {
+      "id": "freeze-model",
+      "from": "entry",
+      "to": "snapshot",
+      "label": "保存設定與快照"
+    },
+    {
+      "id": "load-snapshot",
+      "from": "snapshot",
+      "to": "adapter",
+      "label": "讀取快照"
+    },
+    {
+      "id": "launch-monitor",
+      "from": "entry",
+      "to": "supervisor",
+      "label": "啟動",
+      "variant": "emphasis",
+      "labelDy": 26
+    },
+    {
+      "id": "launch-attempt",
+      "from": "supervisor",
+      "to": "attempt",
+      "label": "-batch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inject-model",
+      "from": "attempt",
+      "to": "adapter",
+      "label": "取得模型回呼",
+      "labelDy": 0
+    },
+    {
+      "id": "run-engine",
+      "from": "attempt",
+      "to": "engine",
+      "label": "執行",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resume-model",
+      "from": "checkpoints",
+      "to": "attempt",
+      "label": "選取有效存檔"
+    },
+    {
+      "id": "train-workers",
+      "from": "engine",
+      "to": "pool",
+      "label": "建立平行池並訓練",
+      "labelDy": 70
+    },
+    {
+      "id": "save-progress",
+      "from": "engine",
+      "to": "checkpoints",
+      "label": "存檔"
+    },
+    {
+      "id": "record-diagnostics",
+      "from": "supervisor",
+      "to": "diagnostics",
+      "label": "收集紀錄",
+      "labelDy": 70
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "更換模型，不改監控",
+      "items": [
+        "新實驗：+trainingmodels/<模型>/runs/<實驗>/。",
+        "模型快照供續訓核對；runtime 不在快照內。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "每段重新爭取 6 個 worker",
+      "items": [
+        "僅平行池啟動失敗時，新 attempt 改試 4 → 2。",
+        "平行池成功後，下一段恢復目標 6；失敗上限仍生效。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "分段保存，達標才結束",
+      "items": [
+        "預設每 100 回合存檔、每 1000 回合重啟並接續。",
+        "最近 50 回合平均 reward ≥ 2900 → Agent_Success.mat。"
+      ]
+    }
+  ]
+}

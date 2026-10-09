@@ -1,0 +1,352 @@
+{
+  "source_session": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e",
+  "parser": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\plot_training_rewards.py",
+  "episode_count": 29000,
+  "last_episode": 29000,
+  "deduplication": "Latest attempt wins per episode; logged observations, not checkpoint-lineage verification.",
+  "duplicate_lines": 0,
+  "attempts_with_episodes": 29,
+  "best_rolling50": {
+    "mean": 2218.0136,
+    "ending_episode": 9477
+  },
+  "last_rolling50": 119.8528,
+  "windows": [
+    {
+      "first": 1,
+      "last": 5000,
+      "n": 5000,
+      "reward_mean": 178.75202,
+      "reward_std": 84.21754429190868,
+      "reward_median": 145.375,
+      "reward_max": 792.56,
+      "steps_mean": 236.3488,
+      "short_under_256_fraction": 0.6816,
+      "full_3000_fraction": 0,
+      "reward_at_least_2900": 0
+    },
+    {
+      "first": 5001,
+      "last": 10000,
+      "n": 5000,
+      "reward_mean": 842.958006,
+      "reward_std": 838.4120122313158,
+      "reward_median": 419.13,
+      "reward_max": 2689.32,
+      "steps_mean": 1061.2754,
+      "short_under_256_fraction": 0.0814,
+      "full_3000_fraction": 0.1668,
+      "reward_at_least_2900": 0
+    },
+    {
+      "first": 10001,
+      "last": 15000,
+      "n": 5000,
+      "reward_mean": 1751.717344,
+      "reward_std": 944.8786363120852,
+      "reward_median": 2387.295,
+      "reward_max": 2822.18,
+      "steps_mean": 2099.519,
+      "short_under_256_fraction": 0.0278,
+      "full_3000_fraction": 0.5094,
+      "reward_at_least_2900": 0
+    },
+    {
+      "first": 15001,
+      "last": 20000,
+      "n": 5000,
+      "reward_mean": 1044.650792,
+      "reward_std": 1095.9171533602039,
+      "reward_median": 372.32000000000005,
+      "reward_max": 2817.65,
+      "steps_mean": 1239.9108,
+      "short_under_256_fraction": 0.4624,
+      "full_3000_fraction": 0.2854,
+      "reward_at_least_2900": 0
+    },
+    {
+      "first": 20001,
+      "last": 25000,
+      "n": 5000,
+      "reward_mean": 1623.49271,
+      "reward_std": 1040.479568009769,
+      "reward_median": 1967.85,
+      "reward_max": 2865.72,
+      "steps_mean": 1907.162,
+      "short_under_256_fraction": 0.1284,
+      "full_3000_fraction": 0.4542,
+      "reward_at_least_2900": 0
+    },
+    {
+      "first": 25001,
+      "last": 29000,
+      "n": 4000,
+      "reward_mean": 1377.227735,
+      "reward_std": 1043.570187276553,
+      "reward_median": 1124.0,
+      "reward_max": 2849.99,
+      "steps_mean": 1640.91575,
+      "short_under_256_fraction": 0.13725,
+      "full_3000_fraction": 0.35175,
+      "reward_at_least_2900": 0
+    }
+  ],
+  "last1000": {
+    "first": 28001,
+    "last": 29000,
+    "n": 1000,
+    "reward_mean": 506.5015,
+    "reward_std": 694.7238190577245,
+    "reward_median": 223.70499999999998,
+    "reward_max": 2812.07,
+    "steps_mean": 637.292,
+    "short_under_256_fraction": 0.432,
+    "full_3000_fraction": 0.073,
+    "reward_at_least_2900": 0
+  },
+  "last500": {
+    "first": 28501,
+    "last": 29000,
+    "n": 500,
+    "reward_mean": 161.68582,
+    "reward_std": 107.79684530415349,
+    "reward_median": 116.125,
+    "reward_max": 1420.78,
+    "steps_mean": 222.65,
+    "short_under_256_fraction": 0.732,
+    "full_3000_fraction": 0,
+    "reward_at_least_2900": 0
+  },
+  "episode_actual_workers": {
+    "6": 17000,
+    "4": 12000
+  },
+  "completed_attempt_reasons": {
+    "normal_exit": 29,
+    "pool_start_failed": 10,
+    "startup_timeout": 4
+  },
+  "source_logs": [
+    {
+      "attempt": 1,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00001\\stdout.log",
+      "sha256": "e28fee00d69007daf01c276cbc3e55adfad3e4154cca0b35ef1c04de5b86fff1"
+    },
+    {
+      "attempt": 2,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00002\\stdout.log",
+      "sha256": "8d04da4b45038e71f2e9ee461215a661bfbc182d8a91c5cb329c6a573c596c85"
+    },
+    {
+      "attempt": 3,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00003\\stdout.log",
+      "sha256": "e214dc81a566579e733d5c9bbf42bf1a67340c5616f9d3d9622adc5c8f5b1024"
+    },
+    {
+      "attempt": 4,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00004\\stdout.log",
+      "sha256": "824c224be7ae644c52e9bc0dfff89cc44e3fd3bae746c952a951f0fae75aa0aa"
+    },
+    {
+      "attempt": 5,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00005\\stdout.log",
+      "sha256": "d9407f9372cfd110d4ebd8f67ada2a424a2035ae87e6e5baa62741ca2f2319d7"
+    },
+    {
+      "attempt": 6,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00006\\stdout.log",
+      "sha256": "df1ea2b6974215ffb2b63c2e595c88aea36cc20ff6a98526048f1b8f2cd5814c"
+    },
+    {
+      "attempt": 7,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00007\\stdout.log",
+      "sha256": "07655b92b94b30641f4404bf4e7506f6fcdae43534edf7d47f54c89ed43ab01f"
+    },
+    {
+      "attempt": 8,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00008\\stdout.log",
+      "sha256": "5c6a5839265832a045ca255fe7e9c0181ea04d3eae3d23979b8107a2298a36c9"
+    },
+    {
+      "attempt": 9,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00009\\stdout.log",
+      "sha256": "d9e3aafa082c038cb6fd7f2294a957a78bf42214558f79f002ee3f4f68d430e6"
+    },
+    {
+      "attempt": 10,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00010\\stdout.log",
+      "sha256": "bf391738dfa0ada6f32c364bfa3ae88ec288d309415c88a24bd8c04686cd6f68"
+    },
+    {
+      "attempt": 11,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00011\\stdout.log",
+      "sha256": "bb0cd5a933db35cb5a7c763cb4a499328b23b7189129ada34d7c39802274ee6e"
+    },
+    {
+      "attempt": 12,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00012\\stdout.log",
+      "sha256": "71cbf3b03710c6c7721a14fcd4b642ad16c9102222e0e72847d656aad343ed1f"
+    },
+    {
+      "attempt": 13,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00013\\stdout.log",
+      "sha256": "db9ebcb392410c36159f82cbde961974981cf3c4aefdf29d9ea25ba8c8a32bd0"
+    },
+    {
+      "attempt": 14,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00014\\stdout.log",
+      "sha256": "b60f004a7308b639a627b2cce5efa0f598165b9507102d474833c5ecee7a2d7a"
+    },
+    {
+      "attempt": 15,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00015\\stdout.log",
+      "sha256": "15ff25c92aa6e56d108b3d3dfca89f655de094e77e15d357b0d61a12c6a4f86e"
+    },
+    {
+      "attempt": 16,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00016\\stdout.log",
+      "sha256": "f971c8cec2ae6b4d53107c4a1cb8e39e4c7fbcb373c73c43d11b1b342dfcac3e"
+    },
+    {
+      "attempt": 17,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00017\\stdout.log",
+      "sha256": "9fc7aa49b6f42076c80cf62ad215d7ec29131c1c23ed0953d7f091466098b03f"
+    },
+    {
+      "attempt": 18,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00018\\stdout.log",
+      "sha256": "ef6bc61720e2eb42791053f6262097b249cfa23c9c72013394264f36e82f6f93"
+    },
+    {
+      "attempt": 19,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00019\\stdout.log",
+      "sha256": "79d578ce11b5c559fe731035b55f00ae51c194e1ea3494099c9fb13732fe607b"
+    },
+    {
+      "attempt": 20,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00020\\stdout.log",
+      "sha256": "760d81228a3bc68f78ed380ddce8896be7beae52fc3123c474281eff47b7f02c"
+    },
+    {
+      "attempt": 21,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00021\\stdout.log",
+      "sha256": "eaf434729ec9bc46fbb6f7c01a04aee4c2e94c212ecedddf2fa3bf491cd171ab"
+    },
+    {
+      "attempt": 22,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00022\\stdout.log",
+      "sha256": "9b032b84bd80b9eacae954fdf430b619cc23af96a8a549463d83779e8ddb61f9"
+    },
+    {
+      "attempt": 23,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00023\\stdout.log",
+      "sha256": "e5bd7ed82ef8dc5eecaad37d38160c2ac136564376939551ffc650c908843949"
+    },
+    {
+      "attempt": 24,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00024\\stdout.log",
+      "sha256": "7f2ed980fa5db35d8b337f37e28f70f4fe22bea2946b14badd409c609373717f"
+    },
+    {
+      "attempt": 25,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00025\\stdout.log",
+      "sha256": "c562e7c01eeec06a9dd61f452dc0c376d14e438d0a08f86514adf6334b71941c"
+    },
+    {
+      "attempt": 26,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00026\\stdout.log",
+      "sha256": "c4b80204cf3c7bca6725d25cbb6ea985bb6039df2eae4ced8b0162cde9c57df2"
+    },
+    {
+      "attempt": 27,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00027\\stdout.log",
+      "sha256": "8ca2f76f23cd9c6d800c0b34df67d9a83e9b7bfe5db1f9ec2c286b889ffd5b44"
+    },
+    {
+      "attempt": 28,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00028\\stdout.log",
+      "sha256": "1c7ef287ad4902be47c3fa6b910dce56673c34f9764bd740b8d6cd15356a0740"
+    },
+    {
+      "attempt": 29,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00029\\stdout.log",
+      "sha256": "4ec57366a6910248d9ce2dc63573d6692a14f0e553a16a32d2bc09e6683c52e9"
+    },
+    {
+      "attempt": 30,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00030\\stdout.log",
+      "sha256": "c3f1f73cccd05919a1a33dbe5f2dbc6c1a955e7fce4ea2976906243aa8ddc4d8"
+    },
+    {
+      "attempt": 31,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00031\\stdout.log",
+      "sha256": "47c38b4ce8359e3553edf7f7f7d43aebcc6cc65b9d3019e48c2ac830c9415202"
+    },
+    {
+      "attempt": 32,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00032\\stdout.log",
+      "sha256": "0112d8b7d4332e5234ec2a680d66201c19a18b9fb4b67441a30cb8f8b6f8f76a"
+    },
+    {
+      "attempt": 33,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00033\\stdout.log",
+      "sha256": "da212cbd45535f330737dbbb2a0f0d4a54ab23ddcbecd2d2c9273da2e5dc75b0"
+    },
+    {
+      "attempt": 34,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00034\\stdout.log",
+      "sha256": "ee41c8ec0062f570186c603b96e0922469ecad73e30ee2a24ee8686ba727c2d8"
+    },
+    {
+      "attempt": 35,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00035\\stdout.log",
+      "sha256": "ae7964934d981aaa17489fa033ddfa8b3dff5fb3e6c8726dce2417e4d25296ba"
+    },
+    {
+      "attempt": 36,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00036\\stdout.log",
+      "sha256": "553e76a9a7e3344e554e63efdc93137220cadc773af6d105a120f3ac5f2efa01"
+    },
+    {
+      "attempt": 37,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00037\\stdout.log",
+      "sha256": "cccf665c31298d367e060f84bc46b74acc5c80c24c933fad53150e846b69b290"
+    },
+    {
+      "attempt": 38,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00038\\stdout.log",
+      "sha256": "2f64adf801317600099e24e5e7c809766d929eca897a8ec6a687b7cf05ab6a70"
+    },
+    {
+      "attempt": 39,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00039\\stdout.log",
+      "sha256": "b1d68f6b82408f0b6cf6b1b5dfae2d22eb4ee69a00d92a2a30c18624198ff289"
+    },
+    {
+      "attempt": 40,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00040\\stdout.log",
+      "sha256": "59b97b1606d00e8ce2b0b26f4d31afd970328efd49d6388d25dbb364247c8c1e"
+    },
+    {
+      "attempt": 41,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00041\\stdout.log",
+      "sha256": "680be6c3ac9e9babfb8df748b5111e88eb06aaab7b1ed3bd2cb1123133fdb956"
+    },
+    {
+      "attempt": 42,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00042\\stdout.log",
+      "sha256": "2e78ca7a865bee1b9386c7aec84c87dcc7f3ac4379f37b85909e82e98999e969"
+    },
+    {
+      "attempt": 43,
+      "path": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\Simulink\\training_autoretry_sessions\\20260922_122929_tp02dc5edf_2a72_40db_9688_ae5cdbc2383e\\attempt_00043\\stdout.log",
+      "sha256": "411fb8f3ced7bd5146fbcc6391c14b52fadb0e9af2e09d7395ac82ba52505f65"
+    }
+  ],
+  "caveats": [
+    "Single baseline run; no causal attribution from rewards alone.",
+    "No policy KL, entropy, gradient norms or critic-loss time series analyzed.",
+    "Worker fallback and random paths/wind confound comparisons.",
+    "Tuned profile has not been trained or shown to outperform baseline."
+  ]
+}

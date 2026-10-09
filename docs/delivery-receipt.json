@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\ModularTraining\\docs\\architecture.json",
+  "output": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\ModularTraining\\docs\\architecture.html",
+  "specification": {
+    "sha256": "bf9b7e86f49ce0763d64c1008991417a5d861d48bc51a5acb10027081f64c826",
+    "bytes": 5671
+  },
+  "artifact": {
+    "sha256": "5f36cbc20850fa8aa0d7e17cf2e80893d83e1e1a4f06a16563e0ce05a14d503c",
+    "bytes": 814145
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  }
+}

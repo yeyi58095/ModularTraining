@@ -1,0 +1,14 @@
+{
+  "diagram_type": "architecture",
+  "output": "D:\\daniel\\GradSchool\\0-Beginner\\Paper\\Flower\\Deep Reinforcement Learning\\ModularTraining\\docs\\architecture.html",
+  "specification_sha256": "bf9b7e86f49ce0763d64c1008991417a5d861d48bc51a5acb10027081f64c826",
+  "artifact_sha256": "5f36cbc20850fa8aa0d7e17cf2e80893d83e1e1a4f06a16563e0ce05a14d503c",
+  "validation": "9/9 showcase, 0 errors, 0 warnings",
+  "browser_evidence": "passed",
+  "visual_review": "passed",
+  "correction_rounds": 1,
+  "review_scope": "Inspected updated 2048x1320 light and dark screenshots; automated containment at four desktop sizes. No manual interaction testing.",
+  "authored_language": "Traditional Chinese",
+  "viewer_ui": "English",
+  "source_basis": "Local ModularTraining source files inspected; diagram is a logical overview, not a complete call graph."
+}
