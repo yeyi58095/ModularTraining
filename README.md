@@ -171,6 +171,12 @@ ModularTraining/
 
 ## 驗證
 
+實驗室正式啟動步驟見 [6 workers＋GPU 操作說明](docs/lab-start.md)，硬體與重試參數在 `configs/lab_gpu6.json`。此組合尚未實測；本機真實短測僅使用 CPU／1 worker。
+
+六階段訓練方案見 [training-plan-v1](docs/training-plan-v1.md)，可執行設定為 `curricula/progressive_v1.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
+
+`tests/test_curriculum_end_to_end.m`：明確呼叫才啟動 CPU／1 worker 真實 UAV 訓練，固定路徑、MAT、random 各一回合，驗證跨程序續訓、階段切換與 actor／critic 權重接續；使用測試用回合門檻，不代表學會任務。
+
 `tests/test_worker_range.m`：用模擬 pool API 驗證目標 6／可用 3 時同一次呼叫成功，及下限、失敗診斷與舊呼叫相容；不啟動真實 pool。
 `tests/test_learning_health.py`：驗證持續退步、恢復、早期低 reward、單次尖峰及缺回合。
 精簡報告新增 `learning_health`，每次匯出會計算規則式診斷；不是背景監控，不會自動修改訓練。預設每 1000 回合一段，連續 5 段低於先前最佳完整區間平均的 50%，且參考平均至少 500 時標記疑似退步。詳見 [處理策略](docs/learning-health.md)。

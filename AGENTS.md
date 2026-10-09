@@ -53,4 +53,18 @@
 - 每個實驗保存 `curriculum.json`、`curriculum_assets/`、`curriculum_state.json`、`curriculum_outcome.json`。已有 checkpoint 卻遺失階段狀態時拒絕猜測，不可隨意刪除狀態或改寫課程快照。
 - 課程模式的過關條件以 JSON 為準，不接受另外傳入 targetReward；既有非課程實驗維持原流程。不要把既有普通實驗直接改旗標當成課程實驗。
 - `+trainingcurriculum/` 屬執行程式，與 runtime 一樣不得在活動訓練期間修改。MAT 輸入不會自動納入 Git，沿用原忽略規則。
-- 已通過合成歷史、入口假引擎、設定與報告測試；尚未跑真實 Simulink 平行訓練的跨階段驗證。
+- 已通過合成歷史、入口假引擎、設定與報告測試；2026-10-09 亦在使用者授權下完成 CPU／1 worker 的真實 Simulink 三階段短測，見 `docs/validation-2026-10-09.md`。不能將其視為長期收斂或多 worker 驗證。
+
+## 六階段訓練方案與短測（2026-10-09）
+
+- `curricula/progressive_v1.json`：直線 → 平緩 S 彎 → 固定轉彎 → random 無風 → 小風擾 → 完整風擾，沿用 ppo_lstm128。設計、起始門檻、限制與操作見 `docs/training-plan-v1.md`。
+- `prepare_progressive_training()` 只生成可重建的 MAT 輸入並檢查設定，不啟動訓練；兩台電腦各自執行即可。不同內容的既有 MAT 不會被覆寫。
+- 每階段使用最低回合數與連續三個 100 回合區間表現門檻，預算用盡 pause。數值尚未經長訓練校準；不宣稱能防止所有退步，learning_health 仍只在匯出時計算。
+- 使用者這次授權短時間真實測試；`tests/test_curriculum_end_to_end.m` 已完成固定 → MAT → random 各一回合，總計 525 步、約 434 秒，確認跨階段 actor／critic 權重接續。測試已退出，沒有啟動正式六階段長訓練。
+- 獨立 evaluator、最佳評估 checkpoint 選擇、可設定 root seed、退步自動停訓／回滾尚未實作；不要把規劃文件中的後續建議當成現有功能。
+
+## 實驗室正式設定與提交（2026-10-09）
+
+- 使用者本次明確要求 commit／上傳這批訓練方案，並準備遠端 6 workers＋GPU 設定；不在本機測試此組合或啟動正式訓練。
+- `configs/lab_gpu6.json` 保存 retry 參數，使用 progressive_v1 課程、workers=6、minWorkers=1、device=gpu；仍維持當次有 n 個可用就先用 n 個的策略。操作步驟見 `docs/lab-start.md`。
+- 執行參數 JSON 透過 jsondecode 與 namedargs2cell 傳入 retry；在專案根目錄執行。不要將硬體參數混入嚴格驗證的 curriculum schema。
