@@ -109,3 +109,4 @@
 - 新分支 training_guard.json：同階段100回合區間、參考 reward/steps 均>=500，連續3個區間 reward 與 steps 都低於參考的50%時，在保存後暫停；總預算到達亦暫停。training_guard_state.json 暫停保持鎖定，單純retry不繞過。
 - health_candidates/CandidateN.mat 只是訓練區間候選，不是最佳評估模型。沒有自動回滾、改參數、重啟分支或週期獨立評估；手動 compare_training_checkpoints 仍可用。learning_health.py 與 runtime guard 不同，report.json 分別呈現。
 - 本次使用既有本機 checkpoint、合成歷史與假引擎驗證，不啟動正式恢復訓練或 GPU／6 workers。配方、操作、限制見 docs/recovery-training.md。
+- 實驗室 recovery 在 11000 被 guard 暫停；比較 checkpoint 時報告寫入例外遮住原始錯誤。評估工具已改為預先綁定報告函式，保留 phase、原始堆疊，寫報告失敗不能取代原始例外。本機未重現實驗室最初錯誤，需依重新執行後的原始訊息調查；不要因此續訓或改 guard 狀態。

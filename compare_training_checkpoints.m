@@ -13,6 +13,9 @@ root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
 restore=onCleanup(@() restoreCaller(oldPath,oldFolder,oldRng)); %#ok<NASGU>
 addpath(root,runtime);
+% Resolve these before Simulink/model callbacks can change the MATLAB path.
+writeReport=@trainingcurriculum.write_json;
+failEvaluation=@checkpointreview.fail_evaluation;
 if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
 sessionDir=string(char(java.io.File(char(sessionDir)).getCanonicalPath()));
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
@@ -109,7 +112,7 @@ report.runtime_sha256=checkpointreview.sha256(fullfile(runtime,'training_engine.
 report.model_sha256=checkpointreview.sha256(fullfile(runtime,'FAFA_Simulation.slx'));
 report.curriculum_sha256=checkpointreview.sha256(fullfile(sessionDir,'curriculum.json'));
 save(fullfile(out,'scenarios.mat'),'scenarios','opt');
-trainingcurriculum.write_json(fullfile(out,'evaluation.json'),report);
+writeReport(fullfile(out,'evaluation.json'),report);
 fprintf('Evaluation only: %d checkpoints x %d stages x %d seeds. Output: %s\n', ...
     numel(paths),numel(scenarios),numel(opt.seeds),out);
 % Keep caches and all outputs away from training artifacts.
@@ -124,12 +127,16 @@ if hadAgent, oldAgent=evalin('base','Agent_Stage2'); end
 agentGuard=onCleanup(@() restoreAgent(hadAgent,oldAgent)); %#ok<NASGU>
 cd(runtime);
 try
+    report.phase='load_model';
     load_system(fullfile(runtime,'FAFA_Simulation.slx'));
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
+    report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
     for c=1:numel(paths)
         for s=1:numel(scenarios)
             for seed=opt.seeds
+                report.phase='load_checkpoint';
+                report.current=struct('episode',episodes(c),'stage_id',scenarios{s}.id,'seed',seed);
                 variables=whos('-file',paths(c)); agentName='saved_agent';
                 if ~any(strcmp({variables.name},agentName)), agentName='Agent_Stage2'; end
                 data=load(paths(c),agentName); agent=data.(agentName);
@@ -145,6 +152,7 @@ try
                 env.ResetFcn=@(in) resetScenario(in,scenarios{s});
                 rng(seed,'twister');
                 fprintf('Evaluating episode %d / %s / seed %d ...\n',episodes(c),scenarios{s}.id,seed);
+                report.phase='simulate';
                 experience=sim(env,agent,rlSimulationOptions('MaxSteps',opt.maxSteps, ...
                     'NumSimulations',1,'UseParallel',false,'StopOnError','on'));
                 assert(isequaln(beforeActor,getLearnableParameters(getActor(agent))) && ...
@@ -155,22 +163,23 @@ try
                 trace=sprintf('ep%d_stage%d_seed%d.mat',episodes(c),opt.stages(s),seed);
                 save(fullfile(out,trace),'experience','-v7.3'); row.trace=trace;
                 report.results{end+1}=row;
-                trainingcurriculum.write_json(fullfile(out,'evaluation.json'),report);
+                report.phase='save_result';
+                writeReport(fullfile(out,'evaluation.json'),report);
                 fprintf('Reward %.2f | steps %d | %s\n',row.reward,row.steps,row.end_signal);
             end
         end
     end
+    report.phase='verify_sources';
     for i=1:numel(paths)
         assert(strcmp(report.checkpoints{i}.sha256,checkpointreview.sha256(paths(i))), ...
             'Evaluation:SourceChanged','Source checkpoint changed during evaluation.');
     end
     report.status='complete'; report.weights_unchanged=true;
 catch err
-    report.status='failed'; report.error=struct('identifier',err.identifier,'message',err.message);
-    trainingcurriculum.write_json(fullfile(out,'evaluation.json'),report);
-    rethrow(err);
+    failEvaluation(err,fullfile(out,'evaluation.json'),report,writeReport);
 end
-trainingcurriculum.write_json(fullfile(out,'evaluation.json'),report);
+report.phase='complete';
+writeReport(fullfile(out,'evaluation.json'),report);
 disp(struct2table([report.results{:}]));
 fprintf('Complete. No training or rollback. Share: %s\n',fullfile(out,'evaluation.json'));
 end
