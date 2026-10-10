@@ -112,3 +112,4 @@
 - 實驗室 recovery 在 11000 被 guard 暫停；比較 checkpoint 時報告寫入例外遮住原始錯誤。評估工具已改為預先綁定報告函式，保留 phase、原始堆疊，寫報告失敗不能取代原始例外。本機未重現實驗室最初錯誤，需依重新執行後的原始訊息調查；不要因此續訓或改 guard 狀態。
 - 後續實驗室證實預先綁定 package handle 仍可能呼叫失敗；現改成入口內直接 catch/rethrow 與同檔 local JSON writer，不再使用 fail_evaluation 套件函式。切換 Simulink 快取／目錄與載入模型後補回 root/runtime 路徑。實際入口故障注入已驗證：移除 root 路徑後仍保存失敗報告、拋出原始模型錯誤；實驗室初始錯誤仍待確認。
 - 實驗室後續完整評估成功：10600 步數3000/3000/1578，10700為133/134/133，11000均144；第一段100回合內已觀察到舊任務能力下降。audit_training_resume 唯讀核對既有 Agent_Initial 與其 resume 來源、主要設定及權重差異，不解析 optimizer 私有狀態、不自動續訓。單 seed 結果不證明根因，操作見 docs/resume-audit.md。
+- 使用者同意以診斷 ZIP／GitHub Release 附件跨機分享，不解除 MAT/log 忽略或重寫 Git 歷史。pack_training_diagnostics.ps1 只在停止狀態及排他鎖下選取 checkpoint、initial snapshot、evaluation traces 與設定日誌，產生 diagnostic_packages/ ZIP 並驗證逐檔 SHA256；不自動上傳、不啟動訓練，子集不能作完整續訓備份。實驗室打包和草稿附件流程見 docs/diagnostic-package.md。
