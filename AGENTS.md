@@ -113,3 +113,5 @@
 - 後續實驗室證實預先綁定 package handle 仍可能呼叫失敗；現改成入口內直接 catch/rethrow 與同檔 local JSON writer，不再使用 fail_evaluation 套件函式。切換 Simulink 快取／目錄與載入模型後補回 root/runtime 路徑。實際入口故障注入已驗證：移除 root 路徑後仍保存失敗報告、拋出原始模型錯誤；實驗室初始錯誤仍待確認。
 - 實驗室後續完整評估成功：10600 步數3000/3000/1578，10700為133/134/133，11000均144；第一段100回合內已觀察到舊任務能力下降。audit_training_resume 唯讀核對既有 Agent_Initial 與其 resume 來源、主要設定及權重差異，不解析 optimizer 私有狀態、不自動續訓。單 seed 結果不證明根因，操作見 docs/resume-audit.md。
 - 使用者同意以診斷 ZIP／GitHub Release 附件跨機分享，不解除 MAT/log 忽略或重寫 Git 歷史。pack_training_diagnostics.ps1 只在停止狀態及排他鎖下選取 checkpoint、initial snapshot、evaluation traces 與設定日誌，產生 diagnostic_packages/ ZIP 並驗證逐檔 SHA256；不自動上傳、不啟動訓練，子集不能作完整續訓備份。實驗室打包和草稿附件流程見 docs/diagnostic-package.md。
+- 實驗室 ZIP 已由使用者複製回本機並通過38檔雜湊驗證。讀取 traces 並比對相同SHA256的模型後，確認本次提前終止對應模型 d>=50m，非roll±40度；observation7=d/30。10601–10700 同一 attempt 內表現逐步變差。根因仍未證實，尤其前約10秒 d=0 不可解讀為完美循跡；詳見 docs/lab-trace-findings-2026-10-10.md。未啟動訓練或模擬。
+- 後續離線actor重播各自trace最大action誤差0；相同10600觀測前150步，10600/10700均值平均絕對差0.365。純函式驗證WindowManager首次valid在第100次(0.1秒取樣)，之前planner輸出單點導致guidance回傳假零誤差。首次valid候選僅在diagnostic_packages副本測試[1,100]，未改SLX或runtime，未證實是更新退步唯一根因；閉迴路候選比較尚未做，不得宣稱已修復收斂。
