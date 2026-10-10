@@ -92,3 +92,11 @@
 - 圖表與精簡報告預設輸出到各 run/reports/。Git 僅放行頂層 curriculum.json 及 run/reports/report.json；MAT、完整日誌、PNG、CSV 仍忽略。
 - organize_training_reports.ps1 在停止狀態與排他鎖下複製舊報告和圖表，比對雜湊、保留原件；相同檔案可重跑，不同目的檔拒絕覆蓋。已遷移的 run 不要重跑完整 migrate_training_session。
 - 使用者明確授權本次架構修改、commit 與 push；沒有授權重啟目前因 Stage 3 退步停止的實驗。驗證使用 Python、PowerShell 合成測試與 MATLAB start=false，不代表長訓練收斂驗證。
+
+## 停訓 checkpoint 比較（2026-10-10 後續）
+
+- compare_training_checkpoints(sessionDir) 預設比較 6100、10600 及最新存檔，在快照前三階段各做一次 CPU 純 sim；不啟動 pool、不 train、不 prepare 課程或回滾。只支援無風 MAT／fixed_builtin。
+- 使用者確認實驗室 6100 與 10600 存在，但尚未評估。不可把本機既有短測 checkpoint 的模擬當成實驗室結果。
+- 結果在每次 run/reports/evaluation_<時間>_<唯一碼>/；逐次 JSON 和 MAT traces 都受 Git 忽略，可請使用者貼 evaluation.results。預設固定條件單 seed 診斷不是泛化成功率。
+- 工具鎖住已停止實驗，檢查原 checkpoint SHA256 及 sim 前後權重。IsDone 不是具體物理終止原因，observation7_rms 不是已確認公尺單位誤差。分支恢復、自動最佳模型選擇與停訓仍未實作。
+- 操作與測試見 docs/checkpoint-comparison.md；使用短系統暫存路徑做 Simulink 快取，避免 Windows 260 字元限制。不要在原 checkpoint 裡改探索模式／裝置後另存覆寫；工具只改記憶體內 agent。

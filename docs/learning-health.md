@@ -24,3 +24,7 @@
 現在同一段可以用成功建立的 n 個 workers；下一段可重新嘗試目標上限。比較學習成效時仍要一起看 ActualWorkers、總環境步數與訓練時間。現有 seed 由 attempt 決定，跨段或跨機不是完全相同採樣條件。
 
 採用 MATLAB `parpool(cluster,[minWorkers workers])` 的範圍語意，已核對本機 R2024b 的 parpool 說明與 [MathWorks 文件](https://www.mathworks.com/help/parallel-computing/parpool.html)。此語意容許成功 pool 小於上限，不能保證所有授權／worker 連線錯誤都能自動產生小 pool。整個 pool 失敗時仍需 supervisor 的恢復機制。
+
+## 2026-10-10：手動比較工具
+
+compare_training_checkpoints 已提供停止後的固定無風任務比較，不更新權重；見 [操作與限制](checkpoint-comparison.md)。這補上有限範圍的手動評估入口，仍沒有持續監控、獨立泛化測試集、自動 best 選擇、回滾或分支恢復。

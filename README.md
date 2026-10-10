@@ -138,6 +138,8 @@ SAC、TD3 等演算法尚未支援；需要擴充 builder、checkpoint 相容性
 
 ## 診斷與檔案隔離
 
+停訓後可執行 `evaluation=compare_training_checkpoints(sessionDir)`，以 CPU 純模擬比較 6100、10600 與最新存檔，預設測前三個無風固定軌跡階段。使用方法、結果限制及本機短測見 [checkpoint 比較](docs/checkpoint-comparison.md)。這不啟動訓練、不回滾，也不修改原實驗快照。
+
 ```text
 ModularTraining/
   experiments/progressive_v1/
