@@ -13,9 +13,6 @@ root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
 restore=onCleanup(@() restoreCaller(oldPath,oldFolder,oldRng)); %#ok<NASGU>
 addpath(root,runtime);
-% Resolve these before Simulink/model callbacks can change the MATLAB path.
-writeReport=@trainingcurriculum.write_json;
-failEvaluation=@checkpointreview.fail_evaluation;
 if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
 sessionDir=string(char(java.io.File(char(sessionDir)).getCanonicalPath()));
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
@@ -126,10 +123,13 @@ hadAgent=evalin('base',"exist('Agent_Stage2','var')==1"); oldAgent=[];
 if hadAgent, oldAgent=evalin('base','Agent_Stage2'); end
 agentGuard=onCleanup(@() restoreAgent(hadAgent,oldAgent)); %#ok<NASGU>
 cd(runtime);
+% Reassert package visibility after cache configuration and folder changes.
+addpath(root,runtime,'-begin');
 try
     report.phase='load_model';
     load_system(fullfile(runtime,'FAFA_Simulation.slx'));
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
+    addpath(root,runtime,'-begin');
     report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
     for c=1:numel(paths)
@@ -176,7 +176,20 @@ try
     end
     report.status='complete'; report.weights_unchanged=true;
 catch err
-    failEvaluation(err,fullfile(out,'evaluation.json'),report,writeReport);
+    % Keep this inline: even a pre-bound package handle can fail to resolve
+    % after a model callback or cache configuration changes MATLAB's path.
+    fprintf(2,'Evaluation failed during %s: %s\n',report.phase,err.message);
+    try
+        report.status='failed';
+        report.error=struct('identifier',err.identifier,'message',err.message, ...
+            'report',getReport(err,'extended','hyperlinks','off'));
+        report.error.cwd=pwd;
+        report.error.project_on_path=any(strcmp(strsplit(path,pathsep),root));
+        writeReport(fullfile(out,'evaluation.json'),report);
+    catch writeError
+        fprintf(2,'Could not save evaluation diagnostics: %s\n',writeError.message);
+    end
+    rethrow(err);
 end
 report.phase='complete';
 writeReport(fullfile(out,'evaluation.json'),report);
@@ -200,4 +213,16 @@ TARGET_SPEED=values{1}; DT=values{2}; WAYPOINT_SPACING=values{3};
 end
 function restoreAgent(hadAgent,oldAgent)
 if hadAgent, assignin('base','Agent_Stage2',oldAgent); else, evalin('base','clear Agent_Stage2'); end
+end
+
+function writeReport(file,value)
+% Local function stays callable when project packages leave the search path.
+temporary=[tempname(fileparts(file)) '.json'];
+fid=fopen(temporary,'w','n','UTF-8');
+assert(fid~=-1,'Evaluation:ReportWrite','Cannot write %s',temporary);
+guard=onCleanup(@() fclose(fid));
+fprintf(fid,'%s',jsonencode(value,PrettyPrint=true));
+clear guard;
+[ok,message]=movefile(temporary,file,'f');
+assert(ok,'Evaluation:ReportWrite','%s',message);
 end

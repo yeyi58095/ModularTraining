@@ -43,3 +43,11 @@
 比較 10600、10700、11000 時，catch 內的 trainingcurriculum.write_json 報錯，遮住原始評估例外。修正為在進入 Simulink 前綁定報告函式，記錄執行 phase、checkpoint／stage／seed 和原始完整堆疊；即使報告寫入失敗也重新拋出原始例外。尚未重現實驗室最初的失敗，不能宣稱其根因已修復。
 
 本機從既有短測 checkpoint 準備 recovery 分支並做單一任務 5 步 CPU sim，修改前後均完成；修改後 reward 5.50、權重及來源 checkpoint 驗證通過。另以故障注入確認報告寫入成功／失敗都保留原始例外及堆疊，活動訓練拒絕與統計測試亦通過。沒有啟動訓練或測試 GPU／6 workers。
+
+### 第二次錯誤回報修正
+
+實驗室再次回報 checkpointreview.fail_evaluation 無法呼叫，表示預先綁定 package handle 並不足以保護錯誤處理。已移除該 helper，改為主函式 catch 直接輸出及 rethrow，JSON writer 使用同檔 local function；報告額外保存失敗時 cwd 與 project_on_path。切換快取與目錄、模型載入後補回專案搜尋路徑，作為防禦處理，尚不宣稱已證實實驗室路徑遺失的原因。
+
+回歸測試改為呼叫真正 compare_training_checkpoints 入口，在測試替身 load_system 內移除 root 路徑後拋錯；確認原始 identifier／stack 與落盤 JSON 均保留，測試通過。上一版只測輔助函式，未涵蓋其本身無法解析的情境。
+
+第二次修正後另完成既有 recovery checkpoint 的 5 步 CPU 評估（reward 5.50），來源雜湊與權重檢查通過；未啟動訓練。

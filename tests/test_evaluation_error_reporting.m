@@ -1,26 +1,27 @@
 function test_evaluation_error_reporting()
-root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
-file=[tempname(fullfile(root,'tests','output')) '.json'];
-report=struct('phase','load_model','results',{{}});
+% Exercise the actual evaluator catch after loss of its package search path.
+root=fileparts(fileparts(mfilename('fullpath')));
+oldPath=path; cleanup=onCleanup(@() path(oldPath)); %#ok<NASGU>
+addpath(root);
+receipt=jsondecode(fileread(fullfile(root,'tests','output','curriculum-smoke-latest.json')));
+fixture=tempname(fullfile(root,'tests','output')); mkdir(fixture);
+fid=fopen(fullfile(fixture,'load_system.m'),'w');
+fprintf(fid,'function load_system(varargin)\nrmpath(''%s'');\nerror(''Test:OriginalModelFailure'',''Injected failure after removing project path'');\nend\n',strrep(root,'''',''''''));
+fclose(fid);
+addpath(fixture,'-begin');
 try
-    error('Test:OriginalModelFailure','Original model failure');
-catch original
-    for writer={@trainingcurriculum.write_json,@brokenWriter}
-        try
-            checkpointreview.fail_evaluation(original,file,report,writer{1});
-            error('Test:MissingRethrow','Expected original exception.');
-        catch actual
-            assert(strcmp(actual.identifier,original.identifier));
-            assert(isequal(actual.stack,original.stack));
-        end
-    end
+    compare_training_checkpoints(receipt.sessionDir,episodes=1,includeLatest=false,stages=1,maxSteps=5);
+    error('Test:MissingRethrow','Expected original exception.');
+catch actual
+    assert(strcmp(actual.identifier,'Test:OriginalModelFailure'),'%s',getReport(actual));
+    assert(strcmp(actual.stack(1).name,'load_system'));
 end
-saved=jsondecode(fileread(file));
+files=dir(fullfile(receipt.sessionDir,'reports','evaluation_*','evaluation.json'));
+[~,order]=sort([files.datenum],'descend');
+saved=jsondecode(fileread(fullfile(files(order(1)).folder,'evaluation.json')));
 assert(strcmp(saved.status,'failed') && strcmp(saved.phase,'load_model'));
 assert(strcmp(saved.error.identifier,'Test:OriginalModelFailure'));
-assert(contains(saved.error.report,'Original model failure'));
-fprintf('PASS original exception preserved with successful and failed report writes.\n');
-end
-function brokenWriter(varargin)
-error('Test:ReportWriteFailure','Simulated report write failure');
+assert(~saved.error.project_on_path);
+assert(contains(saved.error.report,'Injected failure'));
+fprintf('PASS evaluator preserves original error and saves report after package path removal. No simulation started.\n');
 end
