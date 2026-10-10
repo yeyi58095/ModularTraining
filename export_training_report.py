@@ -259,7 +259,7 @@ def main():
     parser.add_argument("--regression-patience", type=int, default=5)
     parser.add_argument("--regression-ratio", type=float, default=0.5)
     parser.add_argument("--regression-min-reference", type=float, default=500)
-    parser.add_argument("--output", type=Path, help="Default: reports/<machine>/<session>/report.json")
+    parser.add_argument("--output", type=Path, help="Default: SESSION/reports/report.json")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}", args.machine):
         parser.error("--machine must be a short letters/digits/underscore/hyphen alias")
@@ -269,10 +269,11 @@ def main():
         parser.error("--from-episode must not exceed --to-episode")
     try:
         session = select_session(args.session)
-        output = args.output or ROOT / "reports" / args.machine / session.name / "report.json"
+        default_output = (session / "reports" / "report.json").resolve()
+        output = args.output or default_output
         output = output.expanduser().resolve()
-        if output.suffix != ".json" or output.is_relative_to(session):
-            raise ValueError("Output must be a .json file outside the source experiment.")
+        if output.suffix != ".json" or (output.is_relative_to(session) and output != default_output):
+            raise ValueError("Within an experiment, only reports/report.json may be written; other .json outputs must be outside it.")
         health_options = dict(window=args.regression_window, patience=args.regression_patience,
                               ratio=args.regression_ratio, min_reference=args.regression_min_reference)
         assess_learning([], **health_options) # Validate before reading large logs.

@@ -4,7 +4,7 @@
   "stages": [
     {
       "id": "straight_calm",
-      "trajectory": {"type": "mat", "file": "../trajectories/generated/progressive_v1/straight.mat", "waypoints_variable": "waypoints", "velocity_variable": "velocity"},
+      "trajectory": {"type": "mat", "file": "assets/straight.mat", "waypoints_variable": "waypoints", "velocity_variable": "velocity"},
       "wind": {"east_mps": [0, 0], "north_mps": [0, 0], "turbulence": [0, 0]},
       "advance_when": {"all": [
         {"metric": "stage_episodes", "at_least": 2000},
@@ -16,7 +16,7 @@
     },
     {
       "id": "gentle_s_calm",
-      "trajectory": {"type": "mat", "file": "../trajectories/generated/progressive_v1/gentle_s.mat", "waypoints_variable": "waypoints", "velocity_variable": "velocity"},
+      "trajectory": {"type": "mat", "file": "assets/gentle_s.mat", "waypoints_variable": "waypoints", "velocity_variable": "velocity"},
       "wind": {"east_mps": [0, 0], "north_mps": [0, 0], "turbulence": [0, 0]},
       "advance_when": {"all": [
         {"metric": "stage_episodes", "at_least": 3000},

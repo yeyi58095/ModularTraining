@@ -13,7 +13,7 @@
 
 - 路徑應從程式／專案所在位置推導，避免硬編碼本機絕對路徑或依賴 Flower 的相對位置。
 - 訓練入口是 `retry.m`；模型定義在 `+trainingmodels/`，獨立執行引擎在 `runtime/`。
-- 新課程實驗資料在 `experiments/<課程 JSON 檔名>/runs/<實驗>/`；非課程與既有實驗保留 `+trainingmodels/<模型>/runs/<實驗>/`。複製的舊設定可能包含來源絕對路徑，續訓前需確認其指向。
+- 新課程實驗資料在 `experiments/<課程>/runs/<實驗>/`；非課程與既有實驗保留 `+trainingmodels/<模型>/runs/<實驗>/`。複製的舊設定可能包含來源絕對路徑，續訓前需確認其指向。
 - 不要擅自啟動、終止訓練或修改活動中的 runtime。
 - 準備 GitHub 時遵循 `.gitignore`，不要自動納入訓練成果、checkpoint、日誌或快取。
 
@@ -21,14 +21,14 @@
 
 - 根目錄的 `plot_training_rewards.py` 移植自 Flower 的 `Deep Reinforcement Learning/Simulink/plot_training_rewards.py`。
 - 已調整為搜尋本專案 `experiments/<課程>/runs/`、模型的 `runs/` 與舊 `sessions/`，無須讀取 Flower。
-- 使用 Python 與 matplotlib，讀取實驗內 `attempt_*/stdout.log`，輸出 `reward_history.png` 與 `.csv`。
+- 使用 Python 與 matplotlib，讀取實驗內 `attempt_*/stdout.log`，輸出 `reports/reward_history.png` 與 `.csv`。
 - 相同 episode 重複出現時採用較新 attempt 的紀錄；`--watch` 定期更新圖表，不控制訓練程序。
 
 ## 雙機與診斷分享（2026-10-09）
 
 - 使用者有宿舍與實驗室兩台電腦；本次提供的 387,512 episodes／388 attempts reward 圖來自實驗室，不代表目前本機已有該實驗日誌。
 - 圖中約 18 萬回合後長期低 reward 是待調查的觀察，不能直接歸因於 learning rate、LSTM 或 checkpoint 損壞。
-- 用根目錄 `export_training_report.py <實驗資料夾> --machine lab`（或 `dorm`）產生 `reports/<machine>/<session>/report.json`，作為可提交 GitHub 的精簡診斷紀錄。
+- 用根目錄 `export_training_report.py <實驗資料夾> --machine lab`（或 `dorm`）產生 `<實驗資料夾>/reports/report.json`，作為可提交 GitHub 的精簡診斷紀錄。
 - 完整訓練日誌、MAT checkpoint、快取留在產生資料的電腦；`.gitignore` 只放行指定結構的精簡報告。匯出不等於授權 commit、建立遠端或 push。
 - 分享報告不等於搬移可續訓實驗。跨機續訓要另行確認 checkpoint 與 control.json 路徑，尤其 diagnosticDir 可能仍指向舊電腦。
 - 匯出器獨立於 runtime，不修改訓練或自動停訓；當下程式指紋不能當作歷史執行版本的證明。
@@ -57,7 +57,7 @@
 
 ## 六階段訓練方案與短測（2026-10-09）
 
-- `curricula/progressive_v1.json`：直線 → 平緩 S 彎 → 固定轉彎 → random 無風 → 小風擾 → 完整風擾，沿用 ppo_lstm128。設計、起始門檻、限制與操作見 `docs/training-plan-v1.md`。
+- `experiments/progressive_v1/curriculum.json`：直線 → 平緩 S 彎 → 固定轉彎 → random 無風 → 小風擾 → 完整風擾，沿用 ppo_lstm128。設計、起始門檻、限制與操作見 `docs/training-plan-v1.md`。
 - `prepare_progressive_training()` 只生成可重建的 MAT 輸入並檢查設定，不啟動訓練；兩台電腦各自執行即可。不同內容的既有 MAT 不會被覆寫。
 - 每階段使用最低回合數與連續三個 100 回合區間表現門檻，預算用盡 pause。數值尚未經長訓練校準；不宣稱能防止所有退步，learning_health 仍只在匯出時計算。
 - 使用者這次授權短時間真實測試；`tests/test_curriculum_end_to_end.m` 已完成固定 → MAT → random 各一回合，總計 525 步、約 434 秒，確認跨階段 actor／critic 權重接續。測試已退出，沒有啟動正式六階段長訓練。
@@ -72,9 +72,23 @@
 
 ## 課程分類與活動實驗保留（2026-10-10）
 
-- 使用者希望以課程管理實驗、模型為課程參數。新 curriculum 實驗按 JSON 檔名存入 experiments；同名計畫共用分類但各有唯一實驗 ID。
+- 使用者希望以課程管理實驗、模型為課程參數。標準 curriculum.json 入口按父課程資料夾名稱存入 experiments；其他獨立 JSON 按檔名分類；同名計畫共用分類但各有唯一實驗 ID。
 - 實驗室的 20261009_201547 實驗仍在舊目錄且使用者希望保留；禁止為結構調整而搬移或修改活動實驗。續訓始終依指定目錄原位進行。
 - 畫圖新增由 curriculum_state.json 讀取的橘色 stage 分界與軸下方標籤；灰線為 attempt。可單獨更新 Python 畫圖檔並重啟畫圖工具，完整執行程式更新則等訓練退出後進行。
 - 操作與備份限制見 docs/curriculum-layout.md；此次只做無訓練驗證，不代表遠端模型已備份或可安全搬移。
 - 使用者後續回報實驗室 attempt 8 已 STOP，並要求把此次模型接續到新架構、上傳修改。migrate_training_session.ps1 僅對已停止且可取得鎖的實驗完整複製與逐檔 SHA256 驗證，原件保留；新副本的控制路徑修正，歷史紀錄不改寫。verify_training_session 在 MATLAB 唯讀檢查可用 checkpoint 及階段位置後，才由使用者 retry(resume=新位置)。不得在兩份副本同時續訓。
 - 畫圖 stage 缺失修正：MATLAB jsondecode/jsonencode 會將 singleton struct array 重新編碼為單一 object，completed 必須兼容 list／object；不可據此認定階段歷史遺失。PNG 使用同目錄暫存檔完成後替換，watch 遇 OSError 會提示並重試；不修改訓練狀態。
+
+## Stage 3 低分調查（2026-10-10）
+
+- 使用者已停止實驗室 attempt 25 並提供精簡報告，日誌觀察到 12616 回合。詳見 docs/lab-regression-2026-10-10.md；此回合數不是已驗證的 checkpoint 進度。
+- Stage 3 從 6101 開始；約 10700–10800 的下降在 attempt 22 內（10101–11100、4 workers），未與換階段／重啟邊界重合。最近 1000 回合平均步數 173.56，87.9% 少於 256 步，不能僅視為畫圖現象。
+- 根因尚未證實；先保留 6100、下跌前約 10600 和最近可用 checkpoint 候選。獨立評估與分支恢復尚未實作，勿直接改課程狀態或覆蓋 checkpoint 作回滾，也未授權重新啟動訓練。
+
+## 課程工作區與每次實驗報告（2026-10-10）
+
+- 正式課程定義移至 experiments/progressive_v1/curriculum.json，prepare_progressive_training 產生同層 assets/；curricula/ 保留其他範例。舊 progressive_v1 入口由 resolve_curriculum_path 相容轉址。
+- curriculum_state.json 是各 run 的實際進度，必須留在 runs/<session>/；頂層只放共享定義，既有 run 的課程和輸入快照不改寫。
+- 圖表與精簡報告預設輸出到各 run/reports/。Git 僅放行頂層 curriculum.json 及 run/reports/report.json；MAT、完整日誌、PNG、CSV 仍忽略。
+- organize_training_reports.ps1 在停止狀態與排他鎖下複製舊報告和圖表，比對雜湊、保留原件；相同檔案可重跑，不同目的檔拒絕覆蓋。已遷移的 run 不要重跑完整 migrate_training_session。
+- 使用者明確授權本次架構修改、commit 與 push；沒有授權重啟目前因 Stage 3 退步停止的實驗。驗證使用 Python、PowerShell 合成測試與 MATLAB start=false，不代表長訓練收斂驗證。

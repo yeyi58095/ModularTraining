@@ -250,7 +250,7 @@ def main():
     parser.add_argument("session", nargs="?", type=Path,
                         default=Path(__file__).resolve().parent,
                         help="Session directory, or parent containing sessions (newest selected)")
-    parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reward_history.png)")
+    parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reports/reward_history.png)")
     parser.add_argument("--watch", type=float, default=0, metavar="SECONDS",
                         help="Refresh the same PNG and CSV periodically; Ctrl+C stops plotting only")
     args = parser.parse_args()
@@ -264,7 +264,7 @@ def main():
         parser.exit(1, "Missing matplotlib. Install with: python -m pip install matplotlib\n")
     try:
         session = select_session(args.session)
-        output = args.output.expanduser().resolve() if args.output else session / "reward_history.png"
+        output = args.output.expanduser().resolve() if args.output else session / "reports" / "reward_history.png"
         if output.suffix.lower() != ".png":
             parser.error("--output must end in .png")
         print(f"Reading session: {session}", flush=True)

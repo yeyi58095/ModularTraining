@@ -14,8 +14,8 @@
       "id": "profiles",
       "type": "backend",
       "label": "課程、模型與硬體設定",
-      "sublabel": "curricula/ · configs/",
-      "tag": "課程指定 +trainingmodels/ 模型",
+      "sublabel": "experiments/<課程>/",
+      "tag": "curriculum.json · configs/",
       "pos": [
         40,
         60
@@ -119,8 +119,8 @@
       "id": "diagnostics",
       "type": "database",
       "label": "診斷、曲線與精簡報告",
-      "sublabel": "plot_training_rewards.py",
-      "tag": "stage 分界 · export_training_report.py",
+      "sublabel": "<實驗>/reports/",
+      "tag": "reward 圖表 · report.json",
       "pos": [
         380,
         500

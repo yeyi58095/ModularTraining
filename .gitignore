@@ -1,7 +1,18 @@
 # Local experiments: never sync checkpoints or full diagnostics through Git.
 sessions/
 +trainingmodels/*/runs/
-/experiments/
+# Track only plan definitions and each run's bounded report, never raw runs.
+/experiments/*
+!/experiments/*/
+/experiments/*/*
+!/experiments/*/curriculum.json
+!/experiments/*/runs/
+/experiments/*/runs/*
+!/experiments/*/runs/*/
+/experiments/*/runs/*/*
+!/experiments/*/runs/*/reports/
+/experiments/*/runs/*/reports/*
+!/experiments/*/runs/*/reports/report.json
 training_diagnostics/
 runtime/training_runs_parallel_checkpointed/
 checkpoints/

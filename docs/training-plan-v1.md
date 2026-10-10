@@ -1,6 +1,6 @@
 # 漸進式 UAV 訓練流程 v1
 
-目標是讓同一個 PPO agent 先學穩定追蹤，再處理轉彎、陌生路徑與風擾。可執行設定是 `curricula/progressive_v1.json`；這是一份待實驗校準的起始方案，不保證收斂，也不是論文參數的精確重現。
+目標是讓同一個 PPO agent 先學穩定追蹤，再處理轉彎、陌生路徑與風擾。可執行設定是 `experiments/progressive_v1/curriculum.json`；這是一份待實驗校準的起始方案，不保證收斂，也不是論文參數的精確重現。
 
 ## 六個階段
 

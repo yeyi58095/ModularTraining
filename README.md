@@ -6,7 +6,7 @@
 
 ## JSON 分階段訓練
 
-新課程實驗按計畫存入 `experiments/<課程 JSON 檔名>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/curriculum-layout.md)。
+新課程實驗按計畫存入 `experiments/<課程>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/curriculum-layout.md)。
 
 已停止的舊實驗可用 `migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
 
@@ -36,7 +36,7 @@ python export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 python export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
 ```
 
-產生 `reports/<machine>/<session>/report.json`，限制在 1.5 MB 內，可提交 GitHub 後跨機閱讀；完整日誌、checkpoint 與快取由 `.gitignore` 排除。
+產生 `<實驗>/reports/report.json`，限制在 1.5 MB 內；標準課程實驗的此檔案可提交 GitHub 後跨機閱讀。完整日誌、checkpoint、圖表與快取由 `.gitignore` 排除。舊報告整理方式見 [課程與報告目錄](docs/curriculum-layout.md)。
 報告包含 reward／steps／Q0 區間統計、重啟與 worker 摘要、模型設定及程式指紋，不含完整錯誤堆疊。匯出不會啟停訓練或自動 push。
 請把範例中的路徑換成實際資料夾；舊實驗可用 `--diagnostics` 明確指定外部診斷目錄。
 詳細格式與限制見 [reports/README.md](reports/README.md)；本次架構審視與雙機工作紀錄見 [docs/review-2026-10-09.md](docs/review-2026-10-09.md)。
@@ -55,7 +55,7 @@ python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --watch 60
 ```
 
-未指定路徑時，依日誌修改時間選擇本專案最新的實驗；也可以指定模型資料夾或其 `runs/`。輸出預設為實驗內的 `reward_history.png` 和 `reward_history.csv`，可用 `--output 路徑.png` 改位置。圖表包含每回合 reward、日誌記錄的平均 reward 與重啟分界；重複 episode 使用較新 attempt 的紀錄。工具只讀取日誌，Ctrl+C 停止圖表更新不影響訓練。
+未指定路徑時，依日誌修改時間選擇本專案最新的實驗；也可以指定模型資料夾或其 `runs/`。輸出預設為實驗 `reports/` 內的 `reward_history.png` 和 `reward_history.csv`，可用 `--output 路徑.png` 改位置。圖表包含每回合 reward、日誌記錄的平均 reward 與重啟分界；重複 episode 使用較新 attempt 的紀錄。工具只讀取日誌，Ctrl+C 停止圖表更新不影響訓練。
 
 獨立於旁邊 `Simulink/` 的實驗版本。包含自己的訓練腳本、supervisor、checkpoint 輔助檔，以及 FAFA_Simulation.slx 副本；不呼叫舊資料夾內的訓練檔案。
 現行 Simulink 版本不需停止或更新。這份程式不會自動啟動、終止或刪除現行實驗。
@@ -140,6 +140,14 @@ SAC、TD3 等演算法尚未支援；需要擴充 builder、checkpoint 相容性
 
 ```text
 ModularTraining/
+  experiments/progressive_v1/
+    curriculum.json       共用課程定義
+    assets/               可重建的軌跡輸入
+    runs/<時間_唯一碼>/
+      curriculum.json     此實驗的課程快照
+      curriculum_state.json 此實驗的階段進度
+      checkpoints/        此實驗的模型存檔
+      reports/            report.json、reward_history.png 與 CSV
   retry.m                 對外入口
   training.m              模型與訓練引擎之間的介面
   +trainingmodels/
@@ -181,7 +189,7 @@ ModularTraining/
 
 實驗室正式啟動步驟見 [6 workers＋GPU 操作說明](docs/lab-start.md)，硬體與重試參數在 `configs/lab_gpu6.json`。此組合尚未實測；本機真實短測僅使用 CPU／1 worker。
 
-六階段訓練方案見 [training-plan-v1](docs/training-plan-v1.md)，可執行設定為 `curricula/progressive_v1.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
+六階段訓練方案見 [training-plan-v1](docs/training-plan-v1.md)，可執行設定為 `experiments/progressive_v1/curriculum.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
 
 `tests/test_curriculum_end_to_end.m`：明確呼叫才啟動 CPU／1 worker 真實 UAV 訓練，固定路徑、MAT、random 各一回合，驗證跨程序續訓、階段切換與 actor／critic 權重接續；使用測試用回合門檻，不代表學會任務。
 

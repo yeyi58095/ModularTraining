@@ -30,7 +30,7 @@ isResume = strlength(string(opt.resume)) > 0;
 plan=[];
 if strlength(string(opt.curriculum))>0
     assert(~isResume,'Curriculum:Immutable','Resume uses the saved curriculum; do not supply a new plan.');
-    planFile=projectPath(root,opt.curriculum);
+    planFile=resolve_curriculum_path(opt.curriculum);
     plan=trainingcurriculum.load_plan(planFile,true);
     assert(strlength(string(opt.model))==0 || strcmp(opt.model,plan.model), ...
         'Curriculum:Model','model must match the curriculum model.');
@@ -64,6 +64,10 @@ else
     cfg = struct('curriculumEnabled',~isempty(plan));
     if ~isempty(plan)
         [~,planName]=fileparts(planFile);
+        [planParent,planFolder]=fileparts(fileparts(planFile));
+        if strcmpi(planName,'curriculum') && strcmpi(planParent,fullfile(root,'experiments'))
+            planName=planFolder;
+        end
         sessions=fullfile(root,'experiments',planName,'runs');
         cfg.curriculumName=planName;
     else

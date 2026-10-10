@@ -36,7 +36,7 @@ info = retry(resume=info.sessionDir);
 
 ## 設定含義
 
-- `configs/lab_gpu6.json` 是 retry 的執行參數；`curricula/progressive_v1.json` 定義六階段路徑、風場與過關條件。分開保留，方便兩台電腦用不同硬體執行同一課程。
+- `configs/lab_gpu6.json` 是 retry 的執行參數；`experiments/progressive_v1/curriculum.json` 定義六階段路徑、風場與過關條件。分開保留，方便兩台電腦用不同硬體執行同一課程。
 - `workers:6`、`minWorkers:1`：最多 6 個 MATLAB workers，當次成功取得 n 個便使用 n 個，符合先前的可用數量策略。若整個 pool 建立失敗，後續 attempt 可用 4、2、1 作備援。不是強制湊滿 6 才開始。
 - `device:"gpu"`：模型使用 GPU；不代表需要或分配了 6 張 GPU，也不保證比 CPU 快。本設定不會自動改成 CPU。遠端需具備相容 GPU、驅動與相應 MATLAB 工具箱／授權。
 - 每 100 回合存 checkpoint，每段最多 1,000 回合後重啟 MATLAB 並評估階段條件。階段預算不足 1,000 時會縮短該段。

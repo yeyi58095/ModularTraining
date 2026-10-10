@@ -6,12 +6,12 @@
   "input": "D:\\daniel\\GradSchool\\0-Beginner\\ModularTraining\\docs\\architecture.json",
   "output": "D:\\daniel\\GradSchool\\0-Beginner\\ModularTraining\\docs\\architecture.html",
   "specification": {
-    "sha256": "a3f386743c225a7fb2cfc80bac3bd304956e6e03813fc949617f1bff4693d42d",
-    "bytes": 6276
+    "sha256": "15e0773fe8f3c149058107912fb36fcdf66b4bc17d08aee972214ddb5081a8e8",
+    "bytes": 6246
   },
   "artifact": {
-    "sha256": "46a1d41c24ea87ead52563df080fe420dda25ff1a842e5dd8f361d2d1ac7a16c",
-    "bytes": 816683
+    "sha256": "4790f017ac8cd46bd99597070fe4588bb28e90f15a80682bc52c7a79fad80ad9",
+    "bytes": 816633
   },
   "validation": {
     "checksPassed": 9,

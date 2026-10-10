@@ -1,13 +1,14 @@
 # 以課程管理實驗，保留既有訓練
 
-2026-10-10 起，新建 curriculum 實驗依課程 JSON 的檔名分組：
+2026-10-10 更新：課程定義與輸入在課程目錄，每次執行的進度、模型與報告留在自己的 run：
 
 ```text
-curricula/progressive_v1.json           課程定義，指定模型和各階段條件
 configs/lab_gpu6.json                  硬體與重試設定
 +trainingmodels/ppo_lstm128/            模型定義
-experiments/progressive_v1/runs/
-  <時間_唯一碼>/
+experiments/progressive_v1/
+  curriculum.json                     課程定義，指定模型和各階段條件
+  assets/                             可重建的 MAT 輸入（不納入 Git）
+  runs/<時間_唯一碼>/
     curriculum.json                   此實驗的課程快照
     curriculum_assets/                軌跡輸入快照
     curriculum_state.json             實際階段分界與進度
@@ -15,13 +16,28 @@ experiments/progressive_v1/runs/
     control.json                      此實驗的硬體／執行設定
     Agent_Final.mat、checkpoints/      可用 checkpoint（訓練後產生）
     attempt_*/、diagnostics/、runs/    日誌與分段紀錄
+    reports/report.json               此實驗精簡報告（可納入 Git）
+    reports/reward_history.png、.csv   圖與逐回合資料（不納入 Git）
 ```
 
-課程名稱取自 JSON 檔名；不同目錄中同名 JSON 會被分到同一組，但每個實驗有獨立 ID 與快照，不會互相覆寫。課程改版建議另取 progressive_v2 等名稱。模型是課程參數；更換模型會建立不同實驗，並不代表不同架構可直接沿用權重。
+標準入口是 experiments/<課程>/curriculum.json，課程名稱取自父資料夾。其他獨立 JSON 範例仍按檔名分類。舊的 curricula/progressive_v1.json 入口由 retry／curriculum_plan 轉到新路徑並提示，不保留兩份可編輯定義。課程改版建議另取 progressive_v2。模型是課程參數；更換模型會建立不同實驗，並不代表不同架構可直接沿用權重。curriculum_state.json 是每次 run 的進度，不放在共享課程層。
 
-非 curriculum 訓練仍使用 `+trainingmodels/<model>/runs/`。已有課程實驗無論放在此舊目錄或新目錄，都依 `retry(resume=完整實驗路徑)` 原位續用，不會被自動搬到新位置。新舊資料夾都受 Git 忽略。畫圖及報告工具可搜尋兩種結構。
+非 curriculum 訓練仍使用 `+trainingmodels/<model>/runs/`。已有課程實驗無論放在此舊目錄或新目錄，都依 `retry(resume=完整實驗路徑)` 原位續用，不會被自動搬到新位置。新實驗目錄只放行課程定義與各 run 的 reports/report.json，其餘資料受 Git 忽略；舊模型目錄仍整體忽略。畫圖及報告工具可搜尋兩種結構。
 
-## 正在實驗室跑的那次怎麼辦
+## 已遷移實驗的 reports 整理（本次更新）
+
+目前已在 experiments/progressive_v1/runs 下的實驗不需再搬 checkpoint，亦不重建模型。確認已 stopped，並停止舊的 Python watch 後，在實驗室專案根目錄執行：
+
+```powershell
+git pull --ff-only
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\organize_training_reports.ps1 -SessionPath "D:\daniel\ModularTraining\experiments\progressive_v1\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" -Machine lab
+```
+
+此工具將根目錄 reports/lab/<實驗>/report.json、run 根目錄舊 reward_history.png／.csv 複製到 run/reports，逐檔比對 SHA256，原件保留。不存在的來源會提示略過；已有相同內容可重跑，不同內容則拒絕覆蓋。若舊報告另存他處，可提供 -LegacyReportPath。來源報告必須符合 session_id 與 machine，避免混入其他實驗。
+
+之後原本匯出／畫圖指令不變，自動寫入 run/reports；--output 仍可明確選擇其他輸出位置。要重建頂層 assets，可在 MATLAB 執行 prepare_progressive_training()，不啟動訓練；目前停止的 Stage 3 問題尚未處理，不因更新目錄而自動續訓。
+
+## 舊版遷移背景：活動訓練的處理
 
 1. 保留目前 `+trainingmodels/ppo_lstm128/runs/20261009_201547_...` 原位，讓既有 supervisor 繼續執行。不需要為分類改變而停止訓練。
 2. 不搬移、不改名、不刪除該實驗，也不編輯其 control／curriculum 快照。活動中的程序持有舊絕對路徑，移動資料可能造成後續讀寫失敗。
@@ -31,7 +47,7 @@ experiments/progressive_v1/runs/
 
 GitHub 的精簡 report.json 不是模型備份；MAT 與完整實驗仍留在原電腦。這次變更沒有操作實驗室檔案，不能取代對遠端磁碟／備份的確認。
 
-## 把已停止的實驗接續到新結構
+## 舊版完整遷移（已完成者不要重跑）
 
 2026-10-10 使用者已回報實驗室 attempt 8 為 stopped，並要求在新結構繼續這次模型。先在實驗室專案根目錄更新程式，再執行 PowerShell：
 

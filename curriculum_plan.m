@@ -4,7 +4,7 @@ function plan = curriculum_plan(filename,varargin)
 p=inputParser; p.addParameter('checkFiles',true); p.parse(varargin{:});
 root=fileparts(mfilename('fullpath')); old=path; guard=onCleanup(@() path(old)); %#ok<NASGU>
 addpath(root,'-begin');
-plan=trainingcurriculum.load_plan(char(filename),p.Results.checkFiles);
+plan=trainingcurriculum.load_plan(resolve_curriculum_path(filename),p.Results.checkFiles);
 trainingmodels.load_profile(plan.model);
 fprintf('Model retained across all stages: %s\n',plan.model);
 for i=1:numel(plan.stages)

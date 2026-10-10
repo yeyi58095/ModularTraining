@@ -84,6 +84,9 @@ class Reports(unittest.TestCase):
         self.assertEqual((folder / "stdout.log").read_bytes(), original)
         bad = subprocess.run(command[:-1] + [str(self.session / "model.json")], capture_output=True)
         self.assertNotEqual(bad.returncode, 0)
+        default = subprocess.run(command[:-2], capture_output=True, text=True)
+        self.assertEqual(default.returncode, 0, default.stderr)
+        self.assertEqual(json.loads((self.session / "reports/report.json").read_text())["episode_count"], 1)
 
     def test_empty_and_nonfinite_records(self):
         self.log(1, episode(1, "1e999"))
@@ -116,6 +119,16 @@ class Reports(unittest.TestCase):
             "reports/dorm/example/report.json": False,
             "reports/README.md": False, "runtime/FAFA_Simulation.slx": False,
             "+trainingmodels/ppo_lstm128/ppo_lstm128.m": False,
+            "experiments/progressive_v1/curriculum.json": False,
+            "experiments/progressive_v1/assets/straight.mat": True,
+            "experiments/progressive_v1/runs/session/reports/report.json": False,
+            "experiments/progressive_v1/runs/session/reports/reward_history.png": True,
+            "experiments/progressive_v1/runs/session/reports/reward_history.csv": True,
+            "experiments/progressive_v1/runs/session/reports/nested/report.json": True,
+            "experiments/progressive_v1/runs/session/control.json": True,
+            "experiments/progressive_v1/runs/session/curriculum_state.json": True,
+            "experiments/progressive_v1/runs/session/checkpoints/Agent100.mat": True,
+            "experiments/progressive_v1/.incoming_test/control.json": True,
         }
         for path, ignored in expected.items():
             result = subprocess.run(["git", "-C", str(repo), "check-ignore", "--quiet", "--no-index", path])

@@ -4,7 +4,7 @@ function info = prepare_progressive_training()
 root=fileparts(mfilename('fullpath')); old=path;
 guard=onCleanup(@() path(old)); %#ok<NASGU>
 addpath(root,'-begin');
-folder=fullfile(root,'trajectories','generated','progressive_v1');
+folder=fullfile(root,'experiments','progressive_v1','assets');
 if ~isfolder(folder), mkdir(folder); end
 distance=(0:1.5:6000)'; % 15 m/s * 0.1 s; longer than a 300-second episode.
 waypoints=[50+distance,zeros(size(distance)),70*ones(size(distance))];
@@ -14,7 +14,7 @@ heading=deg2rad(25)*sin(2*pi*distance/2400);
 waypoints=[50+cumtrapz(distance,cos(heading)),cumtrapz(distance,sin(heading)),70*ones(size(distance))];
 velocity=[15*cos(heading),15*sin(heading),zeros(size(heading))];
 gentle=fullfile(folder,'gentle_s.mat'); saveInput(gentle,waypoints,velocity);
-planFile=fullfile(root,'curricula','progressive_v1.json');
+planFile=fullfile(root,'experiments','progressive_v1','curriculum.json');
 plan=curriculum_plan(planFile);
 info=struct('planFile',planFile,'straightFile',straight,'gentleFile',gentle, ...
     'model',plan.model,'stages',numel(plan.stages));

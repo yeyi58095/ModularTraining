@@ -1,4 +1,8 @@
-# GitHub 精簡訓練紀錄
+# GitHub 精簡訓練紀錄（舊位置）
+
+2026-10-10 起，匯出器預設寫入 `<實驗>/reports/report.json`，畫圖寫入同層 `reward_history.png` 與 `.csv`。標準結構是 `experiments/<課程>/runs/<實驗>/reports/`；Git 僅放行精簡 report.json。machine 仍寫在報告內，不再作為預設輸出路徑層級。舊報告不刪除；可用 `organize_training_reports.ps1` 複製整理，詳見 [操作方式](../docs/curriculum-layout.md)。
+
+下列根目錄 `reports/<machine>/<session>/` 為舊版本保留位置，也可透過 --output 明確匯出到這裡。
 
 此目錄只追蹤 `<machine>/<session>/report.json`，例如 `lab/20260923_.../report.json`。
 由根目錄 `export_training_report.py` 產生，不放 `.mat`、完整 stdout/stderr 或 CSV。
