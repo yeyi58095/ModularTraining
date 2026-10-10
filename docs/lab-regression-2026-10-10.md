@@ -51,3 +51,11 @@
 回歸測試改為呼叫真正 compare_training_checkpoints 入口，在測試替身 load_system 內移除 root 路徑後拋錯；確認原始 identifier／stack 與落盤 JSON 均保留，測試通過。上一版只測輔助函式，未涵蓋其本身無法解析的情境。
 
 第二次修正後另完成既有 recovery checkpoint 的 5 步 CPU 評估（reward 5.50），來源雜湊與權重檢查通過；未啟動訓練。
+
+## Recovery 評估與載入稽核
+
+實驗室更新後完整完成 9 次評估。10600 三項步數為 3000／3000／1578，10700 為 133／134／133，11000 三項均 144。10600 與之前評估一致，表現下降已在第一段 100 回合的存檔出現，且包含直線與 S 彎。單 seed、固定條件，不能據此斷定 optimizer、learning rate 或 LSTM 是根因。
+
+程式審視：resume 分支直接 load agent，新建網路只在無 resume 時執行；每段 train 前已存 Agent_Initial.mat。checkpoint_attempt 按 attempt 編號重設 baseSeed，並同步設定 worker seeds；恢復試驗同時改了段落長度，因此不是只有 learning rate 的單因素差異。固定無風課程 reset 仍使用相同固定軌跡；尚未發現此段程式碼必然導致退步的證據。
+
+新增 audit_training_resume，對照 train 前 initial agent 與其來源 checkpoint 的可學習參數、主要 PPO 設定及 worker seeds，再列所選 checkpoint 參數差異。此為唯讀診斷，須在實驗室執行取得實際資料；不自動開始下一個恢復試驗。操作與限制見 resume-audit.md。
