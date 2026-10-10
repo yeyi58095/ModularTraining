@@ -65,6 +65,8 @@ info = retry(resume=newSession);
 
 標記只讀該實驗的 `curriculum.json` 和 `curriculum_state.json`，不依 JSON 預算或 reward 猜分界。沒有課程紀錄的舊實驗仍可畫 reward；狀態讀取不完整或不一致時會警告並暫不畫 stage，下次 watch 更新再讀取。
 
+2026-10-10 修正：MATLAB 重新編碼單筆 completed 時可能從陣列變成物件，畫圖端現在兼容兩種形狀；原先會誤報 Incomplete stage history。這不需要修改實驗 JSON 或停止訓練。PNG 改為暫存檔完成後原子替換；寫入失敗保留前張成功圖片，watch 提示後重試，持續失敗可關閉圖片檢視器或改用 --output 路徑。PNG 與 CSV 仍是分別輸出，不是兩檔交易式快照。
+
 啟動指令不變，務必指定正在跑的實驗完整路徑，避免自動選到別的測試實驗：
 
 ```powershell

@@ -14,10 +14,12 @@ If an episode is repeated after a restart, the latest attempt takes precedence.
 import argparse
 import csv
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 import re
 import time
+import tempfile
 import warnings
 
 
@@ -116,6 +118,14 @@ def read_stages(session):
         index = state["stage_index"]
         stages = plan["stages"]
         completed = state["completed"]
+        # MATLAB jsondecode -> jsonencode turns a singleton struct array
+        # into an object when prepare re-saves state without advancing.
+        if isinstance(stages, dict):
+            stages = [stages]
+        if isinstance(completed, dict):
+            completed = [completed]
+        if not isinstance(stages, list) or not isinstance(completed, list):
+            raise ValueError("Stage history must be an array or a single object")
         if not isinstance(index, int) or not 1 <= index <= len(stages):
             raise ValueError("Invalid stage index")
         if len(completed) != index - 1:
@@ -157,6 +167,18 @@ def annotate_stages(ax, stages, first_episode, last_episode):
                     xytext=(3, -40 - (i % 2) * 30), textcoords="offset points",
                     ha="left", va="top", fontsize=8, color="#92400e",
                     annotation_clip=False)
+
+
+def save_png(fig, output):
+    """Render away from the viewer's open file; keep the last good PNG on failure."""
+    fd, name = tempfile.mkstemp(prefix=".reward-", suffix=".png", dir=output.parent)
+    os.close(fd)
+    temporary = Path(name)
+    try:
+        fig.savefig(temporary, format="png", dpi=180, facecolor="white", bbox_inches="tight")
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def draw(session, output, plt):
@@ -205,7 +227,7 @@ def draw(session, output, plt):
                  f"Session: {session.name} | Snapshot: {datetime.now():%Y-%m-%d %H:%M:%S}",
                  fontsize=8, color="#64748b")
         try:
-            fig.savefig(output, dpi=180, facecolor="white", bbox_inches="tight")
+            save_png(fig, output)
         finally:
             plt.close(fig)
 
@@ -247,7 +269,16 @@ def main():
             parser.error("--output must end in .png")
         print(f"Reading session: {session}", flush=True)
         while True:
-            success = draw(session, output, plt)
+            try:
+                success = draw(session, output, plt)
+            except OSError as exc:
+                if not args.watch:
+                    raise
+                print(f"Plot refresh failed: {exc}\n"
+                      f"Retrying in {args.watch:g}s. If persistent, close the image viewer "
+                      "or choose another --output path. Training is unaffected.", flush=True)
+                time.sleep(args.watch)
+                continue
             if not args.watch:
                 return 0 if success else 1
             time.sleep(args.watch)

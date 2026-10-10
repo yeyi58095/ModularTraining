@@ -77,3 +77,4 @@
 - 畫圖新增由 curriculum_state.json 讀取的橘色 stage 分界與軸下方標籤；灰線為 attempt。可單獨更新 Python 畫圖檔並重啟畫圖工具，完整執行程式更新則等訓練退出後進行。
 - 操作與備份限制見 docs/curriculum-layout.md；此次只做無訓練驗證，不代表遠端模型已備份或可安全搬移。
 - 使用者後續回報實驗室 attempt 8 已 STOP，並要求把此次模型接續到新架構、上傳修改。migrate_training_session.ps1 僅對已停止且可取得鎖的實驗完整複製與逐檔 SHA256 驗證，原件保留；新副本的控制路徑修正，歷史紀錄不改寫。verify_training_session 在 MATLAB 唯讀檢查可用 checkpoint 及階段位置後，才由使用者 retry(resume=新位置)。不得在兩份副本同時續訓。
+- 畫圖 stage 缺失修正：MATLAB jsondecode/jsonencode 會將 singleton struct array 重新編碼為單一 object，completed 必須兼容 list／object；不可據此認定階段歷史遺失。PNG 使用同目錄暫存檔完成後替換，watch 遇 OSError 會提示並重試；不修改訓練狀態。
