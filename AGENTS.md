@@ -118,3 +118,4 @@
 - 使用者後續要求修正初始化：runtime/FAFA_Simulation.slx的WindowManager改成首次呼叫及原週期發出valid，仍需完整window。只更改chart60一行；tests/test_window_startup從實際模型驗證[1,100,200]和短路徑拒絕。這是環境版本變更，不能把新舊分數直接合併；不改既有checkpoint/課程快照或自動續訓。操作見docs/startup-path-fix.md。
 - 初始化修正A/B：實驗室10600與10700各在原版/修正版直線seed101 CPU評估，上限200步；10600均200步，10700由原版133步IsDone變為修正版200步上限。四次權重及checkpoint SHA不變；無訓練，未證明3000步完成或長期收斂。新評估使用新模型SHA，不與歷史環境混為一談。
 - 完整實驗室回報修正版10600/10700直線及S彎皆3000步，固定轉彎1578/1589；10700仍較大循跡誤差。使用者決定新run：configs/recovery_startup_fix.json從第一個recovery分支10600接續，來源LR必須2.5e-5，scale=1，不再減半；沿用stage3快照和硬體，100/段、上限1000。prepare記錄當下runtime模型/引擎SHA但不啟動。共用課程JSON不改，舊run不改；操作見docs/startup-path-fix.md。
+- 11600評估直線/S彎3000步、固定轉彎2673步。使用者決定先維持共同判讀訓練，合格後提醒整理純腳本另行重跑驗證；已設定本對話條件式提醒，未確認合格時保持安靜。跨夜配方configs/recovery_11600_overnight.json從20261010_201201分支11600另開run，新增10000（最終要求，取代5000），最多21600，LR不變、100/段、guard保留。不要自動解除退步停訓或宣稱一定跨夜/合格。

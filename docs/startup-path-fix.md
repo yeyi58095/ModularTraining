@@ -66,3 +66,20 @@ info = retry(resume=fresh.sessionDir);
 共用課程仍是 experiments/progressive_v1/curriculum.json。新run複製父實驗的curriculum.json和assets快照，從10600所屬stage3接續；curriculum_state.json仍留在新run中，不會寫回共用課程或重跑stage1。這是接續學習的新run，不是新隨機初始化的agent。
 
 新run的control.json繼承硬體、model.json記錄不變學習率、recovery.json記錄來源和準備當下的runtime模型/引擎SHA256。SHA只記錄準備時版本，不是隔離整份runtime；之後仍不得在活動訓練期間更新runtime。沿用歷史時guard亦會參考同stage舊歷史，這是保守停止規則，不是新舊環境分數完全可比的證據。
+
+## 從11600跨夜接續
+
+使用者選擇新增10000回合（不是5000），維持人工共同評估，合格後再整理純腳本從頭重跑驗證。11600在修正版直線/S彎均3000步、固定轉彎2673步，支持繼續嘗試但尚未合格。
+
+`configs/recovery_11600_overnight.json` 從新環境分支11600另開run，LR不變、100/段、總上限21600，保留guard及課程過關/暫停規則。回合數不是保證運行時數；可能因退步、課程暫停或錯誤提前停止。啟動前更新，啟動後不要更新runtime。
+
+```matlab
+clear prepare_recovery_training retry
+parentSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
+    "20261010_201201_recovery_tp0241db13");
+overnight = prepare_recovery_training(parentSession,"configs/recovery_11600_overnight.json");
+info = retry(resume=overnight.sessionDir);
+disp(info.sessionDir)
+```
+
+自動依課程切換不等於新增獨立評估迴圈；本次仍用現有訓練歷史條件與guard，不自動改參數、回滾或無限擴增預算。
