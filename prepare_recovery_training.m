@@ -57,6 +57,10 @@ if ~any(strcmp({entries.name},name)), name='Agent_Stage2'; end
 data=load(checkpoint,name); agent=data.(name);
 addpath(fullfile(sourceSession,'model_source'),'-begin');
 trainingmodels.validate_agent(agent,spec);
+if isfield(settings,'expected_actor_learning_rate')
+    assert(spec.actorLearnRate==settings.expected_actor_learning_rate, ...
+        'Recovery:SourceRate','Unexpected source learning rate. Select the intended recovery parent.');
+end
 actorBefore=getLearnableParameters(getActor(agent)); criticBefore=getLearnableParameters(getCritic(agent));
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
@@ -99,6 +103,9 @@ lineage=struct('schema_version',1,'status','prepared','parent_session',char(sour
 lineage.parent_curriculum_sha256=checkpointreview.sha256(fullfile(sourceSession,'curriculum.json'));
 lineage.parent_model_sha256=checkpointreview.sha256(fullfile(sourceSession,'model.json'));
 lineage.child_checkpoint_sha256=checkpointreview.sha256(target);
+% These identify the local environment at preparation, not historical parent execution.
+lineage.prepared_runtime_model_sha256=checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'));
+lineage.prepared_runtime_engine_sha256=checkpointreview.sha256(fullfile(root,'runtime','training_engine.m'));
 trainingcurriculum.write_json(fullfile(staging,'recovery.json'),lineage);
 trainingcurriculum.write_json(fullfile(staging,'status.json'), ...
     struct('state','paused','attempt',0,'message','Recovery prepared; no training started.'));

@@ -117,3 +117,4 @@
 - 後續離線actor重播各自trace最大action誤差0；相同10600觀測前150步，10600/10700均值平均絕對差0.365。純函式驗證WindowManager首次valid在第100次(0.1秒取樣)，之前planner輸出單點導致guidance回傳假零誤差。首次valid候選僅在diagnostic_packages副本測試[1,100]，未改SLX或runtime，未證實是更新退步唯一根因；閉迴路候選比較尚未做，不得宣稱已修復收斂。
 - 使用者後續要求修正初始化：runtime/FAFA_Simulation.slx的WindowManager改成首次呼叫及原週期發出valid，仍需完整window。只更改chart60一行；tests/test_window_startup從實際模型驗證[1,100,200]和短路徑拒絕。這是環境版本變更，不能把新舊分數直接合併；不改既有checkpoint/課程快照或自動續訓。操作見docs/startup-path-fix.md。
 - 初始化修正A/B：實驗室10600與10700各在原版/修正版直線seed101 CPU評估，上限200步；10600均200步，10700由原版133步IsDone變為修正版200步上限。四次權重及checkpoint SHA不變；無訓練，未證明3000步完成或長期收斂。新評估使用新模型SHA，不與歷史環境混為一談。
+- 完整實驗室回報修正版10600/10700直線及S彎皆3000步，固定轉彎1578/1589；10700仍較大循跡誤差。使用者決定新run：configs/recovery_startup_fix.json從第一個recovery分支10600接續，來源LR必須2.5e-5，scale=1，不再減半；沿用stage3快照和硬體，100/段、上限1000。prepare記錄當下runtime模型/引擎SHA但不啟動。共用課程JSON不改，舊run不改；操作見docs/startup-path-fix.md。

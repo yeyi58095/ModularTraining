@@ -25,6 +25,21 @@ assert(spec.actorLearnRate==2.5e-5);
 target=fullfile(info.sessionDir,'checkpoints','Agent2.mat');
 lineage=jsondecode(fileread(fullfile(info.sessionDir,'recovery.json')));
 assert(strcmp(lineage.child_checkpoint_sha256,checkpointreview.sha256(target)));
+assert(strcmp(lineage.prepared_runtime_model_sha256,checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'))));
+startup=jsondecode(fileread(fullfile(root,'configs','recovery_startup_fix.json')));
+startup.checkpoint_episode=2;
+startupFile=fullfile(fixture,'startup.json'); trainingcurriculum.write_json(startupFile,startup);
+fresh=prepare_recovery_training(info.sessionDir,startupFile);
+assert(fresh.actorLearnRate==2.5e-5 && fresh.stageIndex==2);
+assert(~strcmp(fresh.sessionDir,info.sessionDir));
+freshSpec=jsondecode(fileread(fullfile(fresh.sessionDir,'model.json')));
+assert(isequaln(freshSpec,spec));
+try
+    prepare_recovery_training(source,startupFile);
+    error('Test:UnexpectedSource','Wrong learning-rate parent accepted.');
+catch err
+    assert(strcmp(err.identifier,'Recovery:SourceRate'));
+end
 original=load(fullfile(source,'checkpoints','Agent2.mat'),'saved_agent');
 child=load(target,'Agent_Stage2');
 assert(isequaln(getLearnableParameters(getActor(original.saved_agent)),getLearnableParameters(getActor(child.Agent_Stage2))));

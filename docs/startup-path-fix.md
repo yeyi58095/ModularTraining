@@ -42,3 +42,27 @@ disp(jsonencode(evaluation.results,PrettyPrint=true))
 原版10700重現實驗室133步結果。修正版10700在200步內未提前終止，不能推論已能完成3000步或修好長期收斂；10600的短段reward沒有上升。兩版初始路徑行為不同，分數變動不單獨代表模型更好。原始A/B結果及MAT保存在本機忽略目錄diagnostic_packages/startup_ab.json及startup_v*_ep*.mat。
 
 初始化缺陷修正不等於已修復PPO學習退步；不能據此解除guard或覆蓋原實驗續訓。調查背景見lab-trace-findings-2026-10-10.md。
+
+## 實驗室3000步上限評估回報
+
+使用者提供 evaluation_20261010_200516_tpa46ecfc4 的完整輸出，六項評估完成（seed101，CPU，確定策略）。10600直線/S彎/固定轉彎步數3000/3000/1578，reward3101.85/3184.58/1387.23；10700步數3000/3000/1589，reward2530.87/2686.42/1413.17。
+
+對照原版10700的133/134/133步，初始化修正消除了這組固定條件下的早期失敗。應修正之前把它概括為舊任務能力完全遺失的說法：相同權重在修正版仍可完成直線/S彎，原版的啟動行為是失敗的重要因素。但10700仍有較低reward，直線/S彎observation7 RMS為0.67378/0.65355，相比10600的0.18496/0.12763高；依已驗證d/30映射，模型路徑誤差RMS約20.21/19.61m對5.55/3.83m。兩者第三階段仍未完成，不能宣稱退步或課程難度問題全部解決。
+
+優先保留10600作為下一次獨立試驗候選，不直接resume暫停分支最新11000。若續訓需建立新run並記錄修正版模型雜湊，保留舊環境資料；本回報不代表已授權啟動訓練。此次新trace尚未傳回本機，不能假設固定轉彎仍由相同終止條件觸發。
+
+## 新實驗配方與 JSON 的位置
+
+使用者後續決定另開實驗。`configs/recovery_startup_fix.json` 指定从第一個 recovery 分支10600接續，要求來源actor LR=2.5e-5、scale=1，不再減半；100回合/段、新增上限1000，保留原guard規則與父control的硬體設定。prepare仍不啟動，正式執行由使用者呼叫retry。
+
+```matlab
+clear prepare_recovery_training retry
+parentSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
+    "20261010_155437_recovery_tpebed29a8");
+fresh = prepare_recovery_training(parentSession,"configs/recovery_startup_fix.json");
+info = retry(resume=fresh.sessionDir);
+```
+
+共用課程仍是 experiments/progressive_v1/curriculum.json。新run複製父實驗的curriculum.json和assets快照，從10600所屬stage3接續；curriculum_state.json仍留在新run中，不會寫回共用課程或重跑stage1。這是接續學習的新run，不是新隨機初始化的agent。
+
+新run的control.json繼承硬體、model.json記錄不變學習率、recovery.json記錄來源和準備當下的runtime模型/引擎SHA256。SHA只記錄準備時版本，不是隔離整份runtime；之後仍不得在活動訓練期間更新runtime。沿用歷史時guard亦會參考同stage舊歷史，這是保守停止規則，不是新舊環境分數完全可比的證據。
