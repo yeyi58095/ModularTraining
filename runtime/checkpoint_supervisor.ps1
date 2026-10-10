@@ -276,7 +276,11 @@ try {
         $result = $null
         if (Test-Path -LiteralPath $resultFile) { $result = Get-Content -LiteralPath $resultFile -Raw | ConvertFrom-Json }
         if ($exitCode -eq 0 -and $null -ne $result -and $result.pause) {
-            Write-Status 'paused' "Curriculum stage $($result.stageId) reached its episode budget without passing; saved progress retained."
+            if ($result.pauseReason) {
+                Write-Status 'paused' "Training guard: $($result.pauseReason); saved progress retained, no automatic rollback."
+            } else {
+                Write-Status 'paused' "Curriculum stage $($result.stageId) reached its episode budget without passing; saved progress retained."
+            }
             break
         }
         if ($exitCode -eq 0 -and $null -ne $result -and $result.success) {

@@ -93,6 +93,20 @@ class Reports(unittest.TestCase):
         with self.assertRaises(ValueError):
             report.export_report(self.session, "dorm")
 
+    def test_guard_metadata_is_bounded_and_path_free(self):
+        self.log(1, episode(10700))
+        (self.session / "training_guard_state.json").write_text(json.dumps({
+            "paused": True, "reason": "suspected_regression", "low_windows": 3,
+            "checkpoint": "C:/SECRET/Agent10700.mat", "stage_id": "SECRET"}))
+        (self.session / "recovery.json").write_text(json.dumps({
+            "parent_episode": 10600, "parent_session": "SECRET", "actor_learning_rate_after": 2.5e-5}))
+        data = report.export_report(self.session, "lab")
+        monitor = data["recovery_monitor"]
+        self.assertTrue(monitor["training_guard_state"]["paused"])
+        self.assertEqual(monitor["training_guard_state"]["reason"], "suspected_regression")
+        self.assertEqual(monitor["recovery"]["parent_episode"], 10600)
+        self.assertNotIn("SECRET", json.dumps(data))
+
     def test_curriculum_health_uses_current_stage_only(self):
         self.log(1, "".join(episode(n, 2000 if n <= 10 else 100) for n in range(1, 71)))
         (self.session / "curriculum.json").write_text('{}')

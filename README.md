@@ -205,3 +205,7 @@ ModularTraining/
 `tests/test_end_to_end.m`：CPU／1 worker 的單回合真實 UAV 訓練，使用測試專用的低成功門檻，驗證 supervisor、模型快照、checkpoint／成功存檔及 episode CSV；不代表模型已學會任務。
 `tests/test_episode_format.ps1`：驗證 MATLAB Episode 行的補空白格式及去重。
 未驗證此新副本的遠端 6-worker 長時間訓練或所有自訂架構。
+
+## 有上限的恢復試驗
+
+`prepare_recovery_training(parentSession)` 依 `configs/recovery_actor_half.json` 從指定 checkpoint 另建新實驗；預設 10600、actor LR 減半，每段100回合、最多新增1000回合。具備同階段退步的保存後暫停規則，沒有自動回滾／啟動。詳見 [實驗室操作與限制](docs/recovery-training.md)。

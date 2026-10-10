@@ -16,9 +16,18 @@ function checkpoint_attempt(configFile)
         addpath(cfg.modularRoot);
         checkpointOverrides = training(cfg,checkpointOverrides);
         if (isfield(cfg,'curriculumEnabled') && cfg.curriculumEnabled) || isfile(fullfile(cfg.sessionDir,'curriculum.json'))
-            [context,outcome]=trainingcurriculum.prepare(cfg.sessionDir,resumeFile);
-            checkpointOverrides.curriculumContext=context;
-            checkpointOverrides.maxEpisodes=min(cfg.episodesPerProcess,context.remainingEpisodes);
+            outcome=trainingguard.check(cfg.sessionDir,resumeFile);
+            if isempty(outcome)
+                [context,outcome]=trainingcurriculum.prepare(cfg.sessionDir,resumeFile);
+                checkpointOverrides.curriculumContext=context;
+                checkpointOverrides.maxEpisodes=min(cfg.episodesPerProcess,context.remainingEpisodes);
+                guardFile=fullfile(cfg.sessionDir,'training_guard.json');
+                if isfile(guardFile)
+                    rules=jsondecode(fileread(guardFile));
+                    remaining=rules.origin_episode+rules.max_additional_episodes-context.resumeEpisode;
+                    checkpointOverrides.maxEpisodes=min(checkpointOverrides.maxEpisodes,remaining);
+                end
+            end
         end
     end
     if isempty(outcome)

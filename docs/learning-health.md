@@ -28,3 +28,7 @@
 ## 2026-10-10：手動比較工具
 
 compare_training_checkpoints 已提供停止後的固定無風任務比較，不更新權重；見 [操作與限制](checkpoint-comparison.md)。這補上有限範圍的手動評估入口，仍沒有持續監控、獨立泛化測試集、自動 best 選擇、回滾或分支恢復。
+
+## 2026-10-10：恢復分支的 runtime guard
+
+現在也支援 [恢復試驗](recovery-training.md) 的保存後自動暫停。這是 +trainingguard 的另一組規則，並非本文件原本 learning_health.py 的匯出診斷：每段100回合、連續3個窗口、reward 和 steps 同時下降，或新增1000回合預算用完則暫停。原本沒有 training_guard.json 的實驗不會自動啟用。狀態與有限來源資訊可由 exporter 的 recovery_monitor 分享。

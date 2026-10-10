@@ -38,6 +38,7 @@ if strlength(string(opt.curriculum))>0
 end
 if isResume
     folder = projectPath(root,opt.resume);
+    assert(~endsWith(folder,'.preparing'),'Recovery:Incomplete','Recovery preparation is incomplete.');
     assert(isfile(fullfile(folder,'model.json')) && isfile(fullfile(folder,'control.json')), ...
         'Modular:ResumeFolder','Resume requires a ModularTraining session folder with model.json and control.json.');
     spec = jsondecode(fileread(fullfile(folder,'model.json')));

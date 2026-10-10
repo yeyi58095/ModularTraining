@@ -43,9 +43,9 @@
     {
       "id": "adapter",
       "type": "backend",
-      "label": "課程階段規劃器",
+      "label": "課程規劃與退步保護",
       "sublabel": "+trainingcurriculum/",
-      "tag": "依存檔歷史檢查條件與階段預算",
+      "tag": "+trainingguard/ · 保存後判斷",
       "pos": [
         720,
         60
@@ -163,9 +163,9 @@
     {
       "id": "migration",
       "type": "backend",
-      "label": "已停止實驗的遷移",
-      "sublabel": "migrate_training_session.ps1",
-      "tag": "完整複製與雜湊驗證；保留原件",
+      "label": "停止後的遷移／恢復分支",
+      "sublabel": "prepare_recovery_training.m",
+      "tag": "保留父實驗；另存候選權重與設定",
       "pos": [
         40,
         500
@@ -277,10 +277,10 @@
     },
     {
       "dot": "emerald",
-      "title": "按階段條件前進",
+      "title": "條件驅動與保存後暫停",
       "items": [
-        "每 100 回合存檔；每段最多 1000 回合後檢查課程。",
-        "達標換階段、耗盡預算暫停；退步診斷不會自動回滾。"
+        "一般每段 1000；恢復每段 100，最多新增 1000 回合。",
+        "啟用 guard 後可暫停疑似退步；不自動回滾。"
       ]
     }
   ]

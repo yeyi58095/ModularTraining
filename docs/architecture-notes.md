@@ -29,7 +29,7 @@
 
 - 箭頭表示主要控制／資料關係，不全是函式呼叫；課程規劃器會將階段環境回傳給 attempt，圖中省略返回箭頭。引擎段末另呼叫 outcome 判斷條件。
 - 「診斷、曲線與精簡報告」將資料與離線工具合併呈現：supervisor 收集日誌，但不會自動啟動畫圖或匯出報告。Database 圖例表示檔案資料，不是資料庫服務。
-- 模型快照不包含整套 runtime；同一實驗不是任意版本執行程式的完整封裝。獨立 evaluator、最佳評估模型選擇、退步自動回滾尚未實作。
+- 模型快照不包含整套 runtime；同一實驗不是任意版本執行程式的完整封裝。已提供固定無風任務的手動 evaluator；最佳評估模型自動選擇、退步自動回滾尚未實作。
 - 對照來源：retry.m、training.m、configs/lab_gpu6.json、experiments/progressive_v1/curriculum.json、+trainingcurriculum/prepare.m 與 outcome.m、runtime/checkpoint_supervisor.ps1、runtime/training_engine.m、migrate_training_session.ps1、verify_training_session.m、plot_training_rewards.py。
 - 本次使用 archify 技能產生 architecture 類型 HTML；繁體中文內容，固定 Viewer UI 與 HTML 語系為英文。
 - architecture-receipt.json：9/9 靜態 artifact 檢查通過，composition 0 errors／0 warnings，包含 specification 與 artifact SHA256／bytes。
@@ -37,3 +37,9 @@
 - 人工影像檢閱：檢查四張端點尺寸的明暗截圖，節點、箭頭、卡片與圖例未見裁切或遮擋；此判斷獨立於自動收據的 visualReview=pending，未改寫該欄位。
 
 頂層 experiments/<課程>/curriculum.json 是共享課程定義，assets/ 是輸入；各 run 的 curriculum_state.json 是獨立進度。organize_training_reports.ps1 可複製整理舊報告，保留原件與模型。
+
+## 恢復分支與段末保護
+
+prepare_recovery_training 複製指定 checkpoint 的權重和歷史到新 run，只在新副本設定 actor learning rate，保留來源雜湊。圖中停止後處理節點合併表示原 migrate_training_session 與新增分支工具。+trainingguard 由 attempt 開始前及 engine 完成 Agent_Final 保存後呼叫；依同階段保存歷史判斷，透過 result.pause 讓 supervisor 正常暫停。課程規劃節點概括了這項決策，省略 engine 到 guard 的返回呼叫。
+
+恢復配方預設每段 100、總新增 1000 回合；guard 三個 100 回合區間 reward 和 steps 同時低於合格參考的 50% 時暫停。既有沒有 training_guard.json 的 run 行為不變。learning_health.py 仍只匯出診斷，與這個執行時 guard 分開；不會自動跑獨立評估、改參數或重新啟動分支。

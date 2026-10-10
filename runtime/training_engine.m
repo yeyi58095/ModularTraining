@@ -405,8 +405,11 @@ if isempty(curriculumContext)
     successSummary = checkpoint_mark_success(saveDir, training_stage2.EpisodeReward, ...
         targetReward, averageWindow);
 else
-    successSummary = trainingcurriculum.outcome(curriculumContext,training_stage2.EpisodeReward, ...
-        training_stage2.EpisodeSteps,fullfile(saveDir,'Agent_Final.mat'));
+    successSummary = trainingguard.check(saveDir,fullfile(saveDir,'Agent_Final.mat'));
+    if isempty(successSummary)
+        successSummary = trainingcurriculum.outcome(curriculumContext,training_stage2.EpisodeReward, ...
+            training_stage2.EpisodeSteps,fullfile(saveDir,'Agent_Final.mat'));
+    end
 end
 fprintf('Training stopped normally. Saved in:\n%s\n', saveDir);
 %% Helper Functions

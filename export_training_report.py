@@ -70,6 +70,29 @@ def settings(value, keys):
             if key in value and numeric(value[key]) is not None}
 
 
+def recovery_metadata(session, warnings):
+    result = {}
+    for filename, keys in {
+        "training_guard.json": ("window", "patience", "reward_ratio", "steps_ratio",
+                                "min_reference_reward", "min_reference_steps", "origin_episode",
+                                "max_additional_episodes"),
+        "training_guard_state.json": ("paused", "suspected_regression", "low_windows", "episode",
+                                      "stage_index", "reference_reward", "reference_steps",
+                                      "reference_end_episode", "latest_reward", "latest_steps"),
+        "recovery.json": ("parent_episode", "actor_learning_rate_before", "actor_learning_rate_after",
+                          "weights_preserved"),
+    }.items():
+        if not (session / filename).is_file():
+            continue
+        raw = read_json(session / filename, warnings)
+        value = settings(raw, keys)
+        if filename == "training_guard_state.json":
+            value["reason"] = raw.get("reason") if raw.get("reason") in {
+                "continue", "suspected_regression", "recovery_budget"} else "unknown"
+        result[Path(filename).stem] = value
+    return result
+
+
 def summarize(rows):
     if not rows:
         return None
@@ -211,6 +234,8 @@ def export_report(session, machine, diagnostics=None, first=None, last=None, hea
     local_paths += list((ROOT / "+trainingmodels").glob("*.m"))
     local_paths += list((ROOT / "+trainingmodels").glob("*/*.m"))
     local_paths += list((ROOT / "+trainingcurriculum").glob("*.m"))
+    local_paths += list((ROOT / "+trainingguard").glob("*.m"))
+    local_paths += [ROOT / "prepare_recovery_training.m"]
     if not snapshot_paths:
         warnings.append("missing:model_source snapshot")
     model_name = model.get("name", "unknown")
@@ -222,7 +247,9 @@ def export_report(session, machine, diagnostics=None, first=None, last=None, hea
     report = dict(schema_version=1, machine=machine, session_id=session.name,
                   exported_at_utc=datetime.now(timezone.utc).isoformat(), model=model_name,
                   model_settings=settings(model, MODEL_KEYS), control_settings=control_settings,
-                  status=state, curriculum=curriculum, learning_health=health, episode_count=len(rows), first_episode=rows[0]["episode"],
+                  status=state, curriculum=curriculum, learning_health=health,
+                  recovery_monitor=recovery_metadata(session, warnings),
+                  episode_count=len(rows), first_episode=rows[0]["episode"],
                   last_episode=rows[-1]["episode"], duplicate_lines_replaced=duplicates,
                   missing_episodes=rows[-1]["episode"] - rows[0]["episode"] + 1 - len(rows),
                   nonfinite_records_excluded=invalid, attempts_with_data=used,

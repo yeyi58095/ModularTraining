@@ -100,3 +100,12 @@
 - 結果在每次 run/reports/evaluation_<時間>_<唯一碼>/；逐次 JSON 和 MAT traces 都受 Git 忽略，可請使用者貼 evaluation.results。預設固定條件單 seed 診斷不是泛化成功率。
 - 工具鎖住已停止實驗，檢查原 checkpoint SHA256 及 sim 前後權重。IsDone 不是具體物理終止原因，observation7_rms 不是已確認公尺單位誤差。分支恢復、自動最佳模型選擇與停訓仍未實作。
 - 操作與測試見 docs/checkpoint-comparison.md；使用短系統暫存路徑做 Simulink 快取，避免 Windows 260 字元限制。不要在原 checkpoint 裡改探索模式／裝置後另存覆寫；工具只改記憶體內 agent。
+
+## 恢復試驗與自動暫停（2026-10-10 後續）
+
+- 使用者貼回實驗室評估：6100／10600 在直線及 S 彎各 3000 步，固定轉彎為399／1578；12600 三項均138步。僅證明該固定條件下退步，10600 是三個候選中的恢復起點，不稱全歷史最佳。
+- 新 prepare_recovery_training(parentSession) 預設用 configs/recovery_actor_half.json：10600、actor LR 乘0.5，其餘學習參數與課程不變。另建新 run、保留權重與歷史、記錄 recovery.json，不改父實驗，不自動訓練。model.json 與 agent optimizer rate 同步。
+- 硬體沿用父 control；段落改100回合，總新增上限1000。段落與 seed 變化也是差異，不能把效果全歸因於 LR。以 retry(resume=新session) 才正式啟動。
+- 新分支 training_guard.json：同階段100回合區間、參考 reward/steps 均>=500，連續3個區間 reward 與 steps 都低於參考的50%時，在保存後暫停；總預算到達亦暫停。training_guard_state.json 暫停保持鎖定，單純retry不繞過。
+- health_candidates/CandidateN.mat 只是訓練區間候選，不是最佳評估模型。沒有自動回滾、改參數、重啟分支或週期獨立評估；手動 compare_training_checkpoints 仍可用。learning_health.py 與 runtime guard 不同，report.json 分別呈現。
+- 本次使用既有本機 checkpoint、合成歷史與假引擎驗證，不啟動正式恢復訓練或 GPU／6 workers。配方、操作、限制見 docs/recovery-training.md。
