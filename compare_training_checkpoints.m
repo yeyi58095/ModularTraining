@@ -25,6 +25,10 @@ assert(~bdIsLoaded('FAFA_Simulation'),'Evaluation:ModelLoaded', ...
     'Use a fresh MATLAB session with FAFA_Simulation closed.');
 assert(opt.maxSteps<=3000,'Evaluation:Steps','This comparison supports at most 3000 steps.');
 assert(all(opt.seeds<=2^32-1),'Evaluation:Seed','Seeds must fit uint32.');
+assert(~isempty(opt.seeds) && numel(unique(opt.seeds))==numel(opt.seeds), ...
+    'Evaluation:Seed','Provide nonempty unique seeds.');
+assert(~isempty(opt.stages) && numel(unique(opt.stages))==numel(opt.stages), ...
+    'Evaluation:Stage','Provide nonempty unique stages.');
 plan=trainingcurriculum.load_plan(fullfile(sessionDir,'curriculum.json'),true);
 assert(all(opt.stages<=numel(plan.stages)),'Evaluation:Stage','Unknown stage.');
 % Detect drift: the evaluation fixed path must match the training path exactly.
@@ -72,34 +76,34 @@ end
 assert(~isempty(paths),'Evaluation:Missing','Select at least one checkpoint.');
 % Prepare every scenario before starting simulations; never call prepare(),
 % which performs curriculum transitions and writes curriculum_state.json.
-scenarios=cell(size(opt.stages));
+% One saved scenario per stage/seed; path draws are independent of wind draws.
+randomSource=fileread(fullfile(root,'+checkpointreview','random_path.m'));
+a=strfind(engine,'function [waypoints, velocity] = createPath_Stage2()');
+b=strfind(engine,'% Display path');
+assert(numel(a)==1 && numel(b)==1 && strcmp( ...
+    strrep(strtrim(engine(a:b-1)),char(13),''), ...
+    strrep(strrep(strtrim(randomSource),'random_path()','createPath_Stage2()'),char(13),'')), ...
+    'Evaluation:PathDrift','Random-path implementation changed; update evaluator.');
+scenarios=cell(numel(opt.stages),numel(opt.seeds));
 global TARGET_SPEED DT WAYPOINT_SPACING
 oldGlobals={TARGET_SPEED,DT,WAYPOINT_SPACING};
 globalGuard=onCleanup(@() restoreGlobals(oldGlobals)); %#ok<NASGU>
 TARGET_SPEED=15; DT=0.1; WAYPOINT_SPACING=1.5;
 for i=1:numel(opt.stages)
-    stage=plan.stages{opt.stages(i)};
-    assert(all(stage.wind.east_mps==0) && all(stage.wind.north_mps==0) && ...
-        all(stage.wind.turbulence==0),'Evaluation:Wind','This first comparison supports calm stages only.');
-    switch stage.trajectory.type
-        case 'mat'
-            data=trainingcurriculum.load_trajectory(stage.trajectory,char(sessionDir));
-        case 'fixed_builtin'
-            [data.waypoints,data.velocity]=checkpointreview.fixed_path();
-        otherwise
-            error('Evaluation:Trajectory','Only fixed MAT and fixed_builtin stages are supported.');
+    for j=1:numel(opt.seeds)
+        scenarios{i,j}=checkpointreview.scenario(plan.stages{opt.stages(i)}, ...
+            char(sessionDir),opt.seeds(j));
     end
-    data.id=stage.id; scenarios{i}=data;
 end
 [~,tag]=fileparts(tempname); tag=tag(1:10);
 reports=fullfile(sessionDir,'reports'); if ~isfolder(reports), mkdir(reports); end
 out=fullfile(reports,"evaluation_"+string(datetime('now','Format','yyyyMMdd_HHmmss'))+"_"+tag); mkdir(out);
-report=struct('schema_version',1,'status','running','session_id',char(extractAfter(sessionDir, ...
+report=struct('schema_version',2,'status','running','session_id',char(extractAfter(sessionDir, ...
     strlength(fileparts(sessionDir))+1)),'outputDir',char(out), ...
     'matlab_release',version('-release'),'device','cpu','use_exploration',false, ...
     'max_steps',opt.maxSteps,'seeds',opt.seeds,'stages',opt.stages, ...
-    'scope','Fixed calm tasks at model initial state; not a held-out generalization test.', ...
-    'termination_detail','IsDone only; physical termination cause is not instrumented.', ...
+    'scope','Paired seeded paths and sampled integer winds at model initial state; diagnostic scenarios, not certified generalization.', ...
+    'termination_detail','Terminal observation threshold evidence only; not instrumented IsDone branch attribution.', ...
     'checkpoints',{{}},'results',{{}});
 for i=1:numel(paths)
     report.checkpoints{i}=struct('file',char(paths(i)),'episode',episodes(i), ...
@@ -108,10 +112,12 @@ end
 report.runtime_sha256=checkpointreview.sha256(fullfile(runtime,'training_engine.m'));
 report.model_sha256=checkpointreview.sha256(fullfile(runtime,'FAFA_Simulation.slx'));
 report.curriculum_sha256=checkpointreview.sha256(fullfile(sessionDir,'curriculum.json'));
+report.random_path_sha256=checkpointreview.sha256(fullfile(root,'+checkpointreview','random_path.m'));
+report.turbulence_seed_policy='Internal noise seeds remain as stored in the model; MATLAB scenario seed does not independently seed every Simulink noise source.';
 save(fullfile(out,'scenarios.mat'),'scenarios','opt');
 writeReport(fullfile(out,'evaluation.json'),report);
 fprintf('Evaluation only: %d checkpoints x %d stages x %d seeds. Output: %s\n', ...
-    numel(paths),numel(scenarios),numel(opt.seeds),out);
+    numel(paths),numel(opt.stages),numel(opt.seeds),out);
 % Keep caches and all outputs away from training artifacts.
 fileConfig=Simulink.fileGenControl('getConfig');
 fileGuard=onCleanup(@() Simulink.fileGenControl('setConfig','config',fileConfig)); %#ok<NASGU>
@@ -133,10 +139,11 @@ try
     report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
     for c=1:numel(paths)
-        for s=1:numel(scenarios)
-            for seed=opt.seeds
+        for s=1:numel(opt.stages)
+            for j=1:numel(opt.seeds)
+                seed=opt.seeds(j); scenario=scenarios{s,j};
                 report.phase='load_checkpoint';
-                report.current=struct('episode',episodes(c),'stage_id',scenarios{s}.id,'seed',seed);
+                report.current=struct('episode',episodes(c),'stage_id',scenario.id,'seed',seed);
                 variables=whos('-file',paths(c)); agentName='saved_agent';
                 if ~any(strcmp({variables.name},agentName)), agentName='Agent_Stage2'; end
                 data=load(paths(c),agentName); agent=data.(agentName);
@@ -149,9 +156,9 @@ try
                 assignin('base','Agent_Stage2',agent);
                 env=rlSimulinkEnv('FAFA_Simulation','FAFA_Simulation/RL Agent', ...
                     getObservationInfo(agent),getActionInfo(agent),'UseFastRestart','off');
-                env.ResetFcn=@(in) resetScenario(in,scenarios{s});
+                env.ResetFcn=@(in) resetScenario(in,scenario);
                 rng(seed,'twister');
-                fprintf('Evaluating episode %d / %s / seed %d ...\n',episodes(c),scenarios{s}.id,seed);
+                fprintf('Evaluating episode %d / %s / seed %d ...\n',episodes(c),scenario.id,seed);
                 report.phase='simulate';
                 experience=sim(env,agent,rlSimulationOptions('MaxSteps',opt.maxSteps, ...
                     'NumSimulations',1,'UseParallel',false,'StopOnError','on'));
@@ -159,7 +166,9 @@ try
                     isequaln(beforeCritic,getLearnableParameters(getCritic(agent))), ...
                     'Evaluation:Weights','Unexpected weight mutation during evaluation.');
                 row=checkpointreview.summarize(experience,opt.maxSteps);
-                row.checkpoint_episode=episodes(c); row.stage_id=scenarios{s}.id; row.seed=seed;
+                row.wind_east_mps=scenario.wind(1); row.wind_north_mps=scenario.wind(2);
+                row.turbulence=scenario.wind(3);
+                row.checkpoint_episode=episodes(c); row.stage_id=scenario.id; row.seed=seed;
                 trace=sprintf('ep%d_stage%d_seed%d.mat',episodes(c),opt.stages(s),seed);
                 save(fullfile(out,trace),'experience','-v7.3'); row.trace=trace;
                 report.results{end+1}=row;
@@ -191,6 +200,7 @@ catch err
     end
     rethrow(err);
 end
+report.summary=checkpointreview.aggregate(report.results);
 report.phase='complete';
 writeReport(fullfile(out,'evaluation.json'),report);
 disp(struct2table([report.results{:}]));
@@ -198,8 +208,9 @@ fprintf('Complete. No training or rollback. Share: %s\n',fullfile(out,'evaluatio
 end
 
 function in=resetScenario(in,data)
-for name=["wind_E0","wind_N0","wind_turbulance_value0"]
-    in=setVariable(in,name,0,'Workspace','FAFA_Simulation');
+names=["wind_E0","wind_N0","wind_turbulance_value0"];
+for k=1:3
+    in=setVariable(in,names(k),data.wind(k),'Workspace','FAFA_Simulation');
 end
 in=setVariable(in,'waypoints',data.waypoints,'Workspace','FAFA_Simulation');
 in=setVariable(in,'velocity',data.velocity,'Workspace','FAFA_Simulation');

@@ -1,6 +1,6 @@
 # 停訓後比較 checkpoint
 
-`compare_training_checkpoints` 使用 `sim`，不呼叫 `train`、不回滾、不改寫課程狀態或 MAT checkpoint。先評估再決定恢復起點；目前沒有從指定 checkpoint 建立分支課程的入口。
+`compare_training_checkpoints` 使用 `sim`，不呼叫 `train`、不回滾、不改寫課程狀態或 MAT checkpoint。先評估再決定是否續訓；另開分支使用 prepare_recovery_training。
 
 ## 實驗室操作
 
@@ -21,7 +21,7 @@ disp(jsonencode(evaluation.results,PrettyPrint=true))
 
 預設比較 6100、10600 與最新 checkpoint，各在課程快照前三階段評估一次，最多各 3000 步。若最新與前兩個重複則去重。checkpoint 的 episode 以已保存訓練歷史驗證；最新候選不可讀時明確報錯，不偷偷改用較舊模型。
 
-使用 CPU、單程序，不啟動 worker pool，不更改正式 GPU／6 workers 設定。明確關閉策略探索，各次 sim 重載 agent；相同 seed、相同保存軌跡、模型初始條件與零風。此版本只接受無風的 MAT 或 fixed_builtin 階段，拒絕 random 與風場階段。
+使用 CPU、單程序，不啟動 worker pool，不更改正式 GPU／6 workers 設定。明確關閉策略探索，各次 sim 重載 agent；相同 seed、相同保存軌跡、模型初始條件與零風。以上為預設前三階段；2026-10-11 新增 random 與風場評估，使用方式及配對 seed、終端門檻證據的限制見 [Stage 5 診斷](stage5-evaluation.md)。
 
 ## 結果
 
@@ -33,7 +33,7 @@ disp(jsonencode(evaluation.results,PrettyPrint=true))
 
 逐次保存結果；`status=complete` 才表示整組成功。失敗會記錄 failed 與錯誤，不能把部分完成當全組比較。Ctrl+C 可以停止評估，不會動訓練存檔；中斷時 JSON 可能仍為 running，已保存列可讀取但不是完整結果。編譯快取放在系統暫存目錄，避免 Windows 深層路徑限制；路徑會寫入 JSON。
 
-`reached_step_limit` 只表示跑到本次設定上限，不保證路徑完成或控制正確。`environment_done` 只代表模型的 IsDone；目前未新增物理終止原因記錄，不會把它猜成失速／越界。`observation7_rms` 是原始 observation 第 7 通道統計，不宣稱為公尺單位追蹤誤差。
+`reached_step_limit` 只表示跑到本次設定上限，不保證路徑完成或控制正確。`environment_done` 只代表模型的 IsDone；termination_evidence 新增終端 observation 門檻證據，並非直接記錄 IsDone 分支，不能推論失速；詳見 Stage 5 診斷文件。`observation7_rms` 是原始 observation 第 7 通道統計，不宣稱為公尺單位追蹤誤差。
 
 這是已訓練任務的固定條件診斷，不是獨立泛化測試。預設只有一個 seed；即使指定多個 seed，固定初始狀態／零風／確定策略也可能完全重複，不代表多個獨立測試情境。不能從此結果宣稱統計成功率。
 

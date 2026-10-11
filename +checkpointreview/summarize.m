@@ -16,5 +16,18 @@ row=struct('reward',sum(values),'steps',steps,'reached_step_limit',steps>=maxSte
     'environment_done',logical(done),'end_signal',signal, ...
     'observation7_rms',sqrt(mean(obs(7,:).^2)), ...
     'action_saturation_fraction',mean(abs(action)>=0.99));
-% Channel 7 is intentionally reported in raw observation units, not meters.
+% Evidence from terminal observations, not a claim of causal block attribution.
+row.terminal_observation7=obs(7,end);
+row.terminal_observation3=obs(3,end);
+row.observation7_abs_max=max(abs(obs(7,:)));
+row.termination_evidence='none';
+if done
+    d=abs(obs(7,end))>=50/30; roll=abs(obs(3,end))>=1;
+    if d && roll, row.termination_evidence='distance_and_roll_thresholds';
+    elseif d, row.termination_evidence='distance_threshold';
+    elseif roll, row.termination_evidence='roll_threshold';
+    else, row.termination_evidence='unknown'; end
+end
+% Threshold interpretation assumes the reviewed model's d/30 and phi/40
+% observations. Raw values and model SHA are retained for version checking.
 end

@@ -125,3 +125,9 @@
 - 2026-10-10 原要求只記錄；2026-10-11 使用者授權實作畫圖與文件。plot_training_rewards.py 預設沿 recovery.json 的 parent_session／parent_episode 追溯，祖先只取到分支 checkpoint，子 run 只取接續後的新回合；不同 run 不套用較新 attempt 覆蓋規則。CSV 帶來源欄位，stage 橘線、接續點紫線、各 run 平均 reward 分色。
 - --no-lineage 恢復單 run 畫法；--lineage-root 提供跨機搬移後的搜尋根目錄。同名來源不唯一、來源缺失、循環或錯誤繼承關係會提示，不猜測來源、不補資料。只讀日誌與 JSON、寫指定 PNG／CSV，不修改 checkpoint、課程、控制或訓練程式；訓練中可單獨更新畫圖檔並重啟畫圖程序。
 - 圖例的 prepared_runtime_model_sha256 只證明 prepare 當時環境，configured avg window 來自當下 control，不是歷史執行證據。平均 reward 保留日誌值，不跨 run 重算；未知 reward 版本不能宣稱可直接比較。不實作所有分支比較或其他指標圖。操作、限制與合成測試見 docs/run-lineage-proposal.md。
+
+## Stage 5 配對評估（2026-10-11）
+
+- 實驗室 21600 因 recovery_budget 暫停；前三項無風任務均跑滿，但 Stage 5 低分原因尚未證實。使用者授權下一步擴充評估，不授權續訓。
+- compare_training_checkpoints 現支援 random 與課程風場；相同 seed 配對路徑，另外抽樣整數風，保存 scenarios 與逐次 traces，CPU 純 sim、不改 runtime/checkpoint/guard。操作見 docs/stage5-evaluation.md。
+- summary 提供樣本完成率及最差 reward trace；終端門檻證據不是 IsDone 分支因果證明。內部 turbulence seeds 沿用 SLX；多 seed 不等於獨立噪音時序，10 組診斷不代表合格。實驗室 21600 checkpoint 尚未在本機測試。
