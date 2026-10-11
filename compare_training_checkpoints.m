@@ -9,6 +9,7 @@ arguments
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
     opt.diagnostics (1,1) logical = false
+    opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead"])} = "baseline"
 end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
@@ -127,6 +128,7 @@ Simulink.fileGenControl('set','CacheFolder',fullfile(cacheRoot,'cache'), ...
     'CodeGenFolder',fullfile(cacheRoot,'codegen'),'createDir',true);
 report.cache_directory=cacheRoot;
 report.diagnostics_enabled=opt.diagnostics;
+report.guidance_variant=char(opt.guidanceVariant);
 hadAgent=evalin('base',"exist('Agent_Stage2','var')==1"); oldAgent=[];
 if hadAgent, oldAgent=evalin('base','Agent_Stage2'); end
 agentGuard=onCleanup(@() restoreAgent(hadAgent,oldAgent)); %#ok<NASGU>
@@ -136,7 +138,7 @@ addpath(root,runtime,'-begin');
 try
     report.phase='load_model';
     modelFile=fullfile(runtime,'FAFA_Simulation.slx');
-    if opt.diagnostics
+    if opt.diagnostics || opt.guidanceVariant~="baseline"
         modelFolder=fullfile(cacheRoot,'model'); mkdir(modelFolder);
         copyfile(modelFile,fullfile(modelFolder,'FAFA_Simulation.slx'));
         modelFile=fullfile(modelFolder,'FAFA_Simulation.slx');
@@ -145,6 +147,17 @@ try
     load_system(modelFile);
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
     addpath(root,runtime,'-begin');
+    if opt.guidanceVariant=="endpoint_lookahead"
+        chart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function12');
+        assert(isscalar(chart),'Evaluation:GuidanceDrift','Expected one guidance chart.');
+        chart.Script=checkpointreview.endpoint_candidate(chart.Script);
+        scriptFile=fullfile(out,'candidate_guidance.m');
+        fid=fopen(scriptFile,'w','n','UTF-8');
+        assert(fid~=-1,'Evaluation:ReportWrite','Cannot save candidate source.');
+        fileGuardScript=onCleanup(@() fclose(fid));
+        fprintf(fid,'%s',chart.Script); clear fileGuardScript;
+        report.candidate_script_sha256=checkpointreview.sha256(scriptFile);
+    end
     report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
     if opt.diagnostics
