@@ -31,3 +31,27 @@ Simulink 內部亂數 seed 沿用模型保存值，MATLAB seed 並不獨立重�
 ## 本機驗證
 
 `tests/test_wind_evaluation.m` 通過配對路徑一致性、不同 seed 路徑差異、RNG 還原與合成終端門檻案例；使用既有短測 agent 完成四次各五步的真實 CPU 模擬（含強制非零風及 turbulence）。`tests/test_checkpoint_comparison.m` 另通過六次各五步固定路徑/MAT 模擬。source SHA、agent 權重與 caller RNG 檢查通過。這是工具整合短測，未執行訓練，未測試實驗室 21600 的表現或完整 3000 步隨機風擾可靠度。
+
+## 規劃與導引訊號重播
+
+初次 20 次評估發現205/207有風失敗、210同風況成功，離線發現見 [trace 調查](stage5-trace-findings-2026-10-11.md)。需要更多訊號時：
+
+```matlab
+clear compare_training_checkpoints
+rehash
+root=fileparts(which("compare_training_checkpoints"));
+session=fullfile(root,"experiments","progressive_v1","runs", ...
+    "20261010_224522_recovery_tpc1c4f06e");
+detail=compare_training_checkpoints(session,episodes=21600,includeLatest=false, ...
+    stages=[4 5],seeds=[205 207 210],diagnostics=true);
+disp(detail.outputDir)
+disp(jsonencode(detail.results,PrettyPrint=true))
+```
+
+共6次完整CPU純模擬。`diagnostics=true` 在系統暫存資料夾建立同名 SLX 副本，只在記憶體中啟用14路 signal logging，不改 chart 或控制演算法、不存回原模型。每個 trace 新增 `diagnostics` Dataset，記錄 E/N位置、psi/phi、完整 planner path、window path/valid/loiter/target distance、guidance target E/N、d、delta_psi、heta。完整可變長度路徑可能增加檔案大小；僅對指定少數情境使用。
+
+以 [MathWorks sim 文件](https://www.mathworks.com/help/reinforcement-learning/ref/rl.env.rlfunctionenv.sim.html) 的 `experience.SimulationInfo(1)` 取得 SimulationOutput 內的訊號資料。報告保留訊號來源 block/port；缺少必要訊號直接失敗，不以空紀錄冒充完成。這仍未直接記錄 guidance 內部 current_index/is_inside；可用實際位置及輸出路徑離線核對幾何，但有歧義時不能自行假定內部分支。
+
+請先將這次6個 reward/steps與原始205/207/210的結果比較；若不一致，須調查重播差異再推論失敗原因。最後將新的 evaluation 資料夾壓縮分享，包含新增 diagnostics 的 traces，無需 checkpoint。本機没有21600 agent，因此完整實驗室重播仍需在實驗室執行。
+
+2026-10-11 本機 `tests/test_evaluation_diagnostics.m` 通過：同 checkpoint、seed、random 路徑分別做一般與 diagnostics 模式各110步 CPU純模擬，reward、observation、action逐值完全一致；取得14路訊號並跨過約9.9秒的週期更新，原SLX SHA256不變。這不是21600實驗室模型的完整重播驗證。

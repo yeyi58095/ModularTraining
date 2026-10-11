@@ -8,6 +8,7 @@ arguments
     opt.stages (1,:) double {mustBeInteger,mustBePositive} = [1 2 3]
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
+    opt.diagnostics (1,1) logical = false
 end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
@@ -125,6 +126,7 @@ cacheRoot=fullfile(tempdir,['ce_' tag]);
 Simulink.fileGenControl('set','CacheFolder',fullfile(cacheRoot,'cache'), ...
     'CodeGenFolder',fullfile(cacheRoot,'codegen'),'createDir',true);
 report.cache_directory=cacheRoot;
+report.diagnostics_enabled=opt.diagnostics;
 hadAgent=evalin('base',"exist('Agent_Stage2','var')==1"); oldAgent=[];
 if hadAgent, oldAgent=evalin('base','Agent_Stage2'); end
 agentGuard=onCleanup(@() restoreAgent(hadAgent,oldAgent)); %#ok<NASGU>
@@ -133,11 +135,21 @@ cd(runtime);
 addpath(root,runtime,'-begin');
 try
     report.phase='load_model';
-    load_system(fullfile(runtime,'FAFA_Simulation.slx'));
+    modelFile=fullfile(runtime,'FAFA_Simulation.slx');
+    if opt.diagnostics
+        modelFolder=fullfile(cacheRoot,'model'); mkdir(modelFolder);
+        copyfile(modelFile,fullfile(modelFolder,'FAFA_Simulation.slx'));
+        modelFile=fullfile(modelFolder,'FAFA_Simulation.slx');
+        cd(modelFolder);
+    end
+    load_system(modelFile);
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
     addpath(root,runtime,'-begin');
     report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
+    if opt.diagnostics
+        report.diagnostic_signals=checkpointreview.instrument_model('FAFA_Simulation');
+    end
     for c=1:numel(paths)
         for s=1:numel(opt.stages)
             for j=1:numel(opt.seeds)
@@ -170,7 +182,20 @@ try
                 row.turbulence=scenario.wind(3);
                 row.checkpoint_episode=episodes(c); row.stage_id=scenario.id; row.seed=seed;
                 trace=sprintf('ep%d_stage%d_seed%d.mat',episodes(c),opt.stages(s),seed);
-                save(fullfile(out,trace),'experience','-v7.3'); row.trace=trace;
+                if opt.diagnostics
+                    simulationOutput=experience.SimulationInfo(1);
+                    diagnostics=simulationOutput.get('review_signals');
+                    assert(isa(diagnostics,'Simulink.SimulationData.Dataset'), ...
+                        'Evaluation:Logging','Diagnostic signals were not returned.');
+                    for signal=string({report.diagnostic_signals.name})
+                        logged=diagnostics.getElement(char(signal));
+                        assert(~isempty(logged.Values),'Evaluation:Logging','Missing signal: %s',signal);
+                    end
+                    save(fullfile(out,trace),'experience','diagnostics','-v7.3');
+                else
+                    save(fullfile(out,trace),'experience','-v7.3');
+                end
+                row.trace=trace;
                 report.results{end+1}=row;
                 report.phase='save_result';
                 writeReport(fullfile(out,'evaluation.json'),report);
@@ -184,6 +209,8 @@ try
             'Evaluation:SourceChanged','Source checkpoint changed during evaluation.');
     end
     report.status='complete'; report.weights_unchanged=true;
+    assert(strcmp(report.model_sha256,checkpointreview.sha256(fullfile(runtime,'FAFA_Simulation.slx'))), ...
+        'Evaluation:SourceChanged','Original runtime model changed during evaluation.');
 catch err
     % Keep this inline: even a pre-bound package handle can fail to resolve
     % after a model callback or cache configuration changes MATLAB's path.
