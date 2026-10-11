@@ -4,8 +4,9 @@ model=fullfile(root,'runtime','FAFA_Simulation.slx'); before=checkpointreview.sh
 assert(~bdIsLoaded('FAFA_Simulation')); load_system(model);
 guard=onCleanup(@() close_system('FAFA_Simulation',0));
 chart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function12');
-production=chart.Script;
+production=strrep(chart.Script,sprintf('\r\n'),newline);
 original=fileread(fullfile(root,'tests','fixtures','guidance_before_endpoint.m.txt'));
+original=strrep(original,sprintf('\r\n'),newline);
 modified=checkpointreview.endpoint_candidate(original);
 modified2=checkpointreview.endpoint_candidate(original,true);
 assert(strcmp(strtrim(production),strtrim(modified2)),'Production guidance differs from validated v2.');
