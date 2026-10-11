@@ -134,3 +134,4 @@
 - 使用者提供完整20次Stage4/5評估ZIP：無風10/10、有風8/10；205/207在104.2/74.3秒達d≈50，動作反向接近路徑更新時點，未證實因果。純離線比對與限制見 docs/stage5-trace-findings-2026-10-11.md。
 - diagnostics=true 只在暫存SLX副本啟用訊號記錄，新增位置、planner/window paths及guidance目標；原runtime/checkpoint不改。下一步實驗室重播205/207/210並核對原結果，保持訓練暫停。未授權自動重啟訓練。
 - 詳細ZIP證實205/207失敗前地速16.3–16.4m/s、越過當前path末點，目標落到後方，valid更新後跳回前方；終端獨立折線距離與d一致。不能單凭此認定唯一根因。新增評估專用 guidanceVariant="endpoint_lookahead"，只在暫存副本沿末段切線補足lookahead，不動正式SLX/reward/IsDone。說明與A/B指令見 docs/endpoint-lookahead-candidate.md；尚未驗證21600候選效果，不得啟動續訓或宣稱修復收斂。
+- 第一版候選在實驗室205有風改善至3000、207延至1145仍失敗；詳細trace確認109秒越出包圍範圍時outside分支退回舊終點。第二版 endpoint_lookahead_v2 僅對outside且最近點為末點、沿切線超越、側偏≤30m時延伸目標，其餘保留。不改正式模型；第二版21600效果仍待實驗室A/B，不可宣稱已解決。

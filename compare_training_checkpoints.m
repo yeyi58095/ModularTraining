@@ -9,7 +9,7 @@ arguments
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
     opt.diagnostics (1,1) logical = false
-    opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead"])} = "baseline"
+    opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2"])} = "baseline"
 end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
@@ -147,10 +147,10 @@ try
     load_system(modelFile);
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
     addpath(root,runtime,'-begin');
-    if opt.guidanceVariant=="endpoint_lookahead"
+    if opt.guidanceVariant~="baseline"
         chart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function12');
         assert(isscalar(chart),'Evaluation:GuidanceDrift','Expected one guidance chart.');
-        chart.Script=checkpointreview.endpoint_candidate(chart.Script);
+        chart.Script=checkpointreview.endpoint_candidate(chart.Script,opt.guidanceVariant=="endpoint_lookahead_v2");
         scriptFile=fullfile(out,'candidate_guidance.m');
         fid=fopen(scriptFile,'w','n','UTF-8');
         assert(fid~=-1,'Evaluation:ReportWrite','Cannot save candidate source.');

@@ -28,3 +28,28 @@ disp(jsonencode(candidate.results,PrettyPrint=true))
 本機純函式測試包含越過端點、接近端點和非末端目標；另用既有短測agent做110步CPU純模擬檢查整合，原SLX雜湊必須不變。本機尚無21600 checkpoint，沒有替代實驗室完整A/B驗證。
 
 2026-10-11 上述測試已通過：越過直線終點時原目標100、候選160；接近終點且側偏10m時候選目標140，d仍為10；非末端情境輸出相同。候選模型完成110步真實CPU純模擬且來源SLX SHA不變。短測未重現實驗室失敗，不能視為修正效果驗證。
+
+## 第二版：外部分支的末端超越
+
+第一版實驗室結果：205有風3000步，207為1145步，210仍3000；三條無風皆3000。詳細訊號顯示207在109秒超出path包圍範圍（min/max±30m）時，轉入未修改的outside分支，目標退回身後。不能稱第一版已完全修復。
+
+`guidanceVariant="endpoint_lookahead_v2"` 保留第一版inside處理；outside分支新增三個同時必要條件：當前path最近waypoint是末點、沿末段切線已超過末點、到末段延長線的側向距離≤30m。符合才以投影位置加50m作目標；其他outside狀況維持原邏輯。不改原d、heta濾波、reward、IsDone、planner或更新頻率。30m沿用原margin，是候選的工程界線而非安全保證，跨出側偏界線仍可能切回舊邏輯。
+
+實驗室先更新，在相同session執行：
+
+```matlab
+clear compare_training_checkpoints
+rehash
+root=fileparts(which("compare_training_checkpoints"));
+session=fullfile(root,"experiments","progressive_v1","runs", ...
+    "20261010_224522_recovery_tpc1c4f06e");
+candidate2=compare_training_checkpoints(session,episodes=21600,includeLatest=false, ...
+    stages=[4 5],seeds=[205 207 210],diagnostics=true, ...
+    guidanceVariant="endpoint_lookahead_v2");
+disp(candidate2.outputDir)
+disp(jsonencode(candidate2.results,PrettyPrint=true))
+```
+
+與baseline及第一版比較，特別查看207是否仍退回身後目標，以及205/210及無風是否退步。未通過廣泛seed與前階段評估前不部署正式模型、不續訓。baseline、v1、v2都可用相同工具獨立重播，各自保留候選原始碼及SHA。
+
+第二版本機測試已通過：outside末端超越、包圍邊界兩側目標連續、側偏40m和起點後方維持原結果、旋轉90度路徑；另完成110步真實CPU純模擬，原SLX雜湊不變。純函式比較重設persistent歷史以保持兩版本起始狀態一致。尚未驗證實驗室21600的第二版效果。
