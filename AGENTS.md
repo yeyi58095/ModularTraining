@@ -119,3 +119,9 @@
 - 初始化修正A/B：實驗室10600與10700各在原版/修正版直線seed101 CPU評估，上限200步；10600均200步，10700由原版133步IsDone變為修正版200步上限。四次權重及checkpoint SHA不變；無訓練，未證明3000步完成或長期收斂。新評估使用新模型SHA，不與歷史環境混為一談。
 - 完整實驗室回報修正版10600/10700直線及S彎皆3000步，固定轉彎1578/1589；10700仍較大循跡誤差。使用者決定新run：configs/recovery_startup_fix.json從第一個recovery分支10600接續，來源LR必須2.5e-5，scale=1，不再減半；沿用stage3快照和硬體，100/段、上限1000。prepare記錄當下runtime模型/引擎SHA但不啟動。共用課程JSON不改，舊run不改；操作見docs/startup-path-fix.md。
 - 11600評估直線/S彎3000步、固定轉彎2673步。使用者決定先維持共同判讀訓練，合格後提醒整理純腳本另行重跑驗證；已設定本對話條件式提醒，未確認合格時保持安靜。跨夜配方configs/recovery_11600_overnight.json從20261010_201201分支11600另開run，新增10000（最終要求，取代5000），最多21600，LR不變、100/段、guard保留。不要自動解除退步停訓或宣稱一定跨夜/合格。
+
+## Run 繼承與跨實驗畫圖（2026-10-10 記錄，2026-10-11 實作）
+
+- 2026-10-10 原要求只記錄；2026-10-11 使用者授權實作畫圖與文件。plot_training_rewards.py 預設沿 recovery.json 的 parent_session／parent_episode 追溯，祖先只取到分支 checkpoint，子 run 只取接續後的新回合；不同 run 不套用較新 attempt 覆蓋規則。CSV 帶來源欄位，stage 橘線、接續點紫線、各 run 平均 reward 分色。
+- --no-lineage 恢復單 run 畫法；--lineage-root 提供跨機搬移後的搜尋根目錄。同名來源不唯一、來源缺失、循環或錯誤繼承關係會提示，不猜測來源、不補資料。只讀日誌與 JSON、寫指定 PNG／CSV，不修改 checkpoint、課程、控制或訓練程式；訓練中可單獨更新畫圖檔並重啟畫圖程序。
+- 圖例的 prepared_runtime_model_sha256 只證明 prepare 當時環境，configured avg window 來自當下 control，不是歷史執行證據。平均 reward 保留日誌值，不跨 run 重算；未知 reward 版本不能宣稱可直接比較。不實作所有分支比較或其他指標圖。操作、限制與合成測試見 docs/run-lineage-proposal.md。

@@ -9,6 +9,8 @@ Examples:
 With no path, select the newest session in curriculum experiments, model runs or sessions.
 Logs are only read. The original Flower project is not required.
 If an episode is repeated after a restart, the latest attempt takes precedence.
+By default, recovery.json ancestry is included up to each inherited checkpoint.
+Use --no-lineage for the selected run only; --lineage-root helps locate moved parents.
 """
 
 import argparse
@@ -16,7 +18,7 @@ import csv
 import json
 import os
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import time
 import tempfile
@@ -149,6 +151,113 @@ def read_stages(session):
         return []
 
 
+def read_recovery(session):
+    path = session / "recovery.json"
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid recovery object: {path}")
+    return data
+
+
+def resolve_parent(session, reference, roots):
+    """Prefer the recorded location; relocate only an unambiguous run ID."""
+    if not isinstance(reference, str) or not reference.strip():
+        raise ValueError("Missing parent_session")
+    portable = reference.replace("\\", "/")
+    path = Path(portable).expanduser()
+    if path.is_absolute():
+        if path.is_dir():
+            return path.resolve()
+    elif not PureWindowsPath(reference).is_absolute():
+        for base in [session, *roots]:
+            candidate = (base / path).resolve()
+            if candidate.is_dir():
+                return candidate
+    name = portable.rstrip("/").split("/")[-1]
+    if name in ("", ".", "..") or any(c in name for c in '*?[]'):
+        raise ValueError("Invalid parent run ID")
+    candidates = set()
+    # No unrestricted recursive scan (checkpoints and caches can be enormous).
+    for root in [session.parent, *roots]:
+        for pattern in [name, f"runs/{name}", f"*/runs/{name}",
+                        f"experiments/*/runs/{name}",
+                        f"+trainingmodels/*/runs/{name}", f"sessions/{name}"]:
+            candidates.update(p.resolve() for p in root.glob(pattern) if p.is_dir()
+                              and p.name == name)
+    if len(candidates) != 1:
+        raise ValueError(f"Parent {name}: {'missing' if not candidates else 'ambiguous'}; "
+                         "use --lineage-root to locate its project/runs folder")
+    return candidates.pop()
+
+
+def read_history(session, include_parents=True, roots=()):
+    """Return disjoint run segments, oldest first; never merge branch duplicates."""
+    segments, issues, seen = [], [], set()
+    current, upper = session.resolve(), None
+    roots = [Path(r).expanduser().resolve() for r in roots]
+    roots.append(Path(__file__).resolve().parent)
+    while True:
+        if current in seen:
+            issues.append(f"Cycle in parent chain at {current.name}; ancestry stopped")
+            break
+        seen.add(current)
+        recovery, lower, parent = {}, 0, None
+        try:
+            recovery = read_recovery(current) if include_parents else {}
+            if recovery:
+                lower = recovery.get("parent_episode")
+                if type(lower) is not int or lower < 0:
+                    raise ValueError("Invalid parent_episode")
+                checkpoint = recovery.get("parent_checkpoint", "")
+                match = re.search(r"(?:Agent|Candidate)(\d+)\.mat$", str(checkpoint), re.I)
+                if match and int(match[1]) != lower:
+                    raise ValueError("Checkpoint filename disagrees with parent_episode")
+                if upper is not None and lower > upper:
+                    raise ValueError("Parent checkpoint precedes this run's own origin")
+                if include_parents:
+                    parent = resolve_parent(current, recovery.get("parent_session"), roots)
+        except (OSError, ValueError, TypeError) as exc:
+            issues.append(f"{current.name}: {exc}; ancestry stopped")
+            parent = None
+            # Never include a segment whose origin cannot be established.
+            if type(lower) is not int or lower < 0 or (upper is not None and lower > upper):
+                break
+        rows, duplicates, attempts = read_episodes(current)
+        rows = [dict(r, source_run=current.name, source_session=str(current)) for r in rows
+                if (not include_parents or r['episode'] > lower)
+                and (upper is None or r['episode'] <= upper)]
+        segments.append(dict(session=current, rows=rows, lower=lower, upper=upper,
+                             recovery=recovery, stages=read_stages(current),
+                             duplicates=duplicates, attempts=attempts))
+        if include_parents and upper is not None and upper > lower and (not rows or rows[-1]['episode'] < upper):
+            issues.append(f"{current.name}: logs do not reach inherited episode {upper}")
+        if not parent:
+            break
+        current, upper = parent, lower
+    segments.reverse()
+    for issue in issues:
+        warnings.warn(issue)
+    return segments, issues
+
+
+def segment_label(segment):
+    data = segment['recovery']
+    sha = data.get('prepared_runtime_model_sha256', '')
+    rate = data.get('actor_learning_rate_after')
+    # A preparation fingerprint is not proof of the version executed historically.
+    details = [f"prep SLX: {sha[:8]}" if isinstance(sha, str) and sha else "prep SLX: unknown"]
+    if rate is not None:
+        details.append(f"actor LR: {rate}")
+    try:
+        control = json.loads((segment['session'] / 'control.json').read_text(encoding='utf-8-sig'))
+        details.append(f"configured avg window: {control.get('averageWindow', 'unknown')}")
+    except (OSError, ValueError, AttributeError):
+        details.append("configured avg window: unknown")
+    return f"{segment['session'].name} | " + " | ".join(details)
+
+
 def annotate_stages(ax, stages, first_episode, last_episode):
     visible = [s for s in stages if s["start"] < last_episode]
     for i, stage in enumerate(visible):
@@ -161,7 +270,7 @@ def annotate_stages(ax, stages, first_episode, last_episode):
         next_start = visible[i + 1]["start"] if i + 1 < len(visible) else last_episode
         if next_start < first_episode:
             continue
-        position = max(boundary, first_episode)
+        position = max(stage.get('label_start', boundary), first_episode)
         label = f"Stage {stage['index']}\n{stage['id']}"
         ax.annotate(label, xy=(position, 0), xycoords=ax.get_xaxis_transform(),
                     xytext=(3, -40 - (i % 2) * 30), textcoords="offset points",
@@ -181,50 +290,94 @@ def save_png(fig, output):
         temporary.unlink(missing_ok=True)
 
 
-def draw(session, output, plt):
-    rows, duplicates, attempts = read_episodes(session)
+def draw(session, output, plt, include_parents=True, roots=()):
+    segments, issues = read_history(session, include_parents, roots)
+    rows = [row for segment in segments for row in segment['rows']]
+    duplicates = sum(s['duplicates'] for s in segments)
+    attempts = sum(len({r['attempt'] for r in s['rows']}) for s in segments)
     if not rows:
         print(f"No complete episode records yet: {session}", flush=True)
         return False
     output.parent.mkdir(parents=True, exist_ok=True)
     x = [r["episode"] for r in rows]
     # Insert gaps rather than imply continuity across missing episodes.
-    plot_x, rewards, averages = [], [], []
+    plot_x, rewards = [], []
     for i, row in enumerate(rows):
-        if i and row["episode"] != rows[i - 1]["episode"] + 1:
+        if i and (row["episode"] != rows[i - 1]["episode"] + 1
+                  or row['source_session'] != rows[i - 1]['source_session']):
             plot_x.append(float("nan"))
             rewards.append(float("nan"))
-            averages.append(float("nan"))
         plot_x.append(row["episode"])
         rewards.append(row["reward"])
-        averages.append(row["average_reward"])
 
     with plt.rc_context({"font.size": 11, "axes.spines.top": False,
                          "axes.spines.right": False}):
-        fig, ax = plt.subplots(figsize=(15, 6.5), layout="constrained")
+        fig, ax = plt.subplots(figsize=(15, 7 + 0.25 * len(segments)), layout="constrained")
+        # Reserve footer space below the alternating stage labels.
+        fig.get_layout_engine().set(rect=(0, 0.06, 1, 0.94))
         ax.plot(plot_x, rewards, color="#8aafcf", linewidth=0.6, alpha=0.5,
                 label="Episode reward", rasterized=True)
-        ax.plot(plot_x, averages, color="#086788", linewidth=1.8,
-                label="Average reward (as logged)")
+        gaps = [(rows[i-1]['episode'] + 0.5, rows[i]['episode'] - 0.5)
+                for i in range(1, len(rows)) if rows[i]['episode'] > rows[i-1]['episode'] + 1]
+        if include_parents and segments[0]['lower'] > 0 and x[0] > 1:
+            gaps.insert(0, (0.5, x[0] - 0.5))
+        for i, (left, right) in enumerate(gaps):
+            ax.axvspan(left, right, color='#94a3b8', alpha=0.16,
+                       label='Missing episode logs' if i == 0 else None)
+        for i, segment in enumerate(segments):
+            sx, sy = [], []
+            for j, row in enumerate(segment['rows']):
+                if j and row['episode'] != segment['rows'][j-1]['episode'] + 1:
+                    sx.append(float('nan'))
+                    sy.append(float('nan'))
+                sx.append(row['episode'])
+                sy.append(row['average_reward'])
+            ax.plot(sx, sy, color=plt.get_cmap('tab10')(i % 10), linewidth=1.8,
+                    label=segment_label(segment))
+            if include_parents and segment['recovery']:
+                boundary = segment['lower'] + 0.5
+                ax.axvline(boundary, color='#7c3aed', linewidth=1.2, linestyle=':',
+                           label=f"Fork at {segment['lower']:,} -> {segment['session'].name}")
         boundaries = [rows[i]["episode"] for i in range(1, len(rows))
-                      if rows[i]["attempt"] != rows[i - 1]["attempt"]]
+                      if rows[i]['source_session'] == rows[i-1]['source_session']
+                      and rows[i]["attempt"] != rows[i - 1]["attempt"]]
         for i, boundary in enumerate(boundaries):
             ax.axvline(boundary, color="#64748b", linewidth=0.6, alpha=0.3,
                        linestyle="--", label="Attempt boundary" if i == 0 else None)
         latest = rows[-1]
-        ax.scatter([x[-1]], [latest["average_reward"]], color="#086788", s=25, zorder=5)
+        latest_color = plt.get_cmap('tab10')(next(i for i, s in enumerate(segments)
+                                                if str(s['session']) == latest['source_session']) % 10)
+        ax.scatter([x[-1]], [latest["average_reward"]], color=latest_color, s=25, zorder=5)
         ax.set_title(
             f"Training Reward History | Episodes {x[0]:,} - {x[-1]:,}\n"
             f"{attempts} attempts with data | Latest average: {latest['average_reward']:,.2f}",
             loc="left", fontsize=15, pad=14)
         ax.set_xlabel("Episode")
-        annotate_stages(ax, read_stages(session), x[0], x[-1])
+        stage_labels = []
+        for segment in segments:
+            if not segment['rows']:
+                continue
+            first, last = segment['rows'][0]['episode'], segment['rows'][-1]['episode']
+            visible = [s for s in segment['stages'] if s['start'] < last]
+            for j, stage in enumerate(visible):
+                end = visible[j+1]['start'] if j+1 < len(visible) else last
+                if end < first:
+                    continue
+                clipped = dict(stage, label_start=max(stage['start'] + 0.5, first))
+                if stage_labels and (stage_labels[-1]['index'], stage_labels[-1]['id']) == (stage['index'], stage['id']):
+                    continue
+                stage_labels.append(clipped)
+        annotate_stages(ax, stage_labels, x[0], x[-1])
         ax.set_ylabel("Reward")
         ax.grid(axis="y", alpha=0.18)
-        ax.legend(loc="upper left", framealpha=0.9)
+        ax.legend(loc="upper left", framealpha=0.9, fontsize=7)
+        if issues or gaps:
+            ax.text(0.99, 0.98, 'Incomplete ancestry / logs (see console)',
+                    transform=ax.transAxes, ha='right', va='top', color='#b91c1c', fontsize=9)
         ax.margins(x=0.01)
         fig.text(0.01, 0.005,
-                 f"Session: {session.name} | Snapshot: {datetime.now():%Y-%m-%d %H:%M:%S}",
+                 f"Session: {session.name} | Average reward as logged; no cross-run smoothing. "
+                 f"Prep SLX is not execution proof; reward versions unverified. | {datetime.now():%Y-%m-%d %H:%M:%S}",
                  fontsize=8, color="#64748b")
         try:
             save_png(fig, output)
@@ -253,6 +406,9 @@ def main():
     parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reports/reward_history.png)")
     parser.add_argument("--watch", type=float, default=0, metavar="SECONDS",
                         help="Refresh the same PNG and CSV periodically; Ctrl+C stops plotting only")
+    parser.add_argument('--no-lineage', action='store_true', help='Plot only the selected run')
+    parser.add_argument('--lineage-root', action='append', type=Path, default=[],
+                        help='Additional project/runs folder for relocated parents (repeatable)')
     args = parser.parse_args()
     if args.watch < 0 or (args.watch and args.watch < 1):
         parser.error("--watch must be 0 (one snapshot) or at least 1 second")
@@ -270,7 +426,7 @@ def main():
         print(f"Reading session: {session}", flush=True)
         while True:
             try:
-                success = draw(session, output, plt)
+                success = draw(session, output, plt, not args.no_lineage, args.lineage_root)
             except OSError as exc:
                 if not args.watch:
                     raise

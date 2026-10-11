@@ -57,6 +57,8 @@ python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 
 未指定路徑時，依日誌修改時間選擇本專案最新的實驗；也可以指定模型資料夾或其 `runs/`。輸出預設為實驗 `reports/` 內的 `reward_history.png` 和 `reward_history.csv`，可用 `--output 路徑.png` 改位置。圖表包含每回合 reward、日誌記錄的平均 reward 與重啟分界；重複 episode 使用較新 attempt 的紀錄。工具只讀取日誌，Ctrl+C 停止圖表更新不影響訓練。
 
+預設沿 `recovery.json` 追溯父 run，依各次繼承 checkpoint 的 episode 截斷祖先曲線；不同 run 的平均 reward 使用不同顏色，紫色虛線標記接續點，橘線保留 stage 分界。CSV 增加 `source_run`、`source_session` 來源欄位。只畫目前 run 可加 `--no-lineage`；父 run 搬到別處時可加 `--lineage-root "父專案或 runs 資料夾"`。找不到來源或資料不完整會提示並保留缺口，不會猜測、補值或改寫訓練狀態。使用方式與版本判讀限制見 [跨 run 畫圖說明](docs/run-lineage-proposal.md)。
+
 獨立於旁邊 `Simulink/` 的實驗版本。包含自己的訓練腳本、supervisor、checkpoint 輔助檔，以及 FAFA_Simulation.slx 副本；不呼叫舊資料夾內的訓練檔案。
 現行 Simulink 版本不需停止或更新。這份程式不會自動啟動、終止或刪除現行實驗。
 
