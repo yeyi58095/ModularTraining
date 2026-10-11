@@ -1,5 +1,7 @@
 # 路徑末端 lookahead：只供評估的候選
 
+> 2026-10-12 更新：第二版已經實驗室擴展測試，並正式納入 runtime。以下是候選開發歷史；目前 `baseline` 表示正式第二版，不能拿它當舊版重做 A/B。重複套用候選會明確拒絕。續訓見 [正式部署操作](endpoint-v2-training.md)。
+
 詳細 traces 證據見 [Stage 5 調查](stage5-trace-findings-2026-10-11.md)。205/207 有風地速約16.3–16.4m/s，超過當前規劃路徑末端後，目標仍停留舊末點，更新時才跳回前方。此候選測試「末端目標不足」對失敗的貢獻，尚未證實能解決所有問題。
 
 `guidanceVariant="endpoint_lookahead"` 僅在臨時模型副本修改 guidance chart：原 inside-window 分支若選到path末點，沿末段切線延伸目標，使沿切線到目標的剩餘距離至少50m。保留原 d/reward/IsDone、planner、更新週期、agent及學習參數。沒有更新正式 SLX。baseline 仍為預設。

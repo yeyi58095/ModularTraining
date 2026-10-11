@@ -4,8 +4,17 @@ model=fullfile(root,'runtime','FAFA_Simulation.slx'); before=checkpointreview.sh
 assert(~bdIsLoaded('FAFA_Simulation')); load_system(model);
 guard=onCleanup(@() close_system('FAFA_Simulation',0));
 chart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function12');
-original=chart.Script; modified=checkpointreview.endpoint_candidate(original);
+production=chart.Script;
+original=fileread(fullfile(root,'tests','fixtures','guidance_before_endpoint.m.txt'));
+modified=checkpointreview.endpoint_candidate(original);
 modified2=checkpointreview.endpoint_candidate(original,true);
+assert(strcmp(strtrim(production),strtrim(modified2)),'Production guidance differs from validated v2.');
+try
+    checkpointreview.endpoint_candidate(production,true);
+    error('Test:ExpectedRejection','Expected duplicate patch rejection.');
+catch err
+    assert(strcmp(err.identifier,'Evaluation:AlreadyApplied'));
+end
 clear guard;
 folder=tempname; mkdir(folder); old=path; cleanup=onCleanup(@() path(old)); %#ok<NASGU>
 for entry={{'guidance_base',original},{'guidance_candidate',modified},{'guidance_candidate_v2',modified2}}
@@ -45,8 +54,8 @@ vertical=[0 0 70;0 100 70];
 assert(e2==0 && n2==190);
 receipt=jsondecode(fileread(fullfile(root,'tests','output','curriculum-smoke-latest.json')));
 r=compare_training_checkpoints(receipt.sessionDir,episodes=3,includeLatest=false, ...
-    stages=3,seeds=205,maxSteps=110,diagnostics=true,guidanceVariant="endpoint_lookahead_v2");
-assert(strcmp(r.status,'complete') && isfield(r,'candidate_script_sha256'));
+    stages=3,seeds=205,maxSteps=110,diagnostics=true);
+assert(strcmp(r.status,'complete'));
 assert(strcmp(before,checkpointreview.sha256(model)));
-fprintf('PASS endpoint geometry, unchanged nonterminal target, candidate CPU sim 110 steps; source model unchanged.\n');
+fprintf('PASS endpoint geometry, production v2 script equality, CPU sim 110 steps; source model unchanged.\n');
 end

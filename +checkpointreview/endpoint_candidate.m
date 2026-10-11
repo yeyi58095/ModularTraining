@@ -1,6 +1,9 @@
 function script=endpoint_candidate(script,includeOutside)
 % Experimental geometry-only change; caller must use an evaluation copy.
 if nargin<2, includeOutside=false; end
+assert(~contains(script,'extension = max(0, target_distance + along);'), ...
+    'Evaluation:AlreadyApplied', ...
+    'Endpoint lookahead is already in the source model. Use guidanceVariant="baseline" to evaluate the current runtime.');
 marker='        % Compute heading difference';
 locations=strfind(script,marker);
 assert(numel(locations)==2 && contains(script,'function [E, N, d, delta_psi, heta, curvature] = guidance_law'), ...

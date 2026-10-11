@@ -135,3 +135,9 @@
 - diagnostics=true 只在暫存SLX副本啟用訊號記錄，新增位置、planner/window paths及guidance目標；原runtime/checkpoint不改。下一步實驗室重播205/207/210並核對原結果，保持訓練暫停。未授權自動重啟訓練。
 - 詳細ZIP證實205/207失敗前地速16.3–16.4m/s、越過當前path末點，目標落到後方，valid更新後跳回前方；終端獨立折線距離與d一致。不能單凭此認定唯一根因。新增評估專用 guidanceVariant="endpoint_lookahead"，只在暫存副本沿末段切線補足lookahead，不動正式SLX/reward/IsDone。說明與A/B指令見 docs/endpoint-lookahead-candidate.md；尚未驗證21600候選效果，不得啟動續訓或宣稱修復收斂。
 - 第一版候選在實驗室205有風改善至3000、207延至1145仍失敗；詳細trace確認109秒越出包圍範圍時outside分支退回舊終點。第二版 endpoint_lookahead_v2 僅對outside且最近點為末點、沿切線超越、側偏≤30m時延伸目標，其餘保留。不改正式模型；第二版21600效果仍待實驗室A/B，不可宣稱已解決。
+
+## 第二版正式部署（2026-10-12）
+
+- 實驗室第二版擴展測試43/43跑滿3000步，另原版新情境20/20；前三階段能力在單seed保留，Stage6未驗證，不代表整體合格。詳見docs/endpoint-v2-training.md。
+- 使用者授權正式納入修正、push並提供立即續訓指令。runtime SLX guidance 採用已評估第二版；不改reward/IsDone。新configs/recovery_21600_endpoint_v2.json從21600另開run，LR不變、100/段、新增10000至最多31600、guard保留、Stage5進度沿用。不得改寫父實驗或自行在本機啟動正式訓練。
+- baseline現在表示正式第二版環境；候選函式拒絕重複套用，舊版guidance文字fixture只供測試。新舊環境分數不能全視為agent學習變化。prepare記錄新環境SHA；用戶自行在實驗室啟動。

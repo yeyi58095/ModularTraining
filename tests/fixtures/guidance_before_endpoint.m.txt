@@ -1,0 +1,226 @@
+function [E, N, d, delta_psi, heta, curvature] = guidance_law(P_N, P_E, psi, v, path, windowLen)
+
+    persistent global_path path_length last_path old_length heta_filt
+    
+    if isempty(global_path)
+        global_path = zeros(500000, 3);
+        path_length = 0;
+        last_path = zeros(500000, 3);
+        old_length = 0;
+        heta_filt = 0;
+    end
+    
+    % 如果這次輸入的 path 不等於上次的，就加入累積
+    if ~isempty(path) && ~isequal(path, last_path(1:old_length, :))
+        new_len = size(path, 1);
+        global_path(path_length+1:path_length+new_len, :) = path(:, :);
+        path_length = path_length + new_len;
+        last_path(1:new_len, :) = path(:, :);
+        old_length = new_len;
+    end
+    path_CTE = global_path;
+
+    r = 0;
+    curvature = 0;
+    d = 0;
+    delta_psi = 0;
+    heta = 0;
+
+    % Use the waypoints in the given path
+    numWps = size(path, 1);
+    if numWps < 2
+        N = P_N;
+        E = P_E;
+        return;
+    end
+
+    % ============================================================
+    % 前瞻曲率（用滑窗 path 末端那一段來估）
+    % ============================================================
+    if numWps < 3
+        curvature = 0;
+    else
+        % 調這兩個 
+        previewDist = 0.9 * windowLen;  % 看視野最前端附近（90%處） 300*0.9=270
+        spanDist    = max(10, 0.1 * windowLen); % 用 10%視野估曲率，至少10m,270*0.1=27,計算270m前後27m的曲率
+        % ------------------------
+
+        % 以 path 起點為 0，計算沿路徑累積距離（平面 E,N）
+        xy = path(:,1:2);
+        s  = [0; cumsum(sqrt(sum(diff(xy).^2,2)))];  % s(i) = 第 i 點距離 path(1) 的弧長
+        L  = s(end);
+
+        if L < 1e-6
+            curvature = 0;
+        else
+            % 把 previewDist 限制在滑窗長度內
+            s2 = min(max(previewDist, 0), L);
+            s1 = max(s2 - spanDist/2, 0);
+            s3 = min(s2 + spanDist/2, L);
+
+            % 找到最接近 s1,s2,s3 的三個點索引
+            [~, i1] = min(abs(s - s1));
+            [~, i2] = min(abs(s - s2));
+            [~, i3] = min(abs(s - s3));
+
+            % 確保三點不重疊（避免除0）
+            if numel(unique([i1 i2 i3])) < 3
+                curvature = 0;
+            else
+                A = xy(i1,:); B = xy(i2,:); C = xy(i3,:);
+
+                a = norm(B - C);
+                b = norm(A - C);
+                c = norm(A - B);
+
+                % signed area2 = 2*Area (帶正負號可分左右轉)
+                area2 = (B(1)-A(1))*(C(2)-A(2)) - (B(2)-A(2))*(C(1)-A(1));
+
+                if a*b*c < 1e-9 || abs(area2) < 1e-9
+                    curvature = 0;
+                    r = 0;
+                else
+                    curvature = (2 * area2) / (a*b*c);   % signed curvature (1/m)
+                    r = 1 / max(abs(curvature), 1e-9);
+                end
+            end
+        end
+    end
+    % ============================================================
+
+    margin = 30;  
+    min_E = min(path(:,1)) - margin;
+    max_E = max(path(:,1)) + margin;
+    min_N = min(path(:,2)) - margin;
+    max_N = max(path(:,2)) + margin;
+
+    is_inside = (P_E >= min_E) && (P_E <= max_E) && ...
+            (P_N >= min_N) && (P_N <= max_N);
+
+    if is_inside
+        extended_P = repmat([P_E, P_N], numWps, 1);
+        differences = path(:, 1:2) - extended_P;
+        distances = sqrt(sum(differences.^2, 2));
+        
+        % Find the closest waypoint
+        [~, current_index] = min(distances);
+        
+        % Define target distance
+        target_distance = 50;
+        
+        % Compute cumulative distances
+        cumulative_distances = [0; cumsum(sqrt(sum(diff(path).^2, 2)))];
+        remaining_distances = cumulative_distances(current_index+1:end) - cumulative_distances(current_index);
+        
+        % Determine target index
+        if isempty(remaining_distances) || current_index + 1 > numWps
+            k = numWps;
+        else
+            % Find the waypoint at the target distance
+            [~, target_index_offset] = min(abs(remaining_distances - target_distance));
+            
+            if current_index + target_index_offset > numWps
+                k = numWps;
+            else
+                k = current_index + target_index_offset;
+            end
+        end
+        
+        % Target waypoint
+        N = path(k, 2); 
+        E = path(k, 1); 
+    
+        % Compute cross-track error
+        if current_index >= numWps
+            x1 = path(numWps-1, 1);
+            y1 = path(numWps-1, 2);
+            x2 = path(numWps, 1);
+            y2 = path(numWps, 2);
+        else
+            x1 = path(current_index, 1);
+            y1 = path(current_index, 2);
+            x2 = path(current_index+1, 1);
+            y2 = path(current_index+1, 2);
+        end
+        
+        D = sqrt((P_N - y1)^2 + (P_E - x1)^2);
+        psi_r = atan2(y2 - y1, x2 - x1);
+        psi_c = atan2(P_N - y1, P_E - x1);
+    
+        if abs(psi_r - psi_c) < 1e-3
+            d = 0; % 避免極小角度導致大誤差
+        else
+            d = abs(D * sin(psi_r - psi_c));
+        end
+           
+        % Compute heading difference
+        psi_cmd = atan2(N - P_N, E - P_E);
+        heta = psi_cmd - psi;
+        heta = mod(heta + pi, 2 * pi) - pi;
+    
+        L1 = sqrt((N - P_N)^2 + (E - P_E)^2);
+        a_cmd = 2 * v^2 / L1 * sin(heta);
+        delta_psi = a_cmd / v;
+
+    else  % ~is_inside
+        
+        numWaypoints = size(path_CTE, 1);
+        % Calculate distances to all waypoints
+        extended_P = repmat([P_E, P_N], numWaypoints, 1);
+        differences = path_CTE(:, 1:2) - extended_P;
+        distances = sqrt(sum(differences.^2, 2));
+        
+        % Find the closest waypoint
+        [~, current_index] = min(distances);
+        
+        % Define target distance
+        target_distance = 30;
+        uav_pos = [P_E, P_N];
+        path_points = path(:,1:2);
+        point_dists = vecnorm(path_points - uav_pos, 2, 2);
+        [~, k] = min(abs(point_dists - target_distance));
+        
+        % Target waypoint
+        E = path(k, 1); 
+        N = path(k, 2); 
+    
+        % Compute cross-track error
+        if current_index >= numWaypoints
+            x1 = path_CTE(numWaypoints-1, 1);
+            y1 = path_CTE(numWaypoints-1, 2);
+            x2 = path_CTE(numWaypoints, 1);
+            y2 = path_CTE(numWaypoints, 2);
+        else
+            x1 = path_CTE(current_index, 1);
+            y1 = path_CTE(current_index, 2);
+            x2 = path_CTE(current_index+1, 1);
+            y2 = path_CTE(current_index+1, 2);
+        end
+        
+        D = sqrt((P_N - y1)^2 + (P_E - x1)^2);
+        psi_r = atan2(y2 - y1, x2 - x1);
+        psi_c = atan2(P_N - y1, P_E - x1);
+    
+        if abs(psi_r - psi_c) < 1e-3
+            d = 0; % 避免極小角度導致大誤差
+        else
+            d = abs(D * sin(psi_r - psi_c));
+        end
+    
+        % Compute heading difference
+        psi_cmd = atan2(N - P_N, E - P_E);
+        heta = psi_cmd - psi;
+        heta = mod(heta + pi, 2 * pi) - pi;
+        if heta_filt == 0
+            heta_filt = heta;
+        end
+        alpha = 0.85;
+       
+        heta_filt = alpha * heta_filt + (1 - alpha) * heta;
+        heta = heta_filt;
+    
+        L1 = sqrt((N - P_N)^2 + (E - P_E)^2);
+        a_cmd = 2 * v^2 / L1 * sin(heta);
+        delta_psi = a_cmd / v;
+    end
+end
