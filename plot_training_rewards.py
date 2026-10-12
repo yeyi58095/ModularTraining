@@ -23,6 +23,79 @@ import re
 import time
 import tempfile
 import warnings
+import threading
+import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+
+def start_viewer(output):
+    """Serve only the selected PNG and a refreshing viewer on localhost."""
+    page = b'''<!doctype html><meta charset="utf-8"><title>Training rewards</title>
+<style>body{margin:0;background:#eee;font:16px sans-serif}p{margin:12px}
+img{display:block;width:100%;height:auto}</style>
+<p>Training rewards - automatically refreshes when the PNG changes.</p><img id="plot">
+<script>
+let previous = '', active = '';
+async function refresh() {
+  try {
+    const response = await fetch('/plot.png', {cache:'no-store'});
+    if (response.ok) {
+      const version = response.headers.get('ETag');
+      if (version !== previous) {
+        const blob = await response.blob();
+        const next = URL.createObjectURL(blob);
+        const probe = new Image();
+        await new Promise((resolve, reject) => {probe.onload=resolve; probe.onerror=reject; probe.src=next;});
+        document.getElementById('plot').src = next;
+        if (active) URL.revokeObjectURL(active);
+        active = next; previous = version;
+      }
+    }
+  } catch (_) {} finally {setTimeout(refresh, 2000);}
+}
+refresh();
+</script>'''
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/':
+                data, kind, version = page, 'text/html; charset=utf-8', None
+            elif self.path == '/plot.png':
+                try:
+                    # Open once so atomic PNG replacement cannot mix versions.
+                    with output.open('rb') as stream:
+                        stat = os.fstat(stream.fileno())
+                        data = stream.read()
+                    kind = 'image/png'
+                    version = f'"{stat.st_mtime_ns}-{stat.st_size}"'
+                except OSError:
+                    self.send_error(503, 'Waiting for plot')
+                    return
+            else:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header('Content-Type', kind)
+            self.send_header('Content-Length', str(len(data)))
+            self.send_header('Cache-Control', 'no-store')
+            if version:
+                self.send_header('ETag', version)
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f'http://127.0.0.1:{server.server_port}/'
+    print(f'Live viewer: {url}', flush=True)
+    webbrowser.open(url)
+    return server
+
 
 
 NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
@@ -406,10 +479,14 @@ def main():
     parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reports/reward_history.png)")
     parser.add_argument("--watch", type=float, default=0, metavar="SECONDS",
                         help="Refresh the same PNG and CSV periodically; Ctrl+C stops plotting only")
+    parser.add_argument('--view', action='store_true',
+                        help='Open an auto-refresh browser viewer; defaults to --watch 60')
     parser.add_argument('--no-lineage', action='store_true', help='Plot only the selected run')
     parser.add_argument('--lineage-root', action='append', type=Path, default=[],
                         help='Additional project/runs folder for relocated parents (repeatable)')
     args = parser.parse_args()
+    if args.view and args.watch == 0:
+        args.watch = 60
     if args.watch < 0 or (args.watch and args.watch < 1):
         parser.error("--watch must be 0 (one snapshot) or at least 1 second")
     try:
@@ -418,12 +495,15 @@ def main():
         import matplotlib.pyplot as plt
     except ImportError:
         parser.exit(1, "Missing matplotlib. Install with: python -m pip install matplotlib\n")
+    viewer = None
     try:
         session = select_session(args.session)
         output = args.output.expanduser().resolve() if args.output else session / "reports" / "reward_history.png"
         if output.suffix.lower() != ".png":
             parser.error("--output must end in .png")
         print(f"Reading session: {session}", flush=True)
+        if args.view:
+            viewer = start_viewer(output)
         while True:
             try:
                 success = draw(session, output, plt, not args.no_lineage, args.lineage_root)
@@ -443,6 +523,11 @@ def main():
         return 0
     except (OSError, ValueError) as exc:
         parser.exit(1, f"Error: {exc}\n")
+
+    finally:
+        if viewer is not None:
+            viewer.shutdown()
+            viewer.server_close()
 
 
 if __name__ == "__main__":
