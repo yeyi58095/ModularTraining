@@ -1,0 +1,80 @@
+function [waypoints_window, velocity_window, valid_flag, loiter_flag, distance_to_target] = WindowManager(position_in, velocity_in, window_length, uav_e, uav_n)
+
+%#codegen
+persistent position_buffer velocity_buffer buffer_counter loiter_flag_internal
+
+if isempty(position_buffer)
+    position_buffer = zeros(100000, 3);
+    velocity_buffer = zeros(100000, 3);
+    buffer_counter = 1;
+    loiter_flag_internal = false;
+end
+
+waypoints_window = zeros(window_length, 3); % 只是保證型態固定
+velocity_window = zeros(window_length, 3);
+valid_flag = false;
+loiter_flag = false;
+distance_to_target = 0;
+% position_buffer(buffer_counter,:) = position_in;
+% velocity_buffer(buffer_counter,:) = velocity_in;
+
+uav_speed = 15; % UAV速度固定20m/s
+
+%==================OFF LINE====================%
+if buffer_counter <= size(position_in, 1)
+    % target_now = [0 0 0];
+    % velocity_now = [0 0 0];
+    target_now = position_in(buffer_counter, :);
+    velocity_now = velocity_in(buffer_counter, :);
+
+    if buffer_counter + window_length - 1 <= size(position_in, 1)
+        waypoints_window = position_in(buffer_counter : buffer_counter + window_length - 1, :);
+        velocity_window = velocity_in(buffer_counter : buffer_counter + window_length - 1, :); 
+    
+        distance_to_target = norm([uav_e - target_now(1), uav_n - target_now(2)]);
+        target_speed_now = norm(velocity_now(1:2));
+    
+        if (target_speed_now < uav_speed) && (distance_to_target <= 30)
+            loiter_flag_internal = true;
+        elseif distance_to_target > 100
+            loiter_flag_internal = false; 
+        end
+
+        loiter_flag = loiter_flag_internal;
+
+
+
+        if buffer_counter == 1 || mod(buffer_counter, window_length) == 0
+            valid_flag = true;
+        end
+    else
+        valid_flag = false;
+    end
+    
+else
+    valid_flag = false;
+    loiter_flag = true;
+end
+
+%=================ONLINE=======================%
+% if mod(buffer_counter, window_length) == 0
+% 
+%     waypoints_window = position_buffer(buffer_counter-window_length+1 : buffer_counter, :);
+%     velocity_window = velocity_buffer(buffer_counter-window_length+1 : buffer_counter, :);
+% 
+%     valid_flag = true; 
+% end
+% 
+% target_speed_now = norm(velocity_in(1:2)); % 只看x、y方向速度
+% distance_to_target = norm([uav_e - position_in(1), uav_n - position_in(2)]);
+% 
+% if (target_speed_now < uav_speed) && (distance_to_target < 50)
+%     loiter_flag = true;
+% else
+%     loiter_flag = false;
+% end
+
+% end
+
+% 累積新的資料
+buffer_counter = buffer_counter + 1;

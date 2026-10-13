@@ -12,6 +12,12 @@ addpath(root,fullfile(root,'runtime'));
 sourceSession=absolute(root,sourceSession); configFile=absolute(root,configFile);
 settings=jsondecode(fileread(configFile));
 assert(settings.schema_version==1,'Recovery:Schema','Unsupported settings.');
+% 指定環境的配方必須配對正確 SLX，避免只更新 JSON 就在舊環境續訓。
+if isfield(settings,'expected_runtime_model_sha256')
+    assert(strcmpi(settings.expected_runtime_model_sha256, ...
+        checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'))), ...
+        'Recovery:EnvironmentMismatch','Runtime model does not match this recovery recipe. Update the complete project before preparing.');
+end
 validateattributes(settings.checkpoint_episode,{'numeric'},{'scalar','integer','positive'});
 validateattributes(settings.actor_learning_rate_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
 validateattributes(settings.episodes_per_process,{'numeric'},{'scalar','integer','positive'});

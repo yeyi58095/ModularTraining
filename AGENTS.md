@@ -141,3 +141,17 @@
 - 實驗室第二版擴展測試43/43跑滿3000步，另原版新情境20/20；前三階段能力在單seed保留，Stage6未驗證，不代表整體合格。詳見docs/guides/endpoint-v2-training.md。
 - 使用者授權正式納入修正、push並提供立即續訓指令。runtime SLX guidance 採用已評估第二版；不改reward/IsDone。新configs/recovery_21600_endpoint_v2.json從21600另開run，LR不變、100/段、新增10000至最多31600、guard保留、Stage5進度沿用。不得改寫父實驗或自行在本機啟動正式訓練。
 - baseline現在表示正式第二版環境；候選函式拒絕重複套用，舊版guidance文字fixture只供測試。新舊環境分數不能全視為agent學習變化。prepare記錄新環境SHA；用戶自行在實驗室啟動。
+
+## Stage6 有效歷史路徑候選（2026-10-13）
+
+- 使用者提供兩個診斷ZIP並授權繼續隔離評估。380個manifest檔案及補充包SHA已驗證；本機首次使用實驗室31600checkpoint做CPU純sim，未訓練。工作區既有註解及文件重組修改保留，未提交。
+- 確認guidance的path_CTE包含global_path未填入零列，末點可能錯連(0,0)。新增guidanceVariant="valid_history"僅在評估副本截到path_length，正式SLX未改。27次評估：baseline4次重現；候選小風10/10、完整風6/10、前三階段3/3，完整風失敗步數2596/998/695/730變2715/1111/1417/730，並非已修復合格。
+- 剩餘失敗有真實偏離與path更新後目標轉向；不可僅放寬門檻、改小d或盲目續訓。後續需評估前方路徑不足與時間window/實際地速進度的關係，不能未說明便改任務語義。來源、證據與限制見docs/records/stage6-history-review-2026-10-13.md。
+
+## Stage 6 空間循跡部署（2026-10-13）
+
+- 使用者明確選擇「沿指定路徑穩定飛行，可依飛機進度更新路段」，授權此任務語義變更；不再宣稱追蹤按原時序移動的目標。
+- 正式 SLX 修正有效歷史範圍，WindowManager 改成局部單調進度、距尾約40點時提前提供連續下一段。重疊 window 候選退步，未部署；未改 reward 公式、終止門檻或 PPO 參數。
+- 實驗室 Agent31600 的本機 CPU 純sim：Stage5 10/10、Stage6既有10/10、新20/20、前三階段3/3，共43個不同組合全跑滿3000。四例獨立原始路線距離RMS8.86–10.57m；全程最大50m皆在初始t=0，10秒後最大18.50–21.28m。這不是完整合格或長訓練收斂證明。
+- configs/recovery_31600_progress_window.json 鎖定新 SLX SHA，31600另開分支、LR不變、100/段、最多新增10000至41600，guard保留。只提供實驗室啟動指令，不自行啟動正式訓練。保留舊階段紀錄不代表新環境已逐階訓練驗證；未來合格後仍需純腳本從頭重跑。
+- 操作及完整證據見 docs/guides/stage6-progress-training.md、docs/records/stage6-progress-validation-2026-10-13.md。目前 baseline 是空間循跡環境，舊候選不可重複套用；更新 runtime 前仍須確認副本沒有活動訓練。

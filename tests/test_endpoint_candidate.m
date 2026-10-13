@@ -11,7 +11,8 @@ original=fileread(fullfile(root,'tests','fixtures','guidance_before_endpoint.m.t
 original=strrep(original,sprintf('\r\n'),newline);
 modified=checkpointreview.endpoint_candidate(original);
 modified2=checkpointreview.endpoint_candidate(original,true);
-assert(strcmp(strtrim(production),strtrim(modified2)),'Production guidance differs from validated v2.');
+assert(strcmp(strtrim(production),strtrim(checkpointreview.history_candidate(modified2))), ...
+    'Production guidance differs from endpoint v2 plus valid history fix.');
 try
     checkpointreview.endpoint_candidate(production,true);
     error('Test:ExpectedRejection','Expected duplicate patch rejection.');

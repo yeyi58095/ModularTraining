@@ -11,7 +11,7 @@ arguments
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
     opt.diagnostics (1,1) logical = false
-    opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2"])} = "baseline"
+    opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2","valid_history","progress_window"])} = "baseline"
 end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
@@ -156,13 +156,28 @@ try
     if opt.guidanceVariant~="baseline"
         chart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function12');
         assert(isscalar(chart),'Evaluation:GuidanceDrift','Expected one guidance chart.');
-        chart.Script=checkpointreview.endpoint_candidate(chart.Script,opt.guidanceVariant=="endpoint_lookahead_v2");
+        if any(opt.guidanceVariant==["valid_history","progress_window"])
+            chart.Script=checkpointreview.history_candidate(chart.Script);
+        else
+            chart.Script=checkpointreview.endpoint_candidate(chart.Script,opt.guidanceVariant=="endpoint_lookahead_v2");
+        end
         scriptFile=fullfile(out,'candidate_guidance.m');
         fid=fopen(scriptFile,'w','n','UTF-8');
         assert(fid~=-1,'Evaluation:ReportWrite','Cannot save candidate source.');
         fileGuardScript=onCleanup(@() fclose(fid));
         fprintf(fid,'%s',chart.Script); clear fileGuardScript;
         report.candidate_script_sha256=checkpointreview.sha256(scriptFile);
+        if opt.guidanceVariant=="progress_window"
+            windowChart=find(sfroot,'-isa','Stateflow.EMChart','Path','FAFA_Simulation/OBSERVATION/MATLAB Function3');
+            assert(isscalar(windowChart),'Evaluation:WindowDrift','Expected one window chart.');
+            windowChart.Script=checkpointreview.progress_window_candidate(windowChart.Script);
+            windowFile=fullfile(out,'candidate_window.m');
+            fid=fopen(windowFile,'w','n','UTF-8');
+            assert(fid~=-1,'Evaluation:ReportWrite','Cannot save window source.');
+            windowGuard=onCleanup(@() fclose(fid));
+            fprintf(fid,'%s',windowChart.Script); clear windowGuard;
+            report.candidate_window_sha256=checkpointreview.sha256(windowFile);
+        end
     end
     report.phase='prepare_model';
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>

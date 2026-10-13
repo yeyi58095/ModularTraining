@@ -32,7 +32,8 @@ docs/
 | 查看六階段計畫 | [training-plan-v1.md](guides/training-plan-v1.md) |
 | 設定課程 JSON | [curriculum.md](guides/curriculum.md) |
 | 實驗室啟動 | [lab-start.md](guides/lab-start.md) |
-| 看目前正式 endpoint V2 環境與續訓操作 | [endpoint-v2-training.md](guides/endpoint-v2-training.md) |
+| 看 Stage 6 空間循跡環境與續訓操作 | [stage6-progress-training.md](guides/stage6-progress-training.md) |
+| 看先前 endpoint V2 環境與續訓操作 | [endpoint-v2-training.md](guides/endpoint-v2-training.md) |
 | 理解課程／run／報告分類 | [curriculum-layout.md](guides/curriculum-layout.md) |
 | 看保存後暫停及恢復分支 | [recovery-training.md](guides/recovery-training.md) |
 | 比較 checkpoint | [checkpoint-comparison.md](guides/checkpoint-comparison.md) |

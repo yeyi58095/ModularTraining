@@ -6,6 +6,8 @@
 
 ## JSON 分階段訓練
 
+目前正式環境採用**按飛機進度更新路段的空間循跡**，不再表示按原時序追蹤移動目標。Stage 6 修正、Agent31600 新分支設定及啟動指令見 [Stage 6 續訓](docs/guides/stage6-progress-training.md)。既有 run 的歷史不改寫。
+
 新課程實驗按計畫存入 `experiments/<課程>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/guides/curriculum-layout.md)。
 
 已停止的舊實驗可用 `migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
