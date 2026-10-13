@@ -1,4 +1,6 @@
 function validate_agent(agent,spec)
+% 模型相容性檢查：確認 PPO 類型、LSTM／隱藏層大小與主要學習設定符合 spec。
+% 不修改權重；檢查失敗拋出對應錯誤，避免用錯模型或學習參數續訓。
 % Prevent a checkpoint with a different architecture from silently resuming.
 assert(isa(agent,'rl.agent.rlPPOAgent'),'Modular:AgentType','Expected a PPO checkpoint.');
 a = getModel(getActor(agent)); c = getModel(getCritic(agent));
@@ -19,6 +21,7 @@ assert(opts.ActorOptimizerOptions.LearnRate == spec.actorLearnRate && ...
 end
 
 function checkNamed(layers,prefix,widths)
+% 按層名檢查分支各隱藏層寬度，避免 layerGraph 排序差異誤判。
 for k=1:numel(widths)
     index=find(strcmp({layers.Name},sprintf('%s_fc%d',prefix,k)));
     assert(isscalar(index) && layers(index).OutputSize==widths(k), ...
@@ -27,6 +30,7 @@ end
 end
 
 function checkLayers(layers,units,widths)
+% 檢查 LSTM 數量／單元及主幹全連接層尺寸，不修改網路。
 actualUnits = []; actualWidths = [];
 for k=1:numel(layers)
     if isa(layers(k),'nnet.cnn.layer.LSTMLayer'), actualUnits(end+1)=layers(k).NumHiddenUnits; end %#ok<AGROW>

@@ -1,4 +1,6 @@
 function test_evaluation_error_reporting()
+% 評估錯誤保存測試：在隔離 fixture 注入模型載入錯誤並移除 root path。
+% 確認原始錯誤與堆疊不被報告寫入失敗遮蓋；此測試不啟動模擬。
 % Exercise the actual evaluator catch after loss of its package search path.
 root=fileparts(fileparts(mfilename('fullpath')));
 oldPath=path; cleanup=onCleanup(@() path(oldPath)); %#ok<NASGU>

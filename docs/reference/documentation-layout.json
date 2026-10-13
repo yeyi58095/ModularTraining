@@ -1,0 +1,281 @@
+{
+  "date": "2026-10-12",
+  "scope": "docs only",
+  "preservedEntries": [
+    "docs/architecture.html",
+    "docs/diagrams/training-explorer.html"
+  ],
+  "historicalReceipts": "Original absolute paths inside archived receipts describe the original validation location; they are intentionally retained.",
+  "files": [
+    {
+      "oldPath": "docs/checkpoint-comparison.md",
+      "newPath": "docs/guides/checkpoint-comparison.md",
+      "originalSha256": "c59659ba87b8ab16d930b90f9020f5c550a76f4d4eb9205111610ecd2808baac"
+    },
+    {
+      "oldPath": "docs/curriculum.md",
+      "newPath": "docs/guides/curriculum.md",
+      "originalSha256": "f6bb6089e2b2c0dd48e543900594a2ff75f35df6acce4370868129c7cf35ee64"
+    },
+    {
+      "oldPath": "docs/curriculum-layout.md",
+      "newPath": "docs/guides/curriculum-layout.md",
+      "originalSha256": "fe0839e0380659061494058534589ec3a90c9f4f0f878bd26abddab3eaf99150"
+    },
+    {
+      "oldPath": "docs/diagnostic-package.md",
+      "newPath": "docs/guides/diagnostic-package.md",
+      "originalSha256": "569ef005a93cf7637fb6cf52c1009d895be7c3a1b15f78763c17e8dc19e2fb32"
+    },
+    {
+      "oldPath": "docs/endpoint-v2-training.md",
+      "newPath": "docs/guides/endpoint-v2-training.md",
+      "originalSha256": "5d6ada11b45928dafb704f7268c9ca2f69481111584e0822bd6294c1d763215a"
+    },
+    {
+      "oldPath": "docs/lab-start.md",
+      "newPath": "docs/guides/lab-start.md",
+      "originalSha256": "46bc4654ea75c5c9966ee6449b183a1d1ee42c5d3c6a5ea150e5c395939da3ae"
+    },
+    {
+      "oldPath": "docs/learning-health.md",
+      "newPath": "docs/guides/learning-health.md",
+      "originalSha256": "1ebdd7de73d6967bd2109d28184d146904429f51e8e992ebe35fef6c1f7b4e7c"
+    },
+    {
+      "oldPath": "docs/recovery-training.md",
+      "newPath": "docs/guides/recovery-training.md",
+      "originalSha256": "046ac23c4f8ec6f1ca701dc3452c72bb28813a04f9c58aaedc9587fb117718a8"
+    },
+    {
+      "oldPath": "docs/resume-audit.md",
+      "newPath": "docs/guides/resume-audit.md",
+      "originalSha256": "f9d16c1d9911415f2c9e6a8f701c9129656f807b04521b0ae78ea4ce9d9b5c60"
+    },
+    {
+      "oldPath": "docs/run-lineage-proposal.md",
+      "newPath": "docs/guides/run-lineage-proposal.md",
+      "originalSha256": "9d7fd2744798a1c94be342c675291d95015a61dfc186fdf13e916ea36bdb0a30"
+    },
+    {
+      "oldPath": "docs/stage5-evaluation.md",
+      "newPath": "docs/guides/stage5-evaluation.md",
+      "originalSha256": "4076ff327089a0b242b38fd6c03763ccd30c53d77c9d94e4d71e0eced0d8bddc"
+    },
+    {
+      "oldPath": "docs/startup-path-fix.md",
+      "newPath": "docs/guides/startup-path-fix.md",
+      "originalSha256": "be1e4a753c9931b67b073f2ddfc56ba0b124ebe554cc9d0ea6f0de1b70afe338"
+    },
+    {
+      "oldPath": "docs/training-plan-v1.md",
+      "newPath": "docs/guides/training-plan-v1.md",
+      "originalSha256": "68d9c738d215e0a6cedfcfb42182b0b5bfcd3cc300ee32fb79e8c39a2bf15016"
+    },
+    {
+      "oldPath": "docs/endpoint-lookahead-candidate.md",
+      "newPath": "docs/research/endpoint-lookahead-candidate.md",
+      "originalSha256": "a33659213d942fdf5c07eb3cfd317670ebdbe535ad4232a17a0baa0d6bb65510"
+    },
+    {
+      "oldPath": "docs/lab-regression-2026-10-10.md",
+      "newPath": "docs/research/lab-regression-2026-10-10.md",
+      "originalSha256": "c79d4464bac6ba2a83e7c47e732d3eab0bbe017580197d802e618c44d9d3c63c"
+    },
+    {
+      "oldPath": "docs/lab-trace-findings-2026-10-10.md",
+      "newPath": "docs/research/lab-trace-findings-2026-10-10.md",
+      "originalSha256": "cba64d3aad17eddd1292fc620489b248bc5c1653205290ba0434923b52c6cd32"
+    },
+    {
+      "oldPath": "docs/stage5-trace-findings-2026-10-11.md",
+      "newPath": "docs/research/stage5-trace-findings-2026-10-11.md",
+      "originalSha256": "18559ff7f7da318e0787f1f12b03b8377a7759058cf544a7b9a6ab2de3cebc73"
+    },
+    {
+      "oldPath": "docs/code-comments-2026-10-12.md",
+      "newPath": "docs/records/code-comments-2026-10-12.md",
+      "originalSha256": "a663a6a160ccd09e13945806ed81fd453c79cd4e61b1d5fc2d46cad996a9e7de"
+    },
+    {
+      "oldPath": "docs/review-2026-10-09.md",
+      "newPath": "docs/records/review-2026-10-09.md",
+      "originalSha256": "402b922723ebf5e9aa153369b3b4eabc31199c63188a391d586480ab1e9b0cbf"
+    },
+    {
+      "oldPath": "docs/validation-2026-10-09.md",
+      "newPath": "docs/records/validation-2026-10-09.md",
+      "originalSha256": "875329d0269798b789cbb3508e5d70af75d5e7503025c37ca75dd2d9a6e5ac1e"
+    },
+    {
+      "oldPath": "docs/architecture-notes.md",
+      "newPath": "docs/reference/architecture-notes.md",
+      "originalSha256": "f47dcc797f5584b9a0f8beffc81140c236d4afe882f397c6694ad823df69ec8f"
+    },
+    {
+      "oldPath": "docs/presentation_sources.md",
+      "newPath": "docs/reference/presentation_sources.md",
+      "originalSha256": "6edd2191ae2535b65bae4d6cc98342cca50e64340b7cfec080bb8db750678521"
+    },
+    {
+      "oldPath": "docs/architecture.json",
+      "newPath": "docs/diagrams/src/architecture.json",
+      "originalSha256": "9c5448fc49d3cadad33202ab32c441e094b349dbaf39e197193aa64ae23cd304"
+    },
+    {
+      "oldPath": "docs/architecture-receipt.json",
+      "newPath": "docs/diagrams/evidence/architecture-receipt.json",
+      "originalSha256": "07fcbaf49ef0b2e13fe7098d9e5e4362f6cb4d485d69032ddd691b8d3696e203"
+    },
+    {
+      "oldPath": "docs/delivery-receipt.json",
+      "newPath": "docs/diagrams/evidence/delivery-receipt.json",
+      "originalSha256": "260cb03949d25328ce60520eb2b15b9b69fa0a7a867f146a043432385f4d1cd5"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.1440x900.dark.png",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.1440x900.dark.png",
+      "originalSha256": "750bd99b5806efb8b95baa1f0853341ae033f9b0da1e9cdfe6bf35d16a7666c7"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.1440x900.light.png",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.1440x900.light.png",
+      "originalSha256": "ad846559d2370dae8e42399cfe42cb5b11023405ab78e75368e4c2566c70707f"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.2048x1320.dark.png",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.2048x1320.dark.png",
+      "originalSha256": "2fc6a7d6365048f3fe9c9163025c13b44786502e63629443f99e0b3bd03210d5"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.2048x1320.light.png",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.2048x1320.light.png",
+      "originalSha256": "8657f1733c58b13fe3588ffcf247523d1164fef3f2893542831d4a3530c00a99"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.html",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.html",
+      "originalSha256": "ff68109bcd17d3636dfc5d71e4b5bd5c0569805dce07ec9704d8762c306645d0"
+    },
+    {
+      "oldPath": "docs/architecture.visual-check.json",
+      "newPath": "docs/diagrams/evidence/architecture.visual-check.json",
+      "originalSha256": "b3d1aaff84bdeba3f1a11cd97b640ceb8b778236d514c944e67338e1cd8af979"
+    },
+    {
+      "oldPath": "docs/diagrams/build-training-explorer.cjs",
+      "newPath": "docs/diagrams/src/build-training-explorer.cjs",
+      "originalSha256": "00ca15d755b49b5c9d4657aef9a57661924521890d8137024897b47a0f54bf48"
+    },
+    {
+      "oldPath": "docs/diagrams/check-training-explorer.cjs",
+      "newPath": "docs/diagrams/src/check-training-explorer.cjs",
+      "originalSha256": "27e8a128a3ea3e8db249e885f7d0a695f8f63893fdf88c7f3e9d95e9e5c8ffa8"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.check.json",
+      "newPath": "docs/diagrams/evidence/training-explorer.check.json",
+      "originalSha256": "1f72bd237e2b2c084a3880d2efa97ce1a3d5342ca5b96091d4a1ebe77259d376"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.code.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.code.png",
+      "originalSha256": "c296fa6f13effce2e5922c323f56c0bba7ab7f8a9407f92af7e2e0f46e27a788"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.curriculum.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.curriculum.png",
+      "originalSha256": "507d25aab683102cc20f26849ba4d8535cd705338ba04c6e93f061c700ea52aa"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.dark.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.dark.png",
+      "originalSha256": "1130385151df1173fd2cb10ea7f672ee3b1cfb196267fa1dd2cedcab32f7645e"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.drag.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.drag.png",
+      "originalSha256": "4acb9cc30bcbf2a51a75bb4bd13152ac7f8e8a0e7512771fe313bc59c487cde3"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.light.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.light.png",
+      "originalSha256": "9670f02b0dff62d8f568d0eb26b7df724c6163d3076db0e623c7b9f10110421a"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.overview.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.overview.png",
+      "originalSha256": "59d08c2423508260c15df09b804059e51b8774d623779b2e0822b9cdbf192299"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.resized.png",
+      "newPath": "docs/diagrams/evidence/training-explorer.resized.png",
+      "originalSha256": "3ebf48777f0b2b812336c0f63fb2e0470f81b5b074e64a60109ba0a15442c1c5"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.sources.json",
+      "newPath": "docs/diagrams/evidence/training-explorer.sources.json",
+      "originalSha256": "439739da462986f5c3431da2ff8dfaf3505f697db1f831d5f5370b3eb3aa5ade"
+    },
+    {
+      "oldPath": "docs/diagrams/training-explorer.template.html",
+      "newPath": "docs/diagrams/src/training-explorer.template.html",
+      "originalSha256": "6e51fdb0b93ff5c33e0bba8058d45d7cbabf2c93a9ed397f5ded7dce0a6cf876"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.delivery.json",
+      "newPath": "docs/diagrams/evidence/training-flow.delivery.json",
+      "originalSha256": "c7d5741937c5c3c3ea6e6d63b1553ed205a4ad0de42aebf6f3e029ff0200a773"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.html",
+      "newPath": "docs/diagrams/assets/training-flow.html",
+      "originalSha256": "7eafcc1aaa73455a9498ba8aa41c086739f78e5f2789055abd9022f11e5b20b4"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.1440x900.dark.png",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.1440x900.dark.png",
+      "originalSha256": "f004bbf6663502002d997eba4c754b2d8709eb76a22de817332411d948a8837c"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.1440x900.light.png",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.1440x900.light.png",
+      "originalSha256": "5d23612c33f47befa7404af00566d572bb59e85e41ebf392551ce00800be5d6f"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.2048x1320.dark.png",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.2048x1320.dark.png",
+      "originalSha256": "a92dc6df69d377151ad4ae6ba9315089aa37c61698db20d69500fde1bfaf5bbb"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.2048x1320.light.png",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.2048x1320.light.png",
+      "originalSha256": "2c917f2a898cf0d704c391a7f3a4fe8e455964b19bebfcea7b3ffc9233d56bf7"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.html",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.html",
+      "originalSha256": "16295aba497cd06e684df7e36e7ce9d70c5fc21315a1e9442fc637451405a9f2"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.visual-check.json",
+      "newPath": "docs/diagrams/evidence/training-flow.visual-check.json",
+      "originalSha256": "efd72402ccf06eb14862462e7cf593c4ef07eef365ce6a82fbfd638457d7b3cb"
+    },
+    {
+      "oldPath": "docs/diagrams/training-flow.workflow.json",
+      "newPath": "docs/diagrams/src/training-flow.workflow.json",
+      "originalSha256": "cda8dfe715b138bb5440349ce1c3a79810b16139e0b105cbdf1dc3d5641bd825"
+    },
+    {
+      "oldPath": "docs/diagrams/verification.md",
+      "newPath": "docs/diagrams/evidence/verification.md",
+      "originalSha256": "742a86322c80deaade8881043ef419b37d04bdb1f6674cefb8aa34e1e6edf5e9"
+    },
+    {
+      "oldPath": "docs/diagrams/verify-source-comments.ps1",
+      "newPath": "docs/diagrams/src/verify-source-comments.ps1",
+      "originalSha256": "839a1bdecd6da01f34333992b1f43d99ce35ad37991f6766bc7e40c5d7de8207"
+    }
+  ]
+}

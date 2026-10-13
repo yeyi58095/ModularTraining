@@ -1,4 +1,6 @@
 function [history, episode, runDir] = checkpoint_resume_state(agentFile)
+% 續訓歷史讀取：從 MAT 內容取得 history、實際 episode 與所屬 runDir。
+% 相容已保存歷史格式，必要時在記憶體壓縮 SimulationInfo；從不以檔名推算進度或覆寫 checkpoint。
 % Read real training history. Never infer completed episodes from a filename.
     agentFile = char(agentFile);
     runDir = fileparts(agentFile);

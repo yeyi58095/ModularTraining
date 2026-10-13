@@ -1,8 +1,11 @@
+# 日誌退步診斷：依連續且完整的 reward 區間判斷疑似下降。
+# 此為匯出時的建議訊號，與 runtime training_guard 不同，不會控制訓練。
 """Advisory regression detection over logged rewards; never controls training."""
 import math
 import statistics
 
 
+# 完整且不重疊視窗與較早最佳窗比較；缺口重設 streak，門檻只作工程診斷。
 def assess_learning(rows, window=1000, patience=5, ratio=0.5, min_reference=500):
     """Compare nonoverlapping contiguous windows with the best earlier window.
 

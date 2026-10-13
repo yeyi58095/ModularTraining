@@ -1,4 +1,6 @@
 function data = load_trajectory(spec,baseDir)
+% MAT 軌跡讀取：依 JSON 指定的變數名稱載入 waypoints 與 velocity。
+% 路徑相對於 baseDir；回傳有限實數 N×3 陣列，兩者大小必須一致，不生成或修改輸入檔。
 % Only numeric N-by-3 position/velocity arrays are accepted for the FAFA model.
 file=fullfile(baseDir,spec.file);
 assert(isfile(file),'Curriculum:MissingTrajectory','Missing trajectory: %s',file);

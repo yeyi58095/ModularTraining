@@ -1,4 +1,6 @@
 function test_curriculum()
+% 課程合成測試：覆蓋 schema、MAT 快照、保存歷史條件、預算暫停與 attempt 假引擎接線。
+% 只在測試 fixture 取代 engine；不執行正式 train 或建立真實 pool。
 % Synthetic saved histories and MAT inputs only. No train() or real pool.
 root=fileparts(fileparts(mfilename('fullpath'))); old=path;
 guard=onCleanup(@() path(old)); %#ok<NASGU>
@@ -124,6 +126,7 @@ fprintf('PASS: curriculum schema, all/any, windows, rate, budget, MAT snapshot, 
 end
 
 function saveHistory(file,rewards)
+% 保存合成 reward／steps 的相容訓練歷史，只供條件與恢復接線測試。
 rewards=rewards(:); n=numel(rewards);
 data=struct('SimulationInfoStorage',[],'TimeStamp',[], ...
     'EpisodeIndex',(1:n)','EpisodeReward',rewards,'EpisodeSteps',ones(n,1)*3000, ...
@@ -133,6 +136,7 @@ savedAgentResult=rl.train.result.rlTrainingResult.fromResultStruct(data,struct('
 save(file,'savedAgentResult');
 end
 function reject(f,id)
+% 呼叫預期失敗操作，驗證錯誤識別碼，不吞掉不符合預期的結果。
 rejected=false;
 try, f(); catch e, rejected=isempty(id) || strcmp(e.identifier,id); end
 assert(rejected,'Expected rejection: %s',id);

@@ -1,4 +1,6 @@
 function test_checkpoint_comparison()
+% checkpoint 評估短測：使用本機短測 agent，執行有限步數的 CPU 純 sim，確認報告與保護條件。
+% 會模擬及保存 traces，不訓練；本機 fixture 結果不是實驗室評估結果。
 % Explicit, short SIMULATION ONLY. Uses a previously saved local smoke run.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 receipt=jsondecode(fileread(fullfile(root,'tests','output','curriculum-smoke-latest.json')));

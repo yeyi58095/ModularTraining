@@ -1,4 +1,6 @@
 function test_evaluation_diagnostics()
+% 訊號記錄 A/B 測試：對同一情境做兩次短 CPU sim，比較無記錄與診斷記錄的 reward／觀測／動作。
+% 確認週期 window 訊號與原 SLX 雜湊；不執行訓練或保存正式模型修改。
 % Real paired pure simulations, including the first periodic path update.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 receipt=jsondecode(fileread(fullfile(root,'tests','output','curriculum-smoke-latest.json')));

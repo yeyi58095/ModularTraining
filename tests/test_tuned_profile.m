@@ -1,4 +1,6 @@
 function test_tuned_profile()
+% 試驗 profile 測試：確認只更動指定參數、實際 agent optimizer 正確、快照 factory 保留設定。
+% 建構 CPU agent 並 start=false 準備 run；不宣稱試驗參數已改善性能。
 % Verify the selected changes reach the actual agent and its saved snapshot.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 name='ppo_lstm128_tuned_stability_20260923_v1';

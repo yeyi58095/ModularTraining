@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# reward 畫圖入口：讀取本專案日誌與 run 繼承鏈，輸出 PNG／CSV。
+# 只讀訓練來源；watch 定期重畫，不啟動、停止或控制訓練。
 """Plot MATLAB training logs across attempts. Requires: pip install matplotlib.
 
 Examples:
@@ -97,7 +99,6 @@ refresh();
     return server
 
 
-
 NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
 EPISODE = re.compile(
     rf"Episode:\s*(\d+)\s*/\s*\d+\s*\|\s*"
@@ -109,6 +110,7 @@ EPISODE = re.compile(
 ATTEMPT = re.compile(r"attempt_?(\d+)$", re.IGNORECASE)
 
 
+# 只列出此 run 的 attempt stdout，按 attempt 編號排序，不遞迴掃描 checkpoint。
 def log_files(session):
     found = []
     for directory in session.iterdir():
@@ -120,6 +122,7 @@ def log_files(session):
     return sorted(found)
 
 
+# 接受 run 或專案／課程／模型目錄，從支援的目錄結構選最新有日誌的 run。
 def select_session(path):
     root = Path(path).expanduser().resolve()
     if not root.is_dir():
@@ -154,6 +157,7 @@ def select_session(path):
     return max(candidates)[1]
 
 
+# 只解析完整換行列；同一 run 的重複 episode 由較新 attempt 覆蓋，回傳排序資料與去重統計。
 def read_episodes(session):
     episodes = {}
     duplicates = 0
@@ -181,6 +185,7 @@ def read_episodes(session):
     return [episodes[k] for k in sorted(episodes)], duplicates, used_attempts
 
 
+# 只讀 curriculum_state 已保存階段邊界，兼容單一 object；缺失或暫時不可讀時保留 reward 圖。
 def read_stages(session):
     """Use saved curriculum boundaries only, never infer stages from rewards."""
     plan_file = session / "curriculum.json"
@@ -224,6 +229,7 @@ def read_stages(session):
         return []
 
 
+# 讀取 recovery.json 繼承資料；沒有檔案表示沒有已記錄父 run。
 def read_recovery(session):
     path = session / "recovery.json"
     if not path.is_file():
@@ -234,6 +240,7 @@ def read_recovery(session):
     return data
 
 
+# 先採已記錄位置，搬移後只接受唯一同名 run；來源缺失或歧義不猜測。
 def resolve_parent(session, reference, roots):
     """Prefer the recorded location; relocate only an unambiguous run ID."""
     if not isinstance(reference, str) or not reference.strip():
@@ -265,6 +272,7 @@ def resolve_parent(session, reference, roots):
     return candidates.pop()
 
 
+# 沿 parent_session 追溯，祖先取到繼承 checkpoint、子 run 只取新增回合；循環／不一致會提示。
 def read_history(session, include_parents=True, roots=()):
     """Return disjoint run segments, oldest first; never merge branch duplicates."""
     segments, issues, seen = [], [], set()
@@ -315,6 +323,7 @@ def read_history(session, include_parents=True, roots=()):
     return segments, issues
 
 
+# 標示來源、prepare 模型指紋及目前控制視窗；這些不證明歷史實際執行版本。
 def segment_label(segment):
     data = segment['recovery']
     sha = data.get('prepared_runtime_model_sha256', '')
@@ -331,6 +340,7 @@ def segment_label(segment):
     return f"{segment['session'].name} | " + " | ".join(details)
 
 
+# 依保存邊界畫橘線與軸下階段標籤，不從預算或 reward 猜測換階段時間。
 def annotate_stages(ax, stages, first_episode, last_episode):
     visible = [s for s in stages if s["start"] < last_episode]
     for i, stage in enumerate(visible):
@@ -351,6 +361,7 @@ def annotate_stages(ax, stages, first_episode, last_episode):
                     annotation_clip=False)
 
 
+# 先渲染到同目錄暫存 PNG，再原子替換；失敗保留上一張完整圖。
 def save_png(fig, output):
     """Render away from the viewer's open file; keep the last good PNG on failure."""
     fd, name = tempfile.mkstemp(prefix=".reward-", suffix=".png", dir=output.parent)
@@ -363,6 +374,7 @@ def save_png(fig, output):
         temporary.unlink(missing_ok=True)
 
 
+# 組合來源分段、缺口、attempt／stage／接續線與分色平均 reward，輸出 PNG／CSV。
 def draw(session, output, plt, include_parents=True, roots=()):
     segments, issues = read_history(session, include_parents, roots)
     rows = [row for segment in segments for row in segment['rows']]
@@ -470,6 +482,7 @@ def draw(session, output, plt, include_parents=True, roots=()):
     return True
 
 
+# 解析 CLI 參數與輸出位置，執行畫圖／watch 刷新。
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -523,7 +536,6 @@ def main():
         return 0
     except (OSError, ValueError) as exc:
         parser.exit(1, f"Error: {exc}\n")
-
     finally:
         if viewer is not None:
             viewer.shutdown()

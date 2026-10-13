@@ -1,4 +1,6 @@
 function test_short_run_paths()
+% 短路徑保存測試：合成長 run 名稱，驗證短段落目錄的 v7.3 保存／讀回與路徑上限保護。
+% 會寫入 tests/output 的測試 MAT，不執行 train。
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(fullfile(root,'runtime'));
 output=fullfile(root,'tests','output'); if ~isfolder(output), mkdir(output); end
 base=tempname(output); mkdir(base);

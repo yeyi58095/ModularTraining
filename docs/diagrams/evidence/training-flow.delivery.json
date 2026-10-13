@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "workflow",
+  "input": "D:\\daniel\\GradSchool\\0-Beginner\\ModularTraining\\docs\\diagrams\\training-flow.workflow.json",
+  "output": "D:\\daniel\\GradSchool\\0-Beginner\\ModularTraining\\docs\\diagrams\\training-flow.html",
+  "specification": {
+    "sha256": "cda8dfe715b138bb5440349ce1c3a79810b16139e0b105cbdf1dc3d5641bd825",
+    "bytes": 4155
+  },
+  "artifact": {
+    "sha256": "7eafcc1aaa73455a9498ba8aa41c086739f78e5f2789055abd9022f11e5b20b4",
+    "bytes": 814521
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  }
+}

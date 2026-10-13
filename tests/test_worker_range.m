@@ -1,4 +1,6 @@
 function test_worker_range()
+% worker 範圍測試：以假的 parcluster／parpool 模擬縮減、不足、固定數量及舊參數呼叫。
+% 驗證同一 attempt 使用實際 worker 數及診斷檔；不啟動真實 workers 或訓練。
 % Exercise same-attempt range negotiation using fake pool APIs; no workers/train.
 root = fileparts(fileparts(mfilename('fullpath')));
 output = fullfile(root,'tests','output');
@@ -47,12 +49,14 @@ fprintf('PASS: same-attempt smaller pool, diagnostic counts, failed pool, bounds
 end
 
 function writeSource(file,lines)
+% 把假 API 的各行寫入隔離 fixture，用於測試而非正式 runtime。
 fid = fopen(file,'w'); assert(fid~=-1);
 guard = onCleanup(@() fclose(fid)); %#ok<NASGU>
 fprintf(fid,'%s\n',lines);
 end
 
 function restore(oldPath)
+% 恢復此測試暫改的呼叫者環境，避免 fixture 影響後續測試。
 path(oldPath);
 clear parcluster parpool;
 clear global testPoolCalls testPoolRange testPoolAvailable;

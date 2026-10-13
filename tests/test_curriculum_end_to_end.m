@@ -1,4 +1,6 @@
 function test_curriculum_end_to_end()
+% 真實三階段短測：固定→MAT→random 各一回合，CPU／1 worker，確認階段間 actor／critic 權重接續。
+% 明確執行才啟動訓練；僅驗證接線與保存，不代表長期收斂或多 worker 驗證。
 % REAL UAV training: 3 episodes, 1 CPU worker, 3 fresh MATLAB attempts.
 % Explicit invocation only. Episode-count gates test wiring, not learning.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root,fullfile(root,'runtime'));

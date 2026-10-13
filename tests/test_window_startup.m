@@ -1,4 +1,6 @@
 function test_window_startup()
+% window 初始化測試：從實際 SLX 抽出 chart 函式，驗證首次及週期 valid 與短路徑拒絕。
+% 只呼叫抽出的純函式，不啟動 Simulink 模擬或訓練，也不保存 SLX。
 % Execute the actual embedded function without running a Simulink simulation.
 root=fileparts(fileparts(mfilename('fullpath')));
 assert(~bdIsLoaded('FAFA_Simulation'),'Close FAFA_Simulation before this test.');

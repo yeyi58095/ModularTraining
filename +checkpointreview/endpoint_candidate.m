@@ -1,4 +1,6 @@
 function script=endpoint_candidate(script,includeOutside)
+% 候選 guidance 文字轉換：在舊版評估副本補足末段 lookahead，選用 V2 的受限 outside 延伸。
+% 輸入／回傳 chart script；正式 runtime 已有修正時拒絕重複套用，不直接修改正式 SLX。
 % Experimental geometry-only change; caller must use an evaluation copy.
 if nargin<2, includeOutside=false; end
 assert(~contains(script,'extension = max(0, target_distance + along);'), ...

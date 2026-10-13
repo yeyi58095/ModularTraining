@@ -1,4 +1,6 @@
 function report=audit_training_resume(sessionDir,opt)
+% 續訓稽核：比對停止 run 的 checkpoint 與 Agent_Initial 來源、設定及 actor／critic 權重。
+% 回傳並保存稽核報告；不解析 optimizer 私有狀態，不模擬、訓練或覆寫 agent。
 % Read stopped-session agents and initial snapshots; never train or simulate.
 arguments
     sessionDir (1,1) string
@@ -60,11 +62,13 @@ trainingcurriculum.write_json(file,report);
 fprintf('Audit complete. No training or simulation. Report: %s\n',file);
 end
 function agent=readAgent(file)
+% 按 saved_agent／Agent_Stage2 變數名稱讀取 agent；主要 checkpoint 相容性由呼叫端先檢查。
 entries=whos('-file',file); name='saved_agent';
 if ~any(strcmp({entries.name},name)), name='Agent_Stage2'; end
 data=load(file,name); agent=data.(name);
 end
 function row=describe(agent)
+% 擷取 optimizer、PPO、sample time 與探索模式等設定，供稽核比較。
 o=agent.AgentOptions;
 row=struct('actor_learn_rate',o.ActorOptimizerOptions.LearnRate, ...
     'critic_learn_rate',o.CriticOptimizerOptions.LearnRate, ...
@@ -76,6 +80,7 @@ row=struct('actor_learn_rate',o.ActorOptimizerOptions.LearnRate, ...
     'use_exploration',agent.UseExplorationPolicy);
 end
 function result=distance(a,b)
+% 逐一比較兩組參數的形狀與數值，回傳相等性及差異統計。
 x=getLearnableParameters(a); y=getLearnableParameters(b);
 assert(numel(x)==numel(y),'Audit:Shape','Parameter layout differs.');
 total=0; baseline=0; peak=0; equal=true; finite=true;

@@ -1,4 +1,6 @@
 function test_modular_training()
+% 模型模組測試：建構各 profile、檢查動作／相容性，驗證 start=false 新建與續訓及模型快照。
+% 會建立 CPU agent 並載入／關閉 SLX；不執行 train 或 sim，不代表收斂驗證。
 root=fileparts(fileparts(mfilename('fullpath')));
 addpath(root);
 obs=rlNumericSpec([10 1]); obs.Name='observation';

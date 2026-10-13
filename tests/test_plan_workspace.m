@@ -1,4 +1,6 @@
 function test_plan_workspace()
+% 課程工作區測試：驗證共享 JSON／assets、舊入口轉址與 run 的不可變課程快照。
+% 只生成輸入及 start=false 的 run；GPU 設定僅做準備，不執行 GPU 訓練。
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 inputs=prepare_progressive_training();
 assert(strcmp(inputs.planFile,fullfile(root,'experiments','progressive_v1','curriculum.json')));

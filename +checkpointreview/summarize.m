@@ -1,4 +1,6 @@
 function row=summarize(experience,maxSteps)
+% 單次 trace 摘要：將每個 reward transition 計入總分／步數，記錄 IsDone、觀測與動作飽和。
+% 回傳 row；observation7 為模型規範化訊號，終端門檻只是證據，不等於已確認 IsDone 分支因果。
 % Each reward is a transition, including the one labelled t=0 by sim().
 values=double(experience.Reward.Data(:));
 assert(~isempty(values) && all(isfinite(values)),'Evaluation:Reward','Missing or nonfinite rewards.');

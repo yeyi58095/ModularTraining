@@ -2,11 +2,11 @@
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
-[互動架構圖](docs/architecture.html)（2026-10-10 更新）：課程設定、實驗快照、訓練與續訓、遷移和診斷；詳細語意與驗證見 [架構說明](docs/architecture-notes.md)。
+[互動架構圖](docs/architecture.html)（2026-10-10 更新）：課程設定、實驗快照、訓練與續訓、遷移和診斷；詳細語意與驗證見 [架構說明](docs/reference/architecture-notes.md)。
 
 ## JSON 分階段訓練
 
-新課程實驗按計畫存入 `experiments/<課程>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/curriculum-layout.md)。
+新課程實驗按計畫存入 `experiments/<課程>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/guides/curriculum-layout.md)。
 
 已停止的舊實驗可用 `migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
 
@@ -23,7 +23,7 @@ info = retry(curriculum="curricula/fixed_to_random.json",start=false);
 
 可參考 [固定→random 範例](curricula/fixed_to_random.json) 或 [軌跡1→軌跡2→random 模板](curricula/two_mat_then_random.example.json)。後者需要自行提供 MAT；可先用 `curriculum_plan(...,checkFiles=false)` 檢查格式。
 例如 all 組合「本階段至少 5000 回合」與「最近三段各 100 回合平均 reward 都 >=2500」。到達 max_episodes 仍未通過時可指定保存後暫停，不把耗盡預算誤當學會。
-條件在存檔邊界判斷，依 checkpoint 歷史計算；原本不帶 curriculum 的呼叫維持既有行為。完整格式、MAT 限制與續訓語意見 [課程設定說明](docs/curriculum.md)。已完成 CPU／1 worker 三階段真實短測，詳見 [驗證紀錄](docs/validation-2026-10-09.md)。
+條件在存檔邊界判斷，依 checkpoint 歷史計算；原本不帶 curriculum 的呼叫維持既有行為。完整格式、MAT 限制與續訓語意見 [課程設定說明](docs/guides/curriculum.md)。已完成 CPU／1 worker 三階段真實短測，詳見 [驗證紀錄](docs/records/validation-2026-10-09.md)。
 
 ## 宿舍／實驗室分享精簡紀錄
 
@@ -36,10 +36,10 @@ python export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 python export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
 ```
 
-產生 `<實驗>/reports/report.json`，限制在 1.5 MB 內；標準課程實驗的此檔案可提交 GitHub 後跨機閱讀。完整日誌、checkpoint、圖表與快取由 `.gitignore` 排除。舊報告整理方式見 [課程與報告目錄](docs/curriculum-layout.md)。
+產生 `<實驗>/reports/report.json`，限制在 1.5 MB 內；標準課程實驗的此檔案可提交 GitHub 後跨機閱讀。完整日誌、checkpoint、圖表與快取由 `.gitignore` 排除。舊報告整理方式見 [課程與報告目錄](docs/guides/curriculum-layout.md)。
 報告包含 reward／steps／Q0 區間統計、重啟與 worker 摘要、模型設定及程式指紋，不含完整錯誤堆疊。匯出不會啟停訓練或自動 push。
 請把範例中的路徑換成實際資料夾；舊實驗可用 `--diagnostics` 明確指定外部診斷目錄。
-詳細格式與限制見 [reports/README.md](reports/README.md)；本次架構審視與雙機工作紀錄見 [docs/review-2026-10-09.md](docs/review-2026-10-09.md)。
+詳細格式與限制見 [reports/README.md](reports/README.md)；本次架構審視與雙機工作紀錄見 [docs/records/review-2026-10-09.md](docs/records/review-2026-10-09.md)。
 分享報告不能代替 checkpoint 續訓；複製實驗跨機續訓前需檢查 `control.json` 的 `diagnosticDir` 等路徑。
 
 ## 訓練 Reward 圖表
@@ -57,7 +57,7 @@ python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 
 未指定路徑時，依日誌修改時間選擇本專案最新的實驗；也可以指定模型資料夾或其 `runs/`。輸出預設為實驗 `reports/` 內的 `reward_history.png` 和 `reward_history.csv`，可用 `--output 路徑.png` 改位置。圖表包含每回合 reward、日誌記錄的平均 reward 與重啟分界；重複 episode 使用較新 attempt 的紀錄。工具只讀取日誌，Ctrl+C 停止圖表更新不影響訓練。
 
-預設沿 `recovery.json` 追溯父 run，依各次繼承 checkpoint 的 episode 截斷祖先曲線；不同 run 的平均 reward 使用不同顏色，紫色虛線標記接續點，橘線保留 stage 分界。CSV 增加 `source_run`、`source_session` 來源欄位。只畫目前 run 可加 `--no-lineage`；父 run 搬到別處時可加 `--lineage-root "父專案或 runs 資料夾"`。找不到來源或資料不完整會提示並保留缺口，不會猜測、補值或改寫訓練狀態。使用方式與版本判讀限制見 [跨 run 畫圖說明](docs/run-lineage-proposal.md)。
+預設沿 `recovery.json` 追溯父 run，依各次繼承 checkpoint 的 episode 截斷祖先曲線；不同 run 的平均 reward 使用不同顏色，紫色虛線標記接續點，橘線保留 stage 分界。CSV 增加 `source_run`、`source_session` 來源欄位。只畫目前 run 可加 `--no-lineage`；父 run 搬到別處時可加 `--lineage-root "父專案或 runs 資料夾"`。找不到來源或資料不完整會提示並保留缺口，不會猜測、補值或改寫訓練狀態。使用方式與版本判讀限制見 [跨 run 畫圖說明](docs/guides/run-lineage-proposal.md)。
 
 獨立於旁邊 `Simulink/` 的實驗版本。包含自己的訓練腳本、supervisor、checkpoint 輔助檔，以及 FAFA_Simulation.slx 副本；不呼叫舊資料夾內的訓練檔案。
 現行 Simulink 版本不需停止或更新。這份程式不會自動啟動、終止或刪除現行實驗。
@@ -140,7 +140,7 @@ SAC、TD3 等演算法尚未支援；需要擴充 builder、checkpoint 相容性
 
 ## 診斷與檔案隔離
 
-停訓後可執行 `evaluation=compare_training_checkpoints(sessionDir)`，以 CPU 純模擬比較 6100、10600 與最新存檔，預設測前三個無風固定軌跡階段。使用方法、結果限制及本機短測見 [checkpoint 比較](docs/checkpoint-comparison.md)。這不啟動訓練、不回滾，也不修改原實驗快照。
+停訓後可執行 `evaluation=compare_training_checkpoints(sessionDir)`，以 CPU 純模擬比較 6100、10600 與最新存檔，預設測前三個無風固定軌跡階段。使用方法、結果限制及本機短測見 [checkpoint 比較](docs/guides/checkpoint-comparison.md)。這不啟動訓練、不回滾，也不修改原實驗快照。
 
 ```text
 ModularTraining/
@@ -191,15 +191,15 @@ ModularTraining/
 
 ## 驗證
 
-實驗室正式啟動步驟見 [6 workers＋GPU 操作說明](docs/lab-start.md)，硬體與重試參數在 `configs/lab_gpu6.json`。此組合尚未實測；本機真實短測僅使用 CPU／1 worker。
+實驗室正式啟動步驟見 [6 workers＋GPU 操作說明](docs/guides/lab-start.md)，硬體與重試參數在 `configs/lab_gpu6.json`。此組合尚未實測；本機真實短測僅使用 CPU／1 worker。
 
-六階段訓練方案見 [training-plan-v1](docs/training-plan-v1.md)，可執行設定為 `experiments/progressive_v1/curriculum.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
+六階段訓練方案見 [training-plan-v1](docs/guides/training-plan-v1.md)，可執行設定為 `experiments/progressive_v1/curriculum.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
 
 `tests/test_curriculum_end_to_end.m`：明確呼叫才啟動 CPU／1 worker 真實 UAV 訓練，固定路徑、MAT、random 各一回合，驗證跨程序續訓、階段切換與 actor／critic 權重接續；使用測試用回合門檻，不代表學會任務。
 
 `tests/test_worker_range.m`：用模擬 pool API 驗證目標 6／可用 3 時同一次呼叫成功，及下限、失敗診斷與舊呼叫相容；不啟動真實 pool。
 `tests/test_learning_health.py`：驗證持續退步、恢復、早期低 reward、單次尖峰及缺回合。
-精簡報告新增 `learning_health`，每次匯出會計算規則式診斷；不是背景監控，不會自動修改訓練。預設每 1000 回合一段，連續 5 段低於先前最佳完整區間平均的 50%，且參考平均至少 500 時標記疑似退步。詳見 [處理策略](docs/learning-health.md)。
+精簡報告新增 `learning_health`，每次匯出會計算規則式診斷；不是背景監控，不會自動修改訓練。預設每 1000 回合一段，連續 5 段低於先前最佳完整區間平均的 50%，且參考平均至少 500 時標記疑似退步。詳見 [處理策略](docs/guides/learning-health.md)。
 
 `tests/test_model_layout.m`：不啟動訓練，驗證模型分類、每次訓練的獨立路徑、快照排除成果、續訓及舊版診斷路徑相容性。
 
@@ -210,4 +210,4 @@ ModularTraining/
 
 ## 有上限的恢復試驗
 
-`prepare_recovery_training(parentSession)` 依 `configs/recovery_actor_half.json` 從指定 checkpoint 另建新實驗；預設 10600、actor LR 減半，每段100回合、最多新增1000回合。具備同階段退步的保存後暫停規則，沒有自動回滾／啟動。詳見 [實驗室操作與限制](docs/recovery-training.md)。
+`prepare_recovery_training(parentSession)` 依 `configs/recovery_actor_half.json` 從指定 checkpoint 另建新實驗；預設 10600、actor LR 減半，每段100回合、最多新增1000回合。具備同階段退步的保存後暫停規則，沒有自動回滾／啟動。詳見 [實驗室操作與限制](docs/guides/recovery-training.md)。

@@ -1,3 +1,5 @@
+% 共用訓練引擎：套用 overrides、建立／載入 PPO agent，連接 Simulink 環境與實際 workers。
+% 以 train 執行本段，定期保存 checkpoint，段末先保存歷史再判定 guard／課程；由 attempt 在新程序執行。
 %% LSTM-PPO parallel training with periodic checkpoints (R2024b)
 % Run the WHOLE script in a fresh MATLAB session.
 % Native crashes cannot be caught; periodic checkpoints protect completed work.
@@ -6,6 +8,7 @@ clc;
 warning('on', 'all');
 
 %% User settings
+% 本段可設定的預設值；attempt 僅覆蓋白名單參數。
 resumeAgentFile = ""; % Full path to Agent100.mat or Agent_Final.mat; "" = new
 numWorkers = 6; % Original script's intended local pool size
 minWorkers = 1;
@@ -27,6 +30,7 @@ agentFactory = [];
 agentValidator = [];
 curriculumContext = [];
 % Entrypoint/automatic supervisor supplies only these known settings.
+% 僅接收已知 overrides 欄位，避免入口把任意設定注入引擎。
 if exist('checkpointOverrides', 'var') && isstruct(checkpointOverrides)
     allowed = {'resumeAgentFile','numWorkers','minWorkers','checkpointEvery','maxEpisodes', ...
         'trainingDevice','fastRestart','targetReward','averageWindow', ...
@@ -50,6 +54,7 @@ runRoot = fullfile(scriptDir, 'training_runs_parallel_checkpointed');
 if strlength(string(outputRoot)) > 0, runRoot = char(outputRoot); end
 if ~isfolder(runRoot), mkdir(runRoot); end
 [~, runTag] = fileparts(tempname(runRoot));
+% 載入實際 episode 歷史；禁止向同一 run 較舊 checkpoint 回退而覆寫新進度。
 resumeHistory = [];
 resumeEpisode = 0;
 if strlength(string(resumeAgentFile)) > 0
@@ -92,6 +97,7 @@ end
 
 
 %% Environment Setup
+% 重設 client 回合／路徑顯示狀態，供本段環境初始化。
 global episodeCounter pathFigure wind_setup TARGET_SPEED DT WAYPOINT_SPACING
 episodeCounter = 0;
 wind_setup = [];
@@ -101,6 +107,7 @@ if showPathFigure
 end
 
 %% Global Trajectory Parameters
+% 共用速度、取樣時間與點距；移動 window 的速度需與路徑速度一致。
 % Keep the moving window speed consistent with the target speed:
 % WAYPOINT_SPACING = TARGET_SPEED * DT
 TARGET_SPEED = 15;      % Target speed (m/s)
@@ -108,6 +115,7 @@ DT = 0.1;               % Sample time (s)
 WAYPOINT_SPACING = TARGET_SPEED * DT;
 
 %% Observation and Action Space Definition
+% FAFA 介面契約：10 維觀測、1 維 [-1,1] 橫向命令。
 obsDim = [10 1];
 obsInfo = rlNumericSpec(obsDim);
 obsInfo.Name = "observation";
@@ -130,6 +138,7 @@ actInfo.LowerLimit = [-1];
 actInfo.UpperLimit = [1];
 
 %% Simulink Setup
+% 載入正式模型並建立 RL 環境，不將臨時 logging 設定保存到 SLX。
 modelName = "FAFA_Simulation";
 
 % Do not save changes to the original model.
@@ -141,11 +150,13 @@ env = rlSimulinkEnv(modelName, modelName + "/RL Agent", obsInfo, actInfo, ...
     "UseFastRestart", fastRestart);
 rng(baseSeed);
 
+% 新 agent 才呼叫 factory；已有 checkpoint 時直接載入同一 agent。
 if strlength(resumeAgentFile) == 0
 if ~isempty(agentFactory)
     Agent_Stage2 = agentFactory(obsInfo,actInfo,trainingDevice);
 else
 %% Actor Network Architecture
+% 未提供 modular factory 時的舊版 actor 建構分支。
 inPath = [
         sequenceInputLayer(10, "Name", "observation")
         lstmLayer(128, "Name", "lstm_memory", ...
@@ -193,6 +204,7 @@ Actor = rlContinuousGaussianActor(actnet, obsInfo, actInfo, ...
     "UseDevice", trainingDevice);
 
 %% Critic Network Architecture
+% 與 actor 分開的 value 網路，估計 PPO 所需狀態價值。
 valnet = [
     sequenceInputLayer(10, "Name", "observation")
     lstmLayer(128, "Name", "lstm_value", ...
@@ -211,6 +223,7 @@ valnet = [
 Critic = rlValueFunction(valnet, obsInfo, "UseDevice", trainingDevice);
 
 %% PPO Agent Configuration
+% 組合 actor／critic 與 PPO 更新選項；續訓分支直接載入已保存 agent。
 agentOpts = rlPPOAgentOptions(...
     "SampleTime", 0.1, ...
     "DiscountFactor", 0.98, ...
@@ -240,6 +253,7 @@ else
     if strlength(agentVariable) == 0
         error('Training:CheckpointFormat', 'Expected saved_agent or Agent_Stage2.');
     end
+    % 只在記憶體內接續權重，隨後核對 observation／action／sample time。
     loadedAgent = load(char(resumeAgentFile), char(agentVariable));
     Agent_Stage2 = loadedAgent.(char(agentVariable));
     clear loadedAgent;
@@ -259,6 +273,7 @@ else
 end
 
 %% Network Architecture Display
+% 只列印網路大小與 LSTM 單元，不做更新或評估。
 if ~isempty(agentValidator), agentValidator(Agent_Stage2); end
 fprintf('\n========== Network Architecture ==========\n');
 
@@ -286,6 +301,7 @@ end
 fprintf('===================================\n\n');
 
 %% Trajectory Parameter Display
+% 列印軌跡設定，供核對 window 點距／速度。
 fprintf('\n========== Trajectory Parameter Settings ==========\n');
 fprintf('Target speed (TARGET_SPEED): %.1f m/s\n', TARGET_SPEED);
 fprintf('Sample time (DT): %.2f s\n', DT);
@@ -295,6 +311,7 @@ fprintf('Actual moving window speed: %.1f m/s (= %.2f m / %.2f s)\n', ...
 fprintf('===================================\n\n');
 
 %% Centralized logging, matching the original DataQueue design
+% worker 送事件給 client 寫 CSV，避免多個 worker 競爭同一檔案。
 windLogFile = fullfile(runLogDir, 'wind_all.csv');
 fid = fopen(windLogFile, 'w');
 if fid == -1, error('Training:WindLog', 'Cannot create wind log.'); end
@@ -308,11 +325,13 @@ fclose(fid);
 dq = parallel.pool.DataQueue;
 logListener = afterEach(dq, @(event) writeWorkerLog(event, windLogFile, memoryLogFile));
 randomstart_stage2([], dq, true);
+% 將此階段的 trajectory／wind 傳入每回合 ResetFcn，不重建 agent。
 environmentConfig=[];
 if ~isempty(curriculumContext), environmentConfig=curriculumContext.environment; end
 env.ResetFcn = @(in) randomstart_stage2(in, dq, false, environmentConfig);
 
 %% Local process pool (same six-worker intent as the original script)
+% 先排除不相容且閒置的 pool；有其他工作時拒絕覆用或刪除。
 pool = gcp('nocreate');
 requestedWorkers = numWorkers;
 if ~isempty(pool) && (~isa(pool, 'parallel.ProcessPool') || ...
@@ -329,6 +348,7 @@ if isempty(pool)
     pool = checkpoint_open_pool(numWorkers, poolDiagnosticDir, minWorkers);
 end
 % WorkerRandomSeeds and all downstream options must match the actual pool.
+% 成功取得 n 個就立即在本段使用 n 個；seed 數量及 options 同步採實際 n。
 numWorkers = pool.NumWorkers;
 % Workers share the local filesystem. Attach script for local helper callbacks.
 addAttachedFiles(pool, {[mfilename('fullpath') '.m']});
@@ -339,7 +359,10 @@ workerConfig = struct('scriptDir', scriptDir, 'modelName', modelName, ...
     'disableAnimation', disableUAVAnimation);
 % Pool shutdown below releases worker processes instead of waiting for IdleTimeout.
 %% Training
+% 建立訓練 options 與每個實際 worker 的 seed，課程採段落回合數停止。
 maxstep = ceil(300/DT);
+% MaxEpisodes 以 resumeEpisode+新增回合設定；MaxStepsPerEpisode=300/DT，所以目前每回合上限 3000 步。
+% EpisodeFrequency 表示按回合頻率保存；保存條件不等於成功條件，也不保證意外退出前未滿頻率的回合仍存在。
 trainingOpts = rlTrainingOptions( ...
     "MaxEpisodes", resumeEpisode + maxEpisodes, ...
     "MaxStepsPerEpisode", maxstep, ...
@@ -355,13 +378,16 @@ trainingOpts = rlTrainingOptions( ...
     "Verbose", true, ...
     "Plots", trainingPlots ...
 );
+% sync 讓每輪並行訓練採同步模式；UseParallel 不保證要求的 worker 上限一定取得。
 trainingOpts.ParallelizationOptions.Mode = "sync";
+% 課程以本段 EpisodeCount 結束，不用跨階段平均 reward 提前通關。
 if ~isempty(curriculumContext)
     % Stage decisions are made only after the segment is saved. Do not let
     % whole-experiment reward history trigger the legacy global success rule.
     trainingOpts.StopTrainingCriteria = "EpisodeCount";
     trainingOpts.StopTrainingValue = resumeEpisode + maxEpisodes;
 end
+% 1:numWorkers 產生 n 個連續偏移，與實際 pool 對齊；不同 attempt 的 baseSeed 會改變。
 trainingOpts.ParallelizationOptions.WorkerRandomSeeds = baseSeed + (1:numWorkers);
 trainingOpts.ParallelizationOptions.TransferBaseWorkspaceVariables = "on";
 % Runtime queue callbacks are rebuilt each run, not stored in MAT checkpoints.
@@ -370,6 +396,7 @@ save(fullfile(runLogDir, 'TrainingOptions.mat'), 'optionsForDisk', 'numWorkers',
     'resumeAgentFile', 'fastRestart', '-v7.3');
 trainingOpts.ParallelizationOptions.SetupFcn = @() parallelWorkerState("setup", workerConfig, []);
 trainingOpts.ParallelizationOptions.CleanupFcn = @() parallelWorkerState("cleanup", workerConfig, []);
+% Agent_Initial 是本段開始前的 agent，供檢查 resume 是否保留權重；不是這段訓練後成果。
 save(fullfile(runLogDir, 'Agent_Initial.mat'), 'Agent_Stage2', '-v7.3');
 copyfile([mfilename('fullpath') '.m'], fullfile(runLogDir, 'training_script_snapshot.m'));
 clear training_stage2;
@@ -377,10 +404,12 @@ clear training_stage2;
 % Keep the client model unchanged so parallel model transfer sees a saved model.
 try
     trainInput = trainingOpts;
+    % resumeHistory 帶已保存統計；替換其 TrainingOptions 只指定本段選項，不清空既有 episode 編號。
     if ~isempty(resumeHistory)
         resumeHistory.TrainingOptions = trainingOpts;
         trainInput = resumeHistory;
     end
+    % 續訓將既有 history 與本段 options 一起交給 train，保留回合編號。
     training_stage2 = trainWithPoolCleanup(Agent_Stage2, env, trainInput, pool, closePoolOnExit);
 catch trainingError
     % Best effort for MATLAB exceptions only, not process termination.
@@ -398,6 +427,7 @@ catch trainingError
 end
 % Avoid retaining live DataQueue callbacks in the results file.
 training_stage2.TrainingOptions = optionsForDisk;
+% 先完整保存 agent＋歷史，才用保存邊界的數據判定 guard／課程。
 checkpoint_save_final(fullfile(saveDir,'Agent_Final.mat'),Agent_Stage2,training_stage2);
 copyfile(fullfile(saveDir,'Agent_Final.mat'),fullfile(runLogDir,'Agent_Final.mat'));
 save(fullfile(saveDir, 'TrainingResults.mat'), 'training_stage2', '-v7.3');
@@ -405,6 +435,7 @@ if isempty(curriculumContext)
     successSummary = checkpoint_mark_success(saveDir, training_stage2.EpisodeReward, ...
         targetReward, averageWindow);
 else
+    % guard 回傳 pause 時優先保留；只有空結果才執行課程過關判定。
     successSummary = trainingguard.check(saveDir,fullfile(saveDir,'Agent_Final.mat'));
     if isempty(successSummary)
         successSummary = trainingcurriculum.outcome(curriculumContext,training_stage2.EpisodeReward, ...
@@ -413,18 +444,21 @@ else
 end
 fprintf('Training stopped normally. Saved in:\n%s\n', saveDir);
 %% Helper Functions
+% 訓練、worker 環境、回合 reset 與路徑幾何輔助函式。
 function result = trainWithPoolCleanup(agent, environment, options, pool, closeOnExit)
     guard = onCleanup(@() releaseTrainingPool(pool, closeOnExit)); %#ok<NASGU>
     result = train(agent, environment, options);
 end
 
 function releaseTrainingPool(pool, closeOnExit)
+% 只在設定要求且 pool 有效時關閉它，不處理 supervisor 外的其他程序。
     if closeOnExit && ~isempty(pool) && isvalid(pool)
         delete(pool);
     end
 end
 
 function writeWorkerLog(event, windFile, memoryFile)
+% 依 DataQueue 事件種類分流風場與記憶體 CSV，集中由 client 寫檔。
     % Only the client writes these shared files, as in the original script.
     if strcmp(event.kind, 'wind')
         appendWindRow(windFile, event.row);
@@ -434,6 +468,7 @@ function writeWorkerLog(event, windFile, memoryFile)
 end
 
 function parallelWorkerState(action, config, dq)
+% worker setup 保存／切換目錄、路徑與快取，cleanup 透過 guard 恢復模型及檔案環境。
     persistent modelGuard filesystemGuard
     global TARGET_SPEED DT WAYPOINT_SPACING pathFigure
     % Clear stale state when reusing a pool after an interrupted run.
@@ -471,12 +506,14 @@ function parallelWorkerState(action, config, dq)
 end
 
 function restoreWorkerFilesystem(previousFolder, previousPath, previousFileConfig)
+% 恢復 worker 原目錄、MATLAB path 與 Simulink 快取設定。
     Simulink.fileGenControl('setConfig', 'config', previousFileConfig);
     cd(previousFolder);
     path(previousPath);
 end
 
 function in = randomstart_stage2(in, dq, resetState, environmentConfig)
+% 每回合抽樣整數風場、依課程選軌跡並寫入模型變數；resetState 清除持久狀態。
     % Path-generation helpers read the global trajectory settings.
     persistent lastwaypoints lastvelocity localEpisodeCounter
     if resetState
@@ -486,6 +523,7 @@ function in = randomstart_stage2(in, dq, resetState, environmentConfig)
         return;
     end
 
+    % 沒有課程環境時才使用舊版 random／風場預設，保持非課程流程。
     legacyEnvironment=nargin<4 || isempty(environmentConfig);
     if legacyEnvironment
         environmentConfig=struct('trajectory',struct('type','random','refresh_every_worker_episodes',10), ...
@@ -508,6 +546,7 @@ function in = randomstart_stage2(in, dq, resetState, environmentConfig)
     end
 
     % Random wind disturbance, different for each episode.
+    % 每回合抽樣 JSON 指定的整數風場；不代表 turbulence 內部噪音時序互相獨立。
     wind_E0 = randi(environmentConfig.wind.east_mps(:)',1,1);
     wind_N0 = randi(environmentConfig.wind.north_mps(:)',1,1);
     wind_turbulance_value0 = randi(environmentConfig.wind.turbulence(:)',1,1);
@@ -537,6 +576,7 @@ function in = randomstart_stage2(in, dq, resetState, environmentConfig)
     in = setVariable(in, "wind_N0", wind_N0, "Workspace", mdl);
     in = setVariable(in, "wind_turbulance_value0", wind_turbulance_value0, "Workspace", mdl);
 
+    % 固定／MAT 沿用路徑；random 依 worker-local 回合週期更新。
     if isempty(lastwaypoints) || (isfinite(pathUpdateFrequency) && mod(localEpisodeCounter, pathUpdateFrequency)==0)
         switch environmentConfig.trajectory.type
             case 'fixed_builtin'
@@ -562,6 +602,8 @@ end
 
 % Ranfdom path
 function [waypoints, velocity] = createPath_Stage2()
+% random 軌跡：交替抽樣直線段長與左右轉角，產生等高度路徑後依弧長重新等距取樣。
+% 回傳 N×3 waypoints／velocity；使用呼叫者 RNG 與共用速度／點距，不自行設 seed 或訓練。
     global TARGET_SPEED DT WAYPOINT_SPACING
 
     if isempty(TARGET_SPEED)
@@ -570,6 +612,7 @@ function [waypoints, velocity] = createPath_Stage2()
     if isempty(DT), DT = 0.1; end
     if isempty(WAYPOINT_SPACING), WAYPOINT_SPACING = TARGET_SPEED * DT; end
 
+    % 先按 DT 生成直線／轉彎步進，再重採樣成 WAYPOINT_SPACING 點距。
     numSteps = 4000;
     dt = DT;
     x0 = 50;
@@ -593,6 +636,7 @@ function [waypoints, velocity] = createPath_Stage2()
     currentStep = 1;
 
     while currentStep < numSteps
+        % 隨機直線長度以時間步數抽樣，實際距離還取決於速度與 DT。
         thisSegmentSteps = randi([minSegmentLen, maxSegmentLen]);
 
         for k = 1:thisSegmentSteps
@@ -618,6 +662,7 @@ function [waypoints, velocity] = createPath_Stage2()
             turnSignBase = -1;
         end
 
+        % 左右方向與轉角偏移分別抽樣；actual 更新使用 angularSpeedMax。
         turnOffset = (rand()*2 - 1) * turnRangeRad;
         targetAngle = angle + turnSignBase * (turnCenterRad + turnOffset);
 
@@ -666,6 +711,7 @@ function [waypoints, velocity] = createPath_Stage2()
     y = waypoints(:,2);
     z = waypoints(:,3);
 
+    % 按累積弧長建立新取樣座標，位置／速度使用同一插值座標。
     d = [0; cumsum(sqrt(diff(x).^2 + diff(y).^2 + diff(z).^2))];
     d_new = (0:WAYPOINT_SPACING:d(end))';
 
@@ -693,6 +739,7 @@ end
 
 % Display path
 function displayPath(waypoints, episodeNum)
+% 只有 showPathFigure 開啟時更新路徑視窗，僅用於觀察。
     global pathFigure
 
     if isempty(pathFigure) || ~isgraphics(pathFigure), return; end
@@ -716,6 +763,7 @@ function displayPath(waypoints, episodeNum)
 end
 
 function appendWindRow(fname, row)
+% 將已格式化風場列附加至指定 CSV；無法開檔時警告，成功寫入後關檔。
     fid = fopen(fname, 'a');
     if fid ~= -1
         fprintf(fid, "%s\n", row);
@@ -726,6 +774,7 @@ function appendWindRow(fname, row)
 end
 
 function cleanupGuard = prepareTrainingModel(mdl, disableLogging, disableAnimation)
+% 先蒐集完整恢復計畫，再暫改 logging／動畫；onCleanup 不保存模型地恢復。
     % Build the complete restoration plan BEFORE mutating any model settings.
     targets = {char(mdl), 'FastRestart', 'off'};
     if disableLogging
@@ -755,6 +804,7 @@ function cleanupGuard = prepareTrainingModel(mdl, disableLogging, disableAnimati
 end
 
 function restoreModelSettings(mdl, previous, oldDirty)
+% 逆序恢復參數，全部成功才還原 Dirty 標記；失敗以 warning 保留診斷。
     if ~bdIsLoaded(mdl), return; end
     restored = true;
     try
@@ -774,6 +824,7 @@ function restoreModelSettings(mdl, previous, oldDirty)
     if restored, set_param(mdl, 'Dirty', oldDirty); end
 end
 function n = countParams(net)
+% 計算網路可學習參數元素數，供印出模型規模，不更改參數。
     n = 0;
     for i = 1:numel(net.Layers)
         layer = net.Layers(i);
@@ -794,6 +845,8 @@ end
 
 % Fixed path
 function [waypoints, velocity] = createFixedPath()
+% 固定轉彎軌跡：依共用速度與點距，以直線及圓弧連接預定關鍵點。
+% 回傳 N×3 waypoints／velocity；此函式與 engine 的 createFixedPath 內容須保持一致，評估器會逐字檢查。
     global TARGET_SPEED DT WAYPOINT_SPACING
 
     if isempty(TARGET_SPEED)
@@ -807,6 +860,7 @@ function [waypoints, velocity] = createFixedPath()
     waypoint_spacing = WAYPOINT_SPACING;
     turn_radius = 120;
 
+    % 預定關鍵點決定固定任務；轉彎以有限半徑圓弧平滑連接。
     key_points = [
         50, 0;
         500, 0;
@@ -833,6 +887,7 @@ function [waypoints, velocity] = createFixedPath()
     all_waypoints = [];
     all_speeds = [];
 
+    % 依直線段長與轉角計算切點；短段限制半徑，避免切點超出相鄰段。
     for seg = 1:num_segments
         p1 = key_points(seg, :);
         p2 = key_points(seg+1, :);
@@ -862,6 +917,7 @@ function [waypoints, velocity] = createFixedPath()
                     effective_radius = tangent_dist / tan(turn_angle_rad/2);
                 end
 
+                % 移除已累積路徑中被圓弧取代的尾端，避免轉彎重疊。
                 if ~isempty(all_waypoints)
                     cut_length = tangent_dist;
                     distances_from_end = vecnorm(all_waypoints(end:-1:1, 1:2) - p1, 2, 2);
@@ -887,6 +943,7 @@ function [waypoints, velocity] = createFixedPath()
                     if end_angle > start_angle, end_angle = end_angle - 2*pi; end
                 end
 
+                % 依點距取樣圓弧，保持與 window 速度設定相容的路徑密度。
                 arc_length = abs(end_angle - start_angle) * effective_radius;
                 num_arc_points = max(3, round(arc_length / waypoint_spacing));
                 arc_angles = linspace(start_angle, end_angle, num_arc_points);
@@ -903,6 +960,7 @@ function [waypoints, velocity] = createFixedPath()
             end
         end
 
+        % 將剩餘直線等距離離散，跳過相鄰段重複的首點。
         if seg_len > waypoint_spacing
             num_straight_points = round(seg_len / waypoint_spacing);
             straight_x = linspace(p1(1), p2(1), num_straight_points)';
@@ -921,6 +979,7 @@ function [waypoints, velocity] = createFixedPath()
     num_waypoints = size(all_waypoints, 1);
     velocity = zeros(num_waypoints, 3);
 
+    % 速度方向採下一航點切線；末點沿用前一速度方向。
     for i = 1:num_waypoints
         if i < num_waypoints
             dir_vec = all_waypoints(i+1, :) - all_waypoints(i, :);

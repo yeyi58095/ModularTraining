@@ -1,4 +1,6 @@
 function spec = ppo_lstm128()
+% 基準模型規格：PPO actor／critic 使用 128 單元 LSTM，回傳架構與學習參數資料。
+% hidden 陣列表示全連接層寬度；LearnRate／GradientThreshold 是各 optimizer 設定，並非收斂保證。
 % Original PPO architecture and optimizer settings, expressed as data.
 spec = struct('schemaVersion',1,'name','ppo_lstm128','algorithm','PPO', ...
     'lstmUnits',128,'actorHidden',[64 64 32],'criticHidden',[64 32 16], ...

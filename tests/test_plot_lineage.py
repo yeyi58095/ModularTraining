@@ -1,3 +1,5 @@
+# 畫圖繼承合成測試：驗證祖先截斷、子 run 去重、跨機定位、循環與唯讀來源。
+# 在暫存目錄產生日誌與圖表，不更改真實實驗或訓練程序。
 """Synthetic lineage tests; no MATLAB, checkpoints or real runs are modified."""
 import csv
 import json
@@ -10,6 +12,7 @@ from plot_training_rewards import read_history, draw, resolve_parent
 
 
 class LineageTests(unittest.TestCase):
+    # 為每個測試建立獨立暫存 fixture，避免測試來源或狀態彼此污染。
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -18,6 +21,7 @@ class LineageTests(unittest.TestCase):
         self.b = self.make_run('B', range(1, 9), self.a, 5)
         self.c = self.make_run('C', range(1, 10), self.b, 7)
 
+    # 在暫存目錄建立帶指定 episode 歷史與可選 parent 的測試 run。
     def make_run(self, name, episodes, parent=None, origin=0):
         run = self.root / 'experiments/plan/runs' / name
         attempt = run / 'attempt_1'
@@ -30,12 +34,14 @@ class LineageTests(unittest.TestCase):
             self.link(run, parent, origin)
         return run
 
+    # 只在測試 run 寫 recovery 關係，指定分支 checkpoint 起點。
     def link(self, run, parent, origin):
         (run / 'recovery.json').write_text(json.dumps(dict(
             parent_session=str(parent), parent_episode=origin,
             parent_checkpoint=str(parent / f'checkpoints/Agent{origin}.mat'),
             prepared_runtime_model_sha256='a'*64, actor_learning_rate_after=2.5e-5)))
 
+    # 驗證祖先只取到分支回合，子 run 不重畫繼承歷史。
     def test_truncate_and_do_not_duplicate_inherited_history(self):
         segments, issues = read_history(self.c)
         self.assertEqual(issues, [])
@@ -45,6 +51,7 @@ class LineageTests(unittest.TestCase):
         segments, _ = read_history(self.c, False)
         self.assertEqual([r['episode'] for r in segments[0]['rows']], list(range(1, 10)))
 
+    # 驗證 attempt 覆蓋僅限同 run，並忽略尚未完成的日誌列。
     def test_latest_attempt_only_within_run_and_incomplete_line_ignored(self):
         attempt = self.a / 'attempt_2'
         attempt.mkdir()
@@ -57,6 +64,7 @@ class LineageTests(unittest.TestCase):
         self.assertEqual(segments[0]['rows'][-1]['reward'], 99)
         self.assertEqual(segments[1]['rows'][0]['reward'], 6)
 
+    # 驗證 Windows 舊位置可唯一定位，重名來源歧義需拒絕。
     def test_relocated_windows_parent_and_ambiguity(self):
         self.link(self.c, Path('Z:/old/project/experiments/plan/runs/B'), 7)
         segments, issues = read_history(self.c, roots=[self.root])
@@ -68,6 +76,7 @@ class LineageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'ambiguous'):
             resolve_parent(self.c, 'Z:/old/B', [self.root])
 
+    # 驗證缺失祖先／未到 checkpoint 的日誌會提示且不補資料。
     def test_missing_parent_and_no_logs_at_checkpoint(self):
         self.link(self.c, self.root / 'absent', 7)
         with self.assertWarns(UserWarning):
@@ -79,6 +88,7 @@ class LineageTests(unittest.TestCase):
             _, issues = read_history(self.c)
         self.assertTrue(any('do not reach' in issue for issue in issues))
 
+    # 驗證不合法分支起點、checkpoint 不一致與繼承循環會被攔截。
     def test_invalid_origin_checkpoint_and_cycle(self):
         self.link(self.b, self.a, 8)  # C forks at 7, before B's origin.
         with self.assertWarns(UserWarning):
@@ -98,6 +108,7 @@ class LineageTests(unittest.TestCase):
         self.assertEqual(len(segments), 1)
         self.assertIn('disagrees', issues[0])
 
+    # 驗證圖與 CSV 保留來源資訊，繪圖前後原始日誌／JSON 不變。
     def test_png_csv_and_read_only_sources(self):
         import matplotlib
         matplotlib.use('Agg')
@@ -110,6 +121,7 @@ class LineageTests(unittest.TestCase):
         output = self.root / 'reward.png'
         captured = []
         from plot_training_rewards import save_png
+        # 攔截保存呼叫並保留軸物件供後續斷言，再使用原 save_png 保存圖片。
         def capture(fig, target):
             captured.append(fig.axes[0])
             save_png(fig, target)
@@ -126,6 +138,7 @@ class LineageTests(unittest.TestCase):
         self.assertEqual(list(transitions[0].get_xdata()), [3.5, 3.5])
         self.assertEqual(len(transitions), 1)
 
+    # 驗證單 run 模式不依賴壞掉的繼承 metadata。
     def test_bad_json_and_bad_episode_do_not_break_single_run_mode(self):
         for text in ['{', '{"parent_episode": -1}', '{"parent_episode": true}']:
             (self.c/'recovery.json').write_text(text)

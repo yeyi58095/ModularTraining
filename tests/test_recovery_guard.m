@@ -1,4 +1,6 @@
 function test_recovery_guard()
+% 恢復與 guard 測試：以既有本機 checkpoint、合成歷史及假引擎驗證新分支／預算／持續暫停。
+% 可寫新測試 run，但不執行 train 或 sim，不改父 checkpoint。
 % Real checkpoint preparation and a fake engine; never call train or sim.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root,fullfile(root,'runtime'));
 settings=jsondecode(fileread(fullfile(root,'configs','recovery_actor_half.json')));

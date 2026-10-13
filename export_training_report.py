@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 精簡診斷報告：彙整完整日誌、設定白名單、worker 與 learning health。
+# 輸出有大小上限且移除來源絕對路徑的 report.json；只診斷，不自動停訓或回滾。
 """Export bounded, path-free training diagnostics for GitHub (standard library only).
 
 Reads logs, never controls MATLAB. Reports observations, not checkpoint lineage.
@@ -37,6 +39,7 @@ EVENTS = {
 }
 
 
+# 只保留有限數字、布林與短數值陣列，其他值不輸出至分享報告。
 def numeric(value):
     if isinstance(value, bool):
         return value
@@ -49,6 +52,7 @@ def numeric(value):
     return None
 
 
+# 有大小上限地讀 metadata；缺檔、寫入中或壞 JSON 記 warning 並返回空資料。
 def read_json(path, warnings):
     if not path.is_file():
         warnings.append(f"missing:{path.name}")
@@ -65,11 +69,13 @@ def read_json(path, warnings):
         return {}
 
 
+# 按欄位白名單抽取可分享數值，排除任意字串與本機路徑。
 def settings(value, keys):
     return {key: numeric(value[key]) for key in keys
             if key in value and numeric(value[key]) is not None}
 
 
+# 抽取 guard／recovery 的允許欄位，原因只接受已知值，不暴露父 run 絕對位置。
 def recovery_metadata(session, warnings):
     result = {}
     for filename, keys in {
@@ -93,6 +99,7 @@ def recovery_metadata(session, warnings):
     return result
 
 
+# 將所選 episode 區間彙整為 reward、steps 等統計；只是日誌觀察，不代表 checkpoint 實際進度。
 def summarize(rows):
     if not rows:
         return None
@@ -108,6 +115,7 @@ def summarize(rows):
                 logged_average_last=rows[-1]["average_reward"])
 
 
+# 在連續 episode 中找完整 reward 視窗最高均值；遇缺口清空，不跨缺口拼接。
 def rolling_best(rows, window=50):
     queue = deque()
     best = None
@@ -127,6 +135,7 @@ def rolling_best(rows, window=50):
     return best
 
 
+# 分塊讀取允許來源並計算 SHA-256，使用相對路徑；當下檔案指紋不是歷史版本證明。
 def fingerprint(paths, base):
     result = {}
     for path in sorted(paths):
@@ -139,6 +148,7 @@ def fingerprint(paths, base):
     return result
 
 
+# 清除非有限紀錄，限制詳細 attempt 數與輸出大小，分開呈現日誌 learning health 和 runtime guard。
 def export_report(session, machine, diagnostics=None, first=None, last=None, health_options=None):
     warnings = []
     rows, duplicates, used = read_episodes(session)
@@ -275,6 +285,7 @@ def export_report(session, machine, diagnostics=None, first=None, last=None, hea
     return report
 
 
+# 解析 CLI 機器標記、episode 範圍與診斷選項，匯出精簡報告。
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("session", type=Path, help="Explicit experiment folder (recommended), or parent to select newest")

@@ -1,3 +1,5 @@
+# 精簡報告合成測試：驗證完整列、缺口、大小上限、白名單、guard／課程 metadata 與 Git 忽略。
+# 只建立暫存來源、報告及圖表；不啟動 MATLAB 或訓練。
 """Synthetic diagnostics only: never launches MATLAB or reads real experiments."""
 import json
 from pathlib import Path
@@ -11,12 +13,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import export_training_report as report
 
 
+# 生成完整 MATLAB stdout episode 列，讓測試覆蓋真實解析格式。
 def episode(n, reward=120, steps=150):
     return (f"Episode: {n:6d}/500000 | Episode reward: {reward} | Episode steps: {steps} | "
             f"Average reward: {reward} | Step Count: {n * steps} | Episode Q0: 0.5\n")
 
 
 class Reports(unittest.TestCase):
+    # 為每個測試建立獨立暫存 fixture，避免測試來源或狀態彼此污染。
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -28,12 +32,14 @@ class Reports(unittest.TestCase):
         (self.session / "model.json").write_text(json.dumps({"name": "ppo_lstm128", "actorLearnRate": 5e-5}))
         (self.session / "status.json").write_text('{"state":"running","message":"SECRET"}')
 
+    # 向指定測試 attempt stdout 寫合成文字，不接觸正式日誌。
     def log(self, attempt, text):
         folder = self.session / f"attempt_{attempt:05}"
         folder.mkdir()
         (folder / "stdout.log").write_text(text)
         return folder
 
+    # 驗證重啟去重、日誌缺口、半列忽略及分享欄位白名單。
     def test_restart_gaps_partial_lines_and_allowlist(self):
         self.log(1, "".join(episode(n, 1000) for n in range(1, 56)))
         self.log(2, episode(55, 10) + episode(57, 20) + episode(58, 30).rstrip())
@@ -49,10 +55,12 @@ class Reports(unittest.TestCase):
         for private in ("SECRET", "C:/private", "C:/do-not-follow"):
             self.assertNotIn(private, encoded)
 
+    # 驗證最佳滑動視窗不跨缺失 episode 拼接。
     def test_rolling_window_does_not_cross_gaps(self):
         rows = [{"episode": n, "reward": 10} for n in list(range(1, 26)) + list(range(27, 52))]
         self.assertIsNone(report.rolling_best(rows))
 
+    # 驗證大量 attempts 下的報告上限、選取區間與 worker 統計。
     def test_bounded_output_many_attempts_focus_and_workers(self):
         for attempt in range(1, 211):
             self.log(attempt, "".join(episode(n) for n in range((attempt-1)*20+1, attempt*20+1)))
@@ -72,6 +80,7 @@ class Reports(unittest.TestCase):
         self.assertIn("malformed_worker_row", data["warnings"])
         self.assertLess(len(json.dumps(data, indent=2).encode()), report.MAX_BYTES)
 
+    # 驗證 CLI 產生報告不修改來源，且拒絕非法目的位置。
     def test_cli_preserves_source_and_rejects_bad_destination(self):
         folder = self.log(1, episode(1))
         original = (folder / "stdout.log").read_bytes()
@@ -88,11 +97,13 @@ class Reports(unittest.TestCase):
         self.assertEqual(default.returncode, 0, default.stderr)
         self.assertEqual(json.loads((self.session / "reports/report.json").read_text())["episode_count"], 1)
 
+    # 驗證沒有完整有限資料時拒絕產生误導報告。
     def test_empty_and_nonfinite_records(self):
         self.log(1, episode(1, "1e999"))
         with self.assertRaises(ValueError):
             report.export_report(self.session, "dorm")
 
+    # 驗證 guard／recovery metadata 有界且不暴露原絕對路徑。
     def test_guard_metadata_is_bounded_and_path_free(self):
         self.log(1, episode(10700))
         (self.session / "training_guard_state.json").write_text(json.dumps({
@@ -107,6 +118,7 @@ class Reports(unittest.TestCase):
         self.assertEqual(monitor["recovery"]["parent_episode"], 10600)
         self.assertNotIn("SECRET", json.dumps(data))
 
+    # 驗證日誌 learning health 只使用當階段範圍，不混入前階段。
     def test_curriculum_health_uses_current_stage_only(self):
         self.log(1, "".join(episode(n, 2000 if n <= 10 else 100) for n in range(1, 71)))
         (self.session / "curriculum.json").write_text('{}')
@@ -118,6 +130,7 @@ class Reports(unittest.TestCase):
         self.assertEqual(data['learning_health']['completed_windows'], 6)
 
     @unittest.skipUnless(shutil.which("git"), "Git required for ignore-rule verification")
+    # 驗證 Git 只放行指定 report.json，不納入其他報告成果。
     def test_gitignore_allows_only_report_payload(self):
         repo = Path(self.temp.name) / "ignore_fixture"
         repo.mkdir()
@@ -148,6 +161,7 @@ class Reports(unittest.TestCase):
             result = subprocess.run(["git", "-C", str(repo), "check-ignore", "--quiet", "--no-index", path])
             self.assertEqual(result.returncode, 0 if ignored else 1, path)
 
+    # 驗證示例規模的圖表／CSV 可輸出，報告仍受大小限制。
     def test_image_scale_export_size(self):
         for attempt in range(1, 389):
             first = (attempt - 1) * 1000 + 1

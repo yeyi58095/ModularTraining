@@ -1,4 +1,6 @@
 function test_model_layout()
+% 模型目錄測試：驗證各模型獨立 runs、純原始碼快照、續訓原位及舊 control 相容。
+% 使用 start=false 寫入測試 run；不啟動訓練或 worker pool。
 % Filesystem/launcher regression checks; no training or worker pool required.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 profiles=["ppo_lstm128","ppo_lstm256","ppo_mlp"];

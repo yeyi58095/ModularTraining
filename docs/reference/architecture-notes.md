@@ -1,5 +1,7 @@
 # 架構圖核對與閱讀說明
 
+圖表入口：[architecture.html](../architecture.html)。規格與收據移至 `../diagrams/src/architecture.json`、`../diagrams/evidence/`；收據內絕對路徑保留為原驗證時間的歷史記錄。
+
 核對日期：2026-10-10。架構 HTML／JSON 已依目前程式更新；此次未啟動或修改訓練。舊簡報中的架構頁不會因 HTML 更新而自動同步。
 
 ## 課程驅動的執行順序

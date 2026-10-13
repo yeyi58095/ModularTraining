@@ -28,13 +28,13 @@
 
 ## 評估工具後續
 
-使用者確認 Agent6100.mat 與 Agent10600.mat 存在。已提供 compare_training_checkpoints，操作見 [checkpoint 比較](checkpoint-comparison.md)。只做固定無風任務 sim；尚未取得實驗室實際評估結果。原文「尚未實作 evaluator」描述的是當時調查狀態，分支恢復仍未實作。
+使用者確認 Agent6100.mat 與 Agent10600.mat 存在。已提供 compare_training_checkpoints，操作見 [checkpoint 比較](../guides/checkpoint-comparison.md)。只做固定無風任務 sim；尚未取得實驗室實際評估結果。原文「尚未實作 evaluator」描述的是當時調查狀態，分支恢復仍未實作。
 
 ## 實驗室評估已回傳
 
 6100：直線3149.46/3000步、S彎3174.21/3000步、固定轉彎362.34/399步。10600：3113.43/3000、3193.73/3000、1401.85/1578。12600：102.77/138、102.64/138、102.83/138。三者同seed101、CPU、無探索，每個任務一次；未查明物理終止原因。
 
-使用者要求繼續並詢問自動規則，已實作指定 checkpoint 分支準備和保存後暫停，見 docs/recovery-training.md；本紀錄前文的「尚未實作分支」為當時狀態。此次沒有啟動實驗室恢復訓練。
+使用者要求繼續並詢問自動規則，已實作指定 checkpoint 分支準備和保存後暫停，見 docs/guides/recovery-training.md；本紀錄前文的「尚未實作分支」為當時狀態。此次沒有啟動實驗室恢復訓練。
 
 ## 恢復分支暫停與評估錯誤
 

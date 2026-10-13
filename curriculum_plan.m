@@ -1,4 +1,6 @@
 function plan = curriculum_plan(filename,varargin)
+% 課程預檢入口：讀取 JSON、檢查欄位與選用的 MAT 輸入，顯示階段規劃。
+% 回傳 plan；不建立實驗、不建 worker pool，也不啟動訓練。
 % Validate and describe a JSON curriculum without starting training.
 % checkFiles=false permits reviewing a template before its MAT inputs exist.
 p=inputParser; p.addParameter('checkFiles',true); p.parse(varargin{:});

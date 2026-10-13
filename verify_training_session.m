@@ -1,4 +1,6 @@
 function result = verify_training_session(sessionDir)
+% 停止實驗驗證：檢查可讀 checkpoint、實際回合數及課程階段相容性。
+% 回傳驗證結果；以排他鎖避免與 supervisor 同時存取，不 train、不 sim、不改課程進度。
 % Read a stopped experiment's checkpoint and curriculum without training.
 root=fileparts(mfilename('fullpath')); old=path;
 guard=onCleanup(@() path(old)); %#ok<NASGU>

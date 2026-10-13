@@ -1,4 +1,6 @@
 function test_wind_evaluation()
+% 風場配對測試：驗證 seed／RNG 恢復、配對路徑、終端門檻摘要及四次短 CPU sim。
+% 明確執行才進行純模擬；不訓練、不修改原 checkpoint／SLX。
 % Paired scenarios plus real, short CPU SIMULATION ONLY using an existing agent.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 plan=trainingcurriculum.load_plan(fullfile(root,'experiments','progressive_v1','curriculum.json'),false);
@@ -43,6 +45,7 @@ assert(all(cellfun(@(x) x.steps==5,report.results)));
 fprintf('PASS paired seeded scenarios, terminal evidence, four real CPU simulations; source unchanged.\n');
 end
 function restore(old)
+% 恢復此測試暫改的呼叫者環境，避免 fixture 影響後續測試。
 global TARGET_SPEED DT WAYPOINT_SPACING
 TARGET_SPEED=old{1}; DT=old{2}; WAYPOINT_SPACING=old{3};
 end

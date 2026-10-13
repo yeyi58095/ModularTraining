@@ -1,4 +1,6 @@
 function [waypoints, velocity] = random_path()
+% random 軌跡：交替抽樣直線段長與左右轉角，產生等高度路徑後依弧長重新等距取樣。
+% 回傳 N×3 waypoints／velocity；使用呼叫者 RNG 與共用速度／點距，不自行設 seed 或訓練。
     global TARGET_SPEED DT WAYPOINT_SPACING
 
     if isempty(TARGET_SPEED)
@@ -7,6 +9,7 @@ function [waypoints, velocity] = random_path()
     if isempty(DT), DT = 0.1; end
     if isempty(WAYPOINT_SPACING), WAYPOINT_SPACING = TARGET_SPEED * DT; end
 
+    % 先按 DT 生成直線／轉彎步進，再重採樣成 WAYPOINT_SPACING 點距。
     numSteps = 4000;
     dt = DT;
     x0 = 50;
@@ -30,6 +33,7 @@ function [waypoints, velocity] = random_path()
     currentStep = 1;
 
     while currentStep < numSteps
+        % 隨機直線長度以時間步數抽樣，實際距離還取決於速度與 DT。
         thisSegmentSteps = randi([minSegmentLen, maxSegmentLen]);
 
         for k = 1:thisSegmentSteps
@@ -55,6 +59,7 @@ function [waypoints, velocity] = random_path()
             turnSignBase = -1;
         end
 
+        % 左右方向與轉角偏移分別抽樣；actual 更新使用 angularSpeedMax。
         turnOffset = (rand()*2 - 1) * turnRangeRad;
         targetAngle = angle + turnSignBase * (turnCenterRad + turnOffset);
 
@@ -103,6 +108,7 @@ function [waypoints, velocity] = random_path()
     y = waypoints(:,2);
     z = waypoints(:,3);
 
+    % 按累積弧長建立新取樣座標，位置／速度使用同一插值座標。
     d = [0; cumsum(sqrt(diff(x).^2 + diff(y).^2 + diff(z).^2))];
     d_new = (0:WAYPOINT_SPACING:d(end))';
 

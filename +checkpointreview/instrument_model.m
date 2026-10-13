@@ -1,4 +1,6 @@
 function signals=instrument_model(mdl)
+% 評估訊號記錄：在未保存的評估模型副本啟用位置、window／planner 路徑與 guidance 目標記錄。
+% 回傳 signals 清單；只改 logging，不改 chart 程式或正式 runtime SLX。
 % Add only signal logging to an unsaved evaluation copy. No chart edits.
 spec={ ...
     'P_E', 'OBSERVATION/P_E',1; ...

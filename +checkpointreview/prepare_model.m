@@ -1,4 +1,6 @@
 function cleanupGuard = prepare_model(mdl, disableLogging, disableAnimation)
+% 評估模型設定：先保存所有要更動的參數，再暫時關閉 FastRestart、選用的 logging／動畫。
+% 回傳 onCleanup；結束時盡力逆序恢復參數與 Dirty 標記，不保存原始模型。
     % Build the complete restoration plan BEFORE mutating any model settings.
     targets = {char(mdl), 'FastRestart', 'off'};
     if disableLogging
@@ -28,6 +30,7 @@ function cleanupGuard = prepare_model(mdl, disableLogging, disableAnimation)
 end
 
 function restoreModelSettings(mdl, previous, oldDirty)
+% 逆序恢復參數，全部成功才還原 Dirty 標記；失敗以 warning 保留診斷。
     if ~bdIsLoaded(mdl), return; end
     restored = true;
     try

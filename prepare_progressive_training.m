@@ -1,4 +1,6 @@
 function info = prepare_progressive_training()
+% 六階段課程準備：生成可重建的直線／S 彎 MAT，並驗證共享 curriculum.json。
+% 回傳課程與輸入位置；內容不同的既有 MAT 拒絕覆寫，不啟動正式訓練。
 % Generate reproducible starter trajectories and validate the six-stage plan.
 % No training, pool, or experiment is started. Existing differing MATs are refused.
 root=fileparts(mfilename('fullpath')); old=path;
@@ -22,6 +24,7 @@ fprintf('Inputs prepared. No training started. MAT inputs are ignored by Git and
 end
 
 function saveInput(file,waypoints,velocity)
+% 既有 MAT 先比對內容，一致則沿用，不一致拒絕覆寫；新檔保存軌跡與速度。
 if isfile(file)
     current=load(file,'waypoints','velocity');
     assert(isfield(current,'waypoints') && isfield(current,'velocity') && ...

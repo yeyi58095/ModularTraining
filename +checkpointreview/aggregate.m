@@ -1,4 +1,6 @@
 function summary=aggregate(results)
+% 評估摘要：按 checkpoint 回合與 stage_id 分組，計算樣本平均、跑滿比例及最低 reward trace。
+% 輸入 results cell，回傳 summary；只描述這批情境，不代表泛化成功率或最佳模型選擇。
 summary={};
 for i=1:numel(results)
     first=results{i};

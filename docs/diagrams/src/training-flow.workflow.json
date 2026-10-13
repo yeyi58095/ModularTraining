@@ -1,0 +1,198 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ModularTraining 訓練主流程",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "入口與實驗準備 · retry.m"
+    },
+    {
+      "id": "control",
+      "label": "程序管理 · PowerShell supervisor"
+    },
+    {
+      "id": "engine",
+      "label": "單次訓練 · MATLAB runtime"
+    }
+  ],
+  "mainPath": [
+    "input",
+    "session",
+    "snapshot",
+    "launch",
+    "attempt",
+    "prepare"
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "解析輸入",
+      "sublabel": "新建 / 課程 / 續訓",
+      "width": 150
+    },
+    {
+      "id": "session",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "新建或續接實驗",
+      "sublabel": "讀取設定與模型規格",
+      "width": 150
+    },
+    {
+      "id": "snapshot",
+      "lane": "entry",
+      "col": 2,
+      "type": "database",
+      "label": "驗證並保存設定",
+      "sublabel": "快照 / control.json / 鎖",
+      "width": 150
+    },
+    {
+      "id": "launch",
+      "lane": "control",
+      "col": 2,
+      "type": "security",
+      "label": "是否啟動？",
+      "sublabel": "start=false 僅準備",
+      "width": 150
+    },
+    {
+      "id": "attempt",
+      "lane": "control",
+      "col": 3,
+      "type": "messagebus",
+      "label": "啟動 attempt",
+      "sublabel": "候選 checkpoint / watchdog",
+      "width": 150
+    },
+    {
+      "id": "prepare",
+      "lane": "engine",
+      "col": 3,
+      "type": "backend",
+      "label": "準備本段課程",
+      "sublabel": "guard / 階段 / 回合預算",
+      "width": 150
+    },
+    {
+      "id": "agent",
+      "lane": "engine",
+      "col": 2,
+      "type": "backend",
+      "label": "建立或載入 agent",
+      "sublabel": "沿用 checkpoint 權重",
+      "width": 150
+    },
+    {
+      "id": "pool",
+      "lane": "engine",
+      "col": 1,
+      "type": "cloud",
+      "label": "建立 worker pool",
+      "sublabel": "依實際 worker 數配置",
+      "width": 150
+    },
+    {
+      "id": "train",
+      "lane": "engine",
+      "col": 0,
+      "type": "backend",
+      "label": "執行本段 train",
+      "sublabel": "Simulink / reset / PPO",
+      "width": 150
+    },
+    {
+      "id": "saved",
+      "lane": "engine",
+      "col": 4,
+      "type": "database",
+      "label": "保存與判定",
+      "sublabel": "guard 優先 / 課程判定",
+      "width": 150
+    },
+    {
+      "id": "next",
+      "lane": "control",
+      "col": 4,
+      "type": "security",
+      "label": "處理 attempt 結果",
+      "sublabel": "繼續 / 重試 / 暫停 / 完成",
+      "width": 150
+    },
+    {
+      "id": "exit",
+      "lane": "control",
+      "col": 5,
+      "type": "external",
+      "label": "結束 supervisor",
+      "sublabel": "暫停、成功或 STOP",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "session"
+    },
+    {
+      "from": "session",
+      "to": "snapshot"
+    },
+    {
+      "from": "snapshot",
+      "to": "launch"
+    },
+    {
+      "from": "launch",
+      "to": "attempt",
+      "label": "start=true"
+    },
+    {
+      "from": "attempt",
+      "to": "prepare",
+      "label": "新 MATLAB 程序"
+    },
+    {
+      "from": "prepare",
+      "to": "agent",
+      "label": "允許訓練"
+    },
+    {
+      "from": "agent",
+      "to": "pool"
+    },
+    {
+      "from": "pool",
+      "to": "train"
+    },
+    {
+      "from": "train",
+      "to": "saved",
+      "label": "本段結束"
+    },
+    {
+      "from": "saved",
+      "to": "next",
+      "label": "result.json"
+    },
+    {
+      "from": "next",
+      "to": "attempt",
+      "label": "繼續／重試",
+      "role": "return"
+    },
+    {
+      "from": "next",
+      "to": "exit",
+      "label": "停止條件成立"
+    }
+  ]
+}

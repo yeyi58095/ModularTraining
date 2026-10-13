@@ -1,4 +1,6 @@
 function test_resume_audit()
+% 續訓稽核測試：使用真實短測 checkpoint，合成跨機來源與 Agent_Initial，確認權重／選项比較。
+% 只建立 fixture 與讀檔稽核，不訓練、不模擬，驗證來源雜湊保持一致。
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 r=jsondecode(fileread(fullfile(root,'tests','output','curriculum-smoke-latest.json')));
 file=fullfile(r.sessionDir,'checkpoints','Agent1.mat');

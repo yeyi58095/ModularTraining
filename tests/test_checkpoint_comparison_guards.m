@@ -1,4 +1,6 @@
 function test_checkpoint_comparison_guards()
+% 評估保護測試：確認活動 run 被拒絕，並用合成 trace 驗證 t=0 reward／步數與終止摘要。
+% 不執行 Simulink 模擬或訓練。
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 out=fullfile(root,'tests','output'); fixture=tempname(out); mkdir(fixture);
 fid=fopen(fullfile(fixture,'supervisor.lock'),'w'); fclose(fid);

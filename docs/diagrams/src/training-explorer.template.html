@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ModularTraining · 流程與程式碼</title>
+<style>
+:root{color-scheme:light;--bg:#f5f7fb;--panel:#fff;--fg:#192940;--muted:#5d708b;--border:#dce4ef;--accent:#087d9f;--code:#f6f8fc;--selected:#e0f2f6}*{box-sizing:border-box}body{margin:0;font:14px/1.55 system-ui,"Microsoft JhengHei",sans-serif;color:var(--fg);background:var(--bg)}body.dark{color-scheme:dark;--bg:#0e1728;--panel:#142139;--fg:#edf3ff;--muted:#acbcd6;--border:#30415e;--accent:#61d4ed;--code:#0b1425;--selected:#143e50}button,select,input{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 11px}button{cursor:pointer}button:hover{border-color:var(--accent)}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}header{height:84px;padding:12px 24px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border);background:var(--panel)}h1{font-size:19px;margin:0}header p{margin:2px 0 0;color:var(--muted);font-size:12px}.tools{margin-left:auto;display:flex;gap:8px;align-items:center}#choose{max-width:230px}#map{display:block;width:100%;height:calc(100dvh - 112px);border:0}footer{height:28px;font-size:11px;color:var(--muted);padding:5px 24px;border-top:1px solid var(--border)}#drawer{position:fixed;right:16px;top:100px;bottom:44px;width:min(690px,49vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 80px #06142c40;display:grid;grid-template-rows:auto auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);z-index:5}#drawer[hidden]{display:none}#drawer.wide{left:16px;width:auto}#intro{padding:18px 20px 10px;max-height:35vh;overflow:auto}#intro h2{font-size:20px;margin:0 0 5px}.eyebrow{color:var(--accent);font:11px ui-monospace,monospace;letter-spacing:.12em;margin-bottom:5px}#summary{margin:0 0 10px}#notes{color:var(--muted);padding-left:18px;font-size:12px;margin:6px 0}.actions{display:flex;gap:6px;float:right}.actions button{font-size:12px;padding:4px 8px}#tabs{padding:8px 16px;border-block:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;max-height:140px;overflow:auto}#tabs button{font-size:12px;padding:5px 8px}#tabs button.active{background:var(--selected);border-color:var(--accent)}#source-pane{min-width:0;display:flex;flex-direction:column;min-height:0}.source-head{padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.source-head a{color:var(--accent);font-size:12px;text-decoration:none;overflow-wrap:anywhere}.source-head button{font-size:12px;padding:4px 8px}#fingerprint{padding:0 16px 9px;color:var(--muted);font:10px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}#code{flex:1;min-height:0;overflow:auto;margin:0;background:var(--code);padding:12px 0;font:12px/1.8 Consolas,"Cascadia Code",monospace;tab-size:4}#code .line{display:flex;min-width:max-content;padding-right:18px}#code .num{position:sticky;left:0;display:inline-block;text-align:right;flex:none;width:54px;padding-right:13px;color:var(--muted);background:var(--code);user-select:none;border-right:1px solid var(--border);margin-right:14px}#code .related{background:var(--selected)}#code .comment{color:#508165}body.dark #code .comment{color:#8bbfa1}#results{position:fixed;top:76px;right:120px;width:min(570px,70vw);max-height:55vh;overflow:auto;z-index:9;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px #07172c30;padding:8px}#results[hidden]{display:none}#results button{display:block;width:100%;text-align:left;margin:3px 0}#results small{display:block;color:var(--muted)}@media(max-width:900px){header{height:auto;min-height:115px;padding:12px;flex-wrap:wrap;gap:8px}.tools{margin-left:0;flex-wrap:wrap}#map{height:calc(100dvh - 145px)}#drawer{top:130px;left:10px;right:10px;width:auto;bottom:36px}footer{padding-left:12px}#query{width:140px}#results{top:110px;right:10px}}
+/* 閱讀互動：側欄的 width／height 可以由拖曳覆寫，圖表仍保留原 SVG 幾何。 */
+#drawer{width:var(--drawer-width,min(690px,49vw));height:var(--drawer-height,calc(100dvh - 144px));bottom:auto;min-height:360px}
+#drawer.wide{width:auto;height:calc(100dvh - 144px)}
+.resize-handle{position:absolute;z-index:10;touch-action:none;background:transparent;border:0;padding:0}
+#resize-width{left:-7px;top:20px;bottom:16px;width:14px;cursor:ew-resize}
+#resize-width::after{content:"";position:absolute;left:5px;top:40%;height:52px;width:4px;border-radius:4px;background:var(--muted)}
+#resize-height{bottom:-6px;left:16px;right:16px;height:12px;cursor:ns-resize}
+#resize-corner{bottom:-4px;left:-4px;width:23px;height:23px;cursor:nesw-resize;color:var(--accent);font-size:18px}
+#drawer.wide .resize-handle{display:none}
+#intro{max-height:min(35vh,calc(var(--drawer-height,calc(100dvh - 144px)) * .35))}
+#tabs{max-height:min(140px,calc(var(--drawer-height,calc(100dvh - 144px)) * .22))}
+#drag-shield{position:fixed;inset:0;z-index:30;touch-action:none;cursor:ew-resize}
+#drag-shield[hidden]{display:none}
+.source-head button.active{background:var(--selected);border-color:var(--accent)}
+#code.drag-read{cursor:grab;user-select:none;touch-action:none}#code.dragging{cursor:grabbing}
+#code.wrap .line{min-width:0;align-items:flex-start}#code.wrap .line>span:last-child{white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;flex:1}
+.tools{gap:6px}.tools button{white-space:nowrap}#query{width:165px}
+@media(max-width:1100px){header{gap:10px;padding-inline:14px}h1{font-size:17px}#choose{max-width:160px}#query{width:135px}.tools button{padding-inline:8px}}
+@media(max-width:900px){#drawer{width:var(--drawer-width,calc(100vw - 20px));height:var(--drawer-height,calc(100dvh - 166px));min-height:300px;left:auto}#drawer.wide{left:10px;width:auto;height:calc(100dvh - 166px)}#intro{max-height:30vh}}
+</style></head><body>
+<header><div><h1>流程 × 程式原文</h1><p>點選方塊，查看責任、分支、檔案與對應行號。</p></div><div class="tools"><select id="choose" aria-label="選擇流程步驟"><option value="">選擇步驟…</option></select><button id="example">課程 JSON 範例</button><input id="query" type="search" placeholder="搜尋說明或程式碼" aria-label="搜尋說明或程式碼"><button id="theme">深色</button></div></header>
+<div id="map-tools" style="position:fixed;left:24px;bottom:40px;z-index:4;display:flex;gap:6px"><button id="reset-view">重設圖表位置</button><span style="align-self:center;font-size:12px;color:var(--muted)">拖曳圖表空白處可平移</span></div>
+<iframe id="map" title="訓練主流程圖"></iframe>
+<footer>2026-10-12 原始碼快照 · 概覽省略例外分支，詳見各方塊說明 · 圖表內建操作介面使用英文</footer>
+<div id="results" hidden></div>
+<section id="drawer" aria-label="方塊對應程式碼" hidden>
+<button id="resize-width" class="resize-handle" role="separator" aria-orientation="vertical" aria-label="調整側欄寬度" title="左右拖曳調整側欄寬度；方向鍵每次調整 20px"></button>
+<button id="resize-height" class="resize-handle" role="separator" aria-orientation="horizontal" aria-label="調整側欄高度" title="上下拖曳調整側欄高度；方向鍵每次調整 20px"></button>
+<button id="resize-corner" class="resize-handle" aria-label="調整側欄寬度與高度" title="拖曳角落同時調整寬度與高度">↙</button>
+<div id="intro"><div class="actions"><button id="wide">展開閱讀</button><button id="close" aria-label="關閉程式碼面板">關閉 ×</button></div><div class="eyebrow">SOURCE EXPLORER</div><h2 id="title"></h2><p id="summary"></p><ul id="notes"></ul></div>
+<nav id="tabs" aria-label="相關程式區段"></nav>
+<div id="source-pane"><div class="source-head"><a id="location"></a><button id="full">顯示完整檔案</button><button id="copy">複製區段</button><button id="wrap" aria-pressed="false">自動換行</button><button id="code-drag" aria-pressed="false">拖曳閱讀</button></div><div id="fingerprint"></div><pre id="code" tabindex="0" aria-label="程式碼原文"></pre></div>
+</section>
+<div id="drag-shield" hidden></div>
+<script>
+const DATA=/*__DATA__*/;
+const VIEWER=/*__VIEWER__*/;
+const $=id=>document.getElementById(id);
+let current=null,part=0,full=false,returnFocus=null;
+const escape=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+for(const [id,label] of Object.entries(DATA.labels)){const option=document.createElement('option');option.value=id;option.textContent=label;$('choose').append(option);}
+function openNode(id,index=0){if(!DATA.nodes[id])return;returnFocus=document.activeElement;current=id;part=index;full=false;$('drawer').hidden=false;$('results').hidden=true;$('choose').value=id;$('title').textContent=DATA.labels[id];$('summary').textContent=DATA.nodes[id].summary;$('notes').replaceChildren(...DATA.nodes[id].notes.map(t=>{const li=document.createElement('li');li.textContent=t;return li;}));$('tabs').replaceChildren(...DATA.nodes[id].spans.map((s,i)=>{const b=document.createElement('button');b.textContent=s.label;b.onclick=()=>{part=i;full=false;showCode();};return b;}));showCode();history.replaceState(null,'','#'+id);}
+function showCode(){const s=DATA.nodes[current].spans[part],source=DATA.sources[s.file],lines=source.text.replace(/\r\n/g,'\n').split('\n');$('location').textContent=s.file+' : '+s.start+'–'+s.end;$('location').href='../../'+s.file.replace(/\+/g,'%2B')+'#L'+s.start;$('location').title='開啟本機來源檔；行號是否跳轉依檢視器而定';$('fingerprint').textContent='SHA-256 '+source.sha256+' · 保存於 '+DATA.generated;$('full').textContent=full?'只顯示對應區段':'顯示完整檔案';[...$('tabs').children].forEach((b,i)=>b.classList.toggle('active',i===part));const first=full?1:s.start,last=full?lines.length:s.end;$('code').innerHTML=lines.slice(first-1,last).map((line,i)=>{const n=first+i,comment=/^\s*(%|#)/.test(line);return '<span class="line '+(full&&n>=s.start&&n<=s.end?'related':'')+'" data-line="'+n+'"><span class="num">'+n+'</span><span class="'+(comment?'comment':'')+'">'+escape(line)+'</span></span>';}).join('');$('code').scrollTop=0;if(full){const row=$('code').querySelector('[data-line="'+s.start+'"]');$('code').scrollTop=Math.max(0,row.offsetTop-$('code').offsetTop-35);}}
+$('choose').onchange=()=>openNode($('choose').value);
+$('example').onclick=()=>openNode('curriculum-example');
+$('full').onclick=()=>{full=!full;showCode();};
+$('copy').onclick=async()=>{const s=DATA.nodes[current].spans[part];const text=DATA.sources[s.file].text.replace(/\r\n/g,'\n').split('\n').slice(s.start-1,s.end).join('\n');try{await navigator.clipboard.writeText(text);$('copy').textContent='已複製';}catch{const range=document.createRange();range.selectNodeContents($('code'));window.getSelection().removeAllRanges();window.getSelection().addRange(range);$('copy').textContent='已選取，請按 Ctrl+C';}setTimeout(()=>$('copy').textContent='複製區段',2500);};
+function close(){ $('drawer').hidden=true;history.replaceState(null,'',location.pathname+location.search);if(returnFocus&&returnFocus.isConnected)returnFocus.focus(); }
+$('close').onclick=close;$('wide').onclick=()=>{$('drawer').classList.toggle('wide');$('wide').textContent=$('drawer').classList.contains('wide')?'收回側欄':'展開閱讀';};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();$('results').hidden=true;}});
+function setTheme(){const dark=document.body.classList.contains('dark');$('theme').textContent=dark?'淺色':'深色';const d=$('map').contentDocument;if(d){const desired=dark?'dark':'light';if(d.documentElement.dataset.theme!==desired){const button=d.getElementById('btn-theme');if(button)button.click();else d.documentElement.dataset.theme=desired;}}}
+$('theme').onclick=()=>{document.body.classList.toggle('dark');setTheme();};
+$('query').oninput=()=>{const q=$('query').value.trim().toLowerCase();$('results').replaceChildren();$('results').hidden=!q;if(!q)return;for(const [id,n] of Object.entries(DATA.nodes)){const matched=n.spans.map((s,i)=>({s,i})).filter(({s})=>{const code=DATA.sources[s.file].text.replace(/\r\n/g,'\n').split('\n').slice(s.start-1,s.end).join('\n');return (s.file+' '+s.label+' '+code).toLowerCase().includes(q);});if((DATA.labels[id]+' '+n.summary+' '+n.notes.join(' ')).toLowerCase().includes(q)||matched.length){const b=document.createElement('button');b.append(document.createTextNode(DATA.labels[id]));const small=document.createElement('small');small.textContent=matched.length?matched.map(x=>x.s.label).join(' / '):n.summary;b.append(small);b.onclick=()=>openNode(id,matched.length?matched[0].i:0);$('results').append(b);}}if(!$('results').children.length)$('results').textContent='沒有符合的區段。';};
+$('map').onload=()=>{const d=$('map').contentDocument;setTheme();function choose(e){const n=e.target.closest('[data-node-id]');if(!n)return;e.preventDefault();e.stopImmediatePropagation();openNode(n.dataset.nodeId);$('close').focus();}d.addEventListener('click',choose,true);d.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')choose(e);if(e.key==='Escape')close();},true);for(const n of d.querySelectorAll('[data-node-id]')){n.setAttribute('aria-label','查看 '+DATA.labels[n.dataset.nodeId]+' 的程式碼');n.style.cursor='pointer';}const id=location.hash.slice(1);if(DATA.nodes[id])openNode(id);};
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(DATA.nodes[id])openNode(id);});
+$('map').srcdoc=VIEWER;
+// 尺寸拖曳以 viewport 範圍限位；透明 shield 接住跨越 iframe 的 pointer，避免拖曳中斷。
+let resizing=null,codeDrag=null;
+function drawerBounds(){return {width:Math.min(360,innerWidth-32),maxWidth:innerWidth-32,height:Math.min(360,innerHeight-parseFloat(getComputedStyle($('drawer')).top)-44),maxHeight:innerHeight-parseFloat(getComputedStyle($('drawer')).top)-44};}
+function setDrawerSize(width,height){const b=drawerBounds();$('drawer').style.setProperty('--drawer-width',Math.max(b.width,Math.min(b.maxWidth,width))+'px');$('drawer').style.setProperty('--drawer-height',Math.max(b.height,Math.min(b.maxHeight,height))+'px');}
+for(const [id,axis] of [['resize-width','width'],['resize-height','height'],['resize-corner','both']]){
+ $(id).addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();const r=$('drawer').getBoundingClientRect();resizing={axis,x:e.clientX,y:e.clientY,width:r.width,height:r.height};$('drag-shield').hidden=false;$('drag-shield').style.cursor=axis==='width'?'ew-resize':axis==='height'?'ns-resize':'nesw-resize';$('drag-shield').setPointerCapture(e.pointerId);});
+ $(id).addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const r=$('drawer').getBoundingClientRect();setDrawerSize(r.width+(e.key==='ArrowLeft'?20:e.key==='ArrowRight'?-20:0),r.height+(e.key==='ArrowDown'?20:e.key==='ArrowUp'?-20:0));});
+}
+$('drag-shield').addEventListener('pointermove',e=>{if(!resizing)return;const r=resizing;setDrawerSize(r.width+(r.axis==='height'?0:r.x-e.clientX),r.height+(r.axis==='width'?0:e.clientY-r.y));});
+function finishResize(){resizing=null;$('drag-shield').hidden=true;}
+$('drag-shield').addEventListener('pointerup',finishResize);$('drag-shield').addEventListener('pointercancel',finishResize);
+window.addEventListener('resize',()=>{if($('drawer').style.getPropertyValue('--drawer-width')){const r=$('drawer').getBoundingClientRect();setDrawerSize(r.width,r.height);}});
+$('wrap').onclick=()=>{const active=$('code').classList.toggle('wrap');$('wrap').classList.toggle('active',active);$('wrap').setAttribute('aria-pressed',String(active));};
+$('code-drag').onclick=()=>{const active=$('code').classList.toggle('drag-read');$('code-drag').classList.toggle('active',active);$('code-drag').setAttribute('aria-pressed',String(active));};
+$('code').addEventListener('pointerdown',e=>{if(e.button!==0||!$('code').classList.contains('drag-read'))return;e.preventDefault();codeDrag={x:e.clientX,y:e.clientY,left:$('code').scrollLeft,top:$('code').scrollTop};$('code').setPointerCapture(e.pointerId);$('code').classList.add('dragging');});
+$('code').addEventListener('pointermove',e=>{if(codeDrag){$('code').scrollLeft=codeDrag.left+codeDrag.x-e.clientX;$('code').scrollTop=codeDrag.top+codeDrag.y-e.clientY;}});
+for(const event of ['pointerup','pointercancel'])$('code').addEventListener(event,()=>{codeDrag=null;$('code').classList.remove('dragging');});
+// 空白區拖曳在 100% 也可使用。只移動畫面呈現，節點、箭頭與程式映射不變。
+let graphPan={x:0,y:0},resetGraph=()=>{};
+$('reset-view').onclick=()=>resetGraph();
+$('map').addEventListener('load',()=>{
+ const d=$('map').contentDocument,w=$('map').contentWindow,svg=d.querySelector('.diagram-container > svg'),container=svg.parentElement;
+ let drag=null,suppressUntil=0;
+ function applyPan(){svg.style.translate=graphPan.x+'px '+graphPan.y+'px';if(graphPan.x||graphPan.y)svg.style.clipPath='none';}
+ resetGraph=()=>{graphPan={x:0,y:0};svg.style.removeProperty('translate');w.Archify?.view?.reset?.();};
+ container.style.cursor='grab';container.style.touchAction='none';
+ container.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button,input,a,[data-node-id],.diagram-nav,.overview-map,.focus-chip'))return;e.preventDefault();e.stopImmediatePropagation();drag={x:e.clientX,y:e.clientY,px:graphPan.x,py:graphPan.y,moved:false};container.setPointerCapture(e.pointerId);container.style.cursor='grabbing';},true);
+ container.addEventListener('pointermove',e=>{if(!drag)return;e.stopImmediatePropagation();const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;graphPan={x:Math.max(-innerWidth*2,Math.min(innerWidth*2,drag.px+dx)),y:Math.max(-innerHeight,Math.min(innerHeight,drag.py+dy))};applyPan();},true);
+ for(const event of ['pointerup','pointercancel'])container.addEventListener(event,e=>{if(!drag)return;e.stopImmediatePropagation();if(drag.moved)suppressUntil=Date.now()+180;drag=null;container.style.cursor='grab';if(container.hasPointerCapture(e.pointerId))container.releasePointerCapture(e.pointerId);},true);
+ function clearExportPan(){graphPan={x:0,y:0};svg.style.removeProperty('translate');}
+ d.addEventListener('click',e=>{if(Date.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();}if(e.target.closest('#btn-export,[data-export-format],.export-menu button'))clearExportPan();},true);
+ d.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&!e.target.closest('input,textarea'))clearExportPan();},true);
+ // Native zoom 可重算 clip；額外平移時由原容器邊界裁切，避免隱藏本來可見的方塊。
+ new MutationObserver(()=>{if((graphPan.x||graphPan.y)&&svg.style.clipPath!=='none')svg.style.clipPath='none';}).observe(svg,{attributes:true,attributeFilter:['style']});
+});
+</script></body></html>

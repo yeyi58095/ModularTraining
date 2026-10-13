@@ -1,4 +1,6 @@
 function test_retry_relative_paths()
+% 相對路徑測試：從專案外呼叫 start=false，確認課程解析到專案及舊 run 原位續訓。
+% 恢復呼叫前路徑與目錄，不啟動訓練或 pool。
 % Regression: launch from outside the project without training or a pool.
 root=fileparts(fileparts(mfilename('fullpath')));
 oldPath=path; oldFolder=pwd;
@@ -30,5 +32,6 @@ fprintf('PASS: relative curriculum/resume anchored to project; absolute resume p
 end
 
 function restore(oldPath,oldFolder)
+% 恢復此測試暫改的呼叫者環境，避免 fixture 影響後續測試。
 cd(oldFolder); path(oldPath);
 end

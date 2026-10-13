@@ -1,4 +1,6 @@
 function report = compare_training_checkpoints(sessionDir,opt)
+% 獨立 checkpoint 評估：鎖住停止的課程 run，配對指定階段／seed，逐次以 CPU 純 sim 比較。
+% 回傳 report 並保存情境、trace 與 JSON；只修改記憶體 agent／暫存模型，不續訓、不換階段、不回滾。
 % Read-only, serial CPU evaluation of stopped curriculum checkpoints.
 % No train(), checkpoint replacement, curriculum transition or automatic resume.
 arguments
@@ -17,6 +19,7 @@ restore=onCleanup(@() restoreCaller(oldPath,oldFolder,oldRng)); %#ok<NASGU>
 addpath(root,runtime);
 if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
 sessionDir=string(char(java.io.File(char(sessionDir)).getCanonicalPath()));
+% 取得停止 run 的排他鎖；評估期間不允許 supervisor 同時續訓。
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@() lock.Dispose()); %#ok<NASGU>
@@ -34,6 +37,7 @@ assert(~isempty(opt.stages) && numel(unique(opt.stages))==numel(opt.stages), ...
 plan=trainingcurriculum.load_plan(fullfile(sessionDir,'curriculum.json'),true);
 assert(all(opt.stages<=numel(plan.stages)),'Evaluation:Stage','Unknown stage.');
 % Detect drift: the evaluation fixed path must match the training path exactly.
+% 固定路徑評估函式與訓練端逐字比對；連註解也需同步，避免環境漂移。
 engine=fileread(fullfile(runtime,'training_engine.m'));
 marker='function [waypoints, velocity] = createFixedPath()';
 offset=strfind(engine,marker);
@@ -41,6 +45,7 @@ fixed=fileread(fullfile(root,'+checkpointreview','fixed_path.m'));
 assert(numel(offset)==1 && strcmp(strrep(strtrim(engine(offset:end)),char(13),''), ...
     strrep(strrep(strtrim(fixed),'fixed_path()','createFixedPath()'),char(13),'')), ...
     'Evaluation:PathDrift','Fixed-path implementation changed; update evaluator before comparison.');
+% 候選回合由 checkpoint 內歷史核對，latest 也必須是真實可讀進度。
 paths=strings(0); episodes=[];
 for ep=unique(opt.episodes,'stable')
     f=fullfile(sessionDir,'checkpoints',sprintf('Agent%d.mat',ep));
@@ -135,6 +140,7 @@ agentGuard=onCleanup(@() restoreAgent(hadAgent,oldAgent)); %#ok<NASGU>
 cd(runtime);
 % Reassert package visibility after cache configuration and folder changes.
 addpath(root,runtime,'-begin');
+% 模擬與報告可能失敗；入口捕捉並保留原始 phase／堆疊，不讓寫報告例外遮蓋原錯誤。
 try
     report.phase='load_model';
     modelFile=fullfile(runtime,'FAFA_Simulation.slx');
@@ -248,6 +254,7 @@ fprintf('Complete. No training or rollback. Share: %s\n',fullfile(out,'evaluatio
 end
 
 function in=resetScenario(in,data)
+% 將已保存情境的路徑、速度與風場送入這次模擬，不重新抽樣情境。
 names=["wind_E0","wind_N0","wind_turbulance_value0"];
 for k=1:3
     in=setVariable(in,names(k),data.wind(k),'Workspace','FAFA_Simulation');
@@ -256,17 +263,21 @@ in=setVariable(in,'waypoints',data.waypoints,'Workspace','FAFA_Simulation');
 in=setVariable(in,'velocity',data.velocity,'Workspace','FAFA_Simulation');
 end
 function restoreCaller(p,f,r)
+% 恢復評估前的 MATLAB 路徑、工作目錄與 RNG，避免工具影響呼叫者。
 cd(f); path(p); rng(r);
 end
 function restoreGlobals(values)
+% 將評估暫時使用的全域軌跡參數恢復成呼叫前值。
 global TARGET_SPEED DT WAYPOINT_SPACING
 TARGET_SPEED=values{1}; DT=values{2}; WAYPOINT_SPACING=values{3};
 end
 function restoreAgent(hadAgent,oldAgent)
+% 恢復 base workspace 原 agent；原先不存在則清除本次暫存變數。
 if hadAgent, assignin('base','Agent_Stage2',oldAgent); else, evalin('base','clear Agent_Stage2'); end
 end
 
 function writeReport(file,value)
+% 入口同檔的 JSON writer，讓 root package 路徑失效時仍可保存原始錯誤報告。
 % Local function stays callable when project packages leave the search path.
 temporary=[tempname(fileparts(file)) '.json'];
 fid=fopen(temporary,'w','n','UTF-8');

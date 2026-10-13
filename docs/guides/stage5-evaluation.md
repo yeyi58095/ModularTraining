@@ -34,7 +34,7 @@ Simulink 內部亂數 seed 沿用模型保存值，MATLAB seed 並不獨立重�
 
 ## 規劃與導引訊號重播
 
-初次 20 次評估發現205/207有風失敗、210同風況成功，離線發現見 [trace 調查](stage5-trace-findings-2026-10-11.md)。需要更多訊號時：
+初次 20 次評估發現205/207有風失敗、210同風況成功，離線發現見 [trace 調查](../research/stage5-trace-findings-2026-10-11.md)。需要更多訊號時：
 
 ```matlab
 clear compare_training_checkpoints

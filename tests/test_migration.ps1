@@ -1,3 +1,10 @@
+# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
+# [string]／[int]／[bool] 是型別標註或轉型；函式呼叫用「名稱 參數」，不是 MATLAB 的括號呼叫。
+# @() 把輸出收集成陣列，@{} 是名稱→值的表；| 把左側輸出的物件交給右側命令。
+# { } 包住 if／foreach／function 的內容；$_ 是管線當前物件，參數名的 - 前綴不是減號。
+# 遷移合成測試：建立停止 run fixture，驗證完整複製、控制路徑、原件保留及拒絕活動實驗。
+# 只使用 tests/output 的假資料，不續訓、不搬移真正活動 run。
+# PowerShell 內建變數：Stop 將可處理的命令錯誤提升成例外，使 try/catch/finally 能接住。
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $fixture=Join-Path $PSScriptRoot ('output\migration_' + [guid]::NewGuid().ToString('N'))
@@ -6,6 +13,7 @@ $null=New-Item -ItemType Directory -Path (Join-Path $source 'model_source') -For
 $null=New-Item -ItemType Directory -Path (Join-Path $source 'checkpoints') -Force
 $name='test_' + [guid]::NewGuid().ToString('N')
 $utf8=[Text.UTF8Encoding]::new($false)
+# 在測試來源 fixture 寫入指定文字，模擬待遷移資料。
 function Put($file,$text) { [IO.File]::WriteAllText((Join-Path $source $file),$text,$utf8) }
 Put 'supervisor.lock' ''
 Put 'status.json' '{"state":"running","attempt":8}'

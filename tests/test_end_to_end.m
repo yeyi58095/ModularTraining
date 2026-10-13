@@ -1,4 +1,6 @@
 function test_end_to_end()
+% 真實單回合短測：在新 MATLAB 程序以 CPU／1 worker 驗證成功成果發布。
+% 明確執行才啟動訓練；簡易成功門檻是測試接線用途，不代表模型合格。
 % One real UAV episode in an isolated fresh MATLAB process, CPU / one worker.
 % Deliberately easy success threshold tests artifact publication, not learning.
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);

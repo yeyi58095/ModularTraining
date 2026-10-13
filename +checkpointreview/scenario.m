@@ -1,4 +1,6 @@
 function data=scenario(stage,sessionDir,seed)
+% 配對評估情境：按 seed 建立 MAT／固定／random 軌跡，另用偏移 seed 抽樣整數風場。
+% 回傳路徑、速度、風與識別資料；恢復呼叫者 RNG，相同 seed 可跨風場配對路徑。
 % Preserve caller RNG and pair paths across wind conditions.
 old=rng; cleanup=onCleanup(@() rng(old)); %#ok<NASGU>
 rng(seed,'twister');

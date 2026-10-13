@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "artifact": {
+    "sha256": "85aa14c858a74dfeb935701e52b4666232e42497d4412e1b9c0b31552e407f6e",
+    "bytes": 1004474
+  },
+  "sizes": [
+    {
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "scrollHeight": 900
+    },
+    {
+      "width": 1600,
+      "height": 1000,
+      "scrollWidth": 1600,
+      "scrollHeight": 1000
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "width": 2048,
+      "height": 1320,
+      "scrollWidth": 2048,
+      "scrollHeight": 1320
+    }
+  ],
+  "nodes": 13,
+  "sourceFiles": 19,
+  "checks": [
+    "drag at 100% reveals covered right node and resets",
+    "sidebar width and height pointer drag and keyboard resizing",
+    "code drag scrolling and wrapping",
+    "embedded files match current workspace",
+    "all node selections",
+    "all source snippets match embedded original",
+    "full file toggle",
+    "actual SVG node click",
+    "code search",
+    "curriculum example button and all six JSON stages",
+    "deep link",
+    "light/dark screenshots"
+  ],
+  "errors": []
+}

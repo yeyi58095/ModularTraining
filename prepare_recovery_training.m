@@ -1,4 +1,6 @@
 function info=prepare_recovery_training(sourceSession,configFile)
+% 恢復分支準備：在停止且取得鎖的父 run 上選定 checkpoint，建立獨立的新 run。
+% 保留權重與保存歷史，只按配方調整允許設定、保存來源及環境 SHA；不修改父 run 或啟動訓練。
 % Fork a stopped curriculum checkpoint; never launch training or mutate parent.
 arguments
     sourceSession (1,1) string
@@ -19,6 +21,7 @@ assert(mod(settings.max_additional_episodes,settings.episodes_per_process)==0, .
     'Recovery:Budget','Budget must contain whole segments.');
 assert(settings.episodes_per_process==settings.guard.window, ...
     'Recovery:Window','Use one guard window per process for this recovery recipe.');
+% 父 run 必須停止且取得鎖，避免複製正在保存或被另一程序更新的模型。
 lock=System.IO.File.Open(char(fullfile(sourceSession,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@() lock.Dispose()); %#ok<NASGU>
@@ -38,6 +41,7 @@ state=jsondecode(fileread(fullfile(sourceSession,'curriculum_state.json')));
 completed=state.completed; if ~iscell(completed), completed=num2cell(completed); end
 assert(numel(completed)==state.stage_index-1,'Recovery:State','Incomplete stage history.');
 % Reconstruct only from recorded transitions, not reward or filename guesses.
+% 只能用已記錄 stage 轉換重建分支起點，不能用 reward 或檔名猜階段。
 boundary=0;
 for i=1:numel(completed)
     item=completed{i};
@@ -62,6 +66,7 @@ if isfield(settings,'expected_actor_learning_rate')
         'Recovery:SourceRate','Unexpected source learning rate. Select the intended recovery parent.');
 end
 actorBefore=getLearnableParameters(getActor(agent)); criticBefore=getLearnableParameters(getCritic(agent));
+% 同步調整 model spec 與 agent optimizer；前後核對 actor／critic 權重不變。
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
 trainingmodels.validate_agent(agent,spec);
@@ -73,6 +78,7 @@ assert(~isempty(regexp(group,'^[A-Za-z0-9_-]+$','once')),'Recovery:Group','Inval
 base=fullfile(root,'experiments',group,'runs'); if ~isfolder(base), mkdir(base); end
 [~,tag]=fileparts(tempname(base));
 folder=fullfile(base,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_recovery_' tag(1:10)]);
+% 先在 .preparing 暫存目錄完成保存與驗證，未完整發布者 retry 拒絕接續。
 staging=[folder '.preparing']; mkdir(staging);
 % On failure retain only a clearly labelled preparation directory; no launcher
 % accepts it until recovery.json is published complete.
@@ -104,6 +110,7 @@ lineage.parent_curriculum_sha256=checkpointreview.sha256(fullfile(sourceSession,
 lineage.parent_model_sha256=checkpointreview.sha256(fullfile(sourceSession,'model.json'));
 lineage.child_checkpoint_sha256=checkpointreview.sha256(target);
 % These identify the local environment at preparation, not historical parent execution.
+% 環境指紋表示本機準備當下版本，不證明父 run 歷史執行過相同版本。
 lineage.prepared_runtime_model_sha256=checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'));
 lineage.prepared_runtime_engine_sha256=checkpointreview.sha256(fullfile(root,'runtime','training_engine.m'));
 trainingcurriculum.write_json(fullfile(staging,'recovery.json'),lineage);
@@ -118,6 +125,7 @@ info=struct('sessionDir',folder,'parentEpisode',episode,'stageIndex',stage, ...
 disp(info); fprintf('Prepared only. Start explicitly with retry(resume=info.sessionDir).\n');
 end
 function value=absolute(root,value)
+% 將相對輸入接到 root，回傳規範化絕對路徑以供跨目錄呼叫。
 if ~java.io.File(char(value)).isAbsolute(), value=fullfile(root,value); end
 value=char(java.io.File(char(value)).getCanonicalPath());
 end

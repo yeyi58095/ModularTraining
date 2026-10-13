@@ -1,4 +1,6 @@
 function test_endpoint_candidate()
+% 候選幾何測試：驗證末段 lookahead、V2 outside 範圍、旋轉及正式 chart 與已驗證候選一致。
+% 從 fixture 與 SLX 文字測試純 guidance，不執行閉迴路模擬或訓練。
 root=fileparts(fileparts(mfilename('fullpath'))); addpath(root);
 model=fullfile(root,'runtime','FAFA_Simulation.slx'); before=checkpointreview.sha256(model);
 assert(~bdIsLoaded('FAFA_Simulation')); load_system(model);

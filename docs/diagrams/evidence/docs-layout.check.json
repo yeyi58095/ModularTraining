@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "rootEntries": [
+    "README.md",
+    "architecture.html",
+    "index.html"
+  ],
+  "migratedFiles": 54,
+  "localMarkdownLinks": 39,
+  "documents": 22,
+  "viewportWidths": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "width": 1600,
+      "scrollWidth": 1600
+    },
+    {
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "width": 2048,
+      "scrollWidth": 2048
+    },
+    {
+      "width": 800,
+      "scrollWidth": 800
+    }
+  ],
+  "checks": [
+    "all migrated files present",
+    "historical diagrams/specifications/receipts preserved",
+    "all local Markdown links resolve",
+    "old filename search",
+    "formatted and exact-original reader",
+    "all 22 documents render",
+    "desktop and narrow horizontal containment"
+  ],
+  "outsideDocsModified": false
+}

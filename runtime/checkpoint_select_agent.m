@@ -1,4 +1,6 @@
 function resumeFile = checkpoint_select_agent(candidates)
+% checkpoint 選擇：按 supervisor 提供的候選順序，檢查可讀 agent、介面與真實保存歷史。
+% 回傳第一個相容檔；所有既有候選都不可用時拒絕從頭訓練，不改候選檔案。
 % Select the newest readable compatible candidate, preserving fallback order.
     candidates = string(candidates);
     resumeFile = "";

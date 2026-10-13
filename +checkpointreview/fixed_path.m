@@ -1,4 +1,6 @@
 function [waypoints, velocity] = fixed_path()
+% 固定轉彎軌跡：依共用速度與點距，以直線及圓弧連接預定關鍵點。
+% 回傳 N×3 waypoints／velocity；此函式與 engine 的 createFixedPath 內容須保持一致，評估器會逐字檢查。
     global TARGET_SPEED DT WAYPOINT_SPACING
 
     if isempty(TARGET_SPEED)
@@ -12,6 +14,7 @@ function [waypoints, velocity] = fixed_path()
     waypoint_spacing = WAYPOINT_SPACING;
     turn_radius = 120;
 
+    % 預定關鍵點決定固定任務；轉彎以有限半徑圓弧平滑連接。
     key_points = [
         50, 0;
         500, 0;
@@ -38,6 +41,7 @@ function [waypoints, velocity] = fixed_path()
     all_waypoints = [];
     all_speeds = [];
 
+    % 依直線段長與轉角計算切點；短段限制半徑，避免切點超出相鄰段。
     for seg = 1:num_segments
         p1 = key_points(seg, :);
         p2 = key_points(seg+1, :);
@@ -67,6 +71,7 @@ function [waypoints, velocity] = fixed_path()
                     effective_radius = tangent_dist / tan(turn_angle_rad/2);
                 end
 
+                % 移除已累積路徑中被圓弧取代的尾端，避免轉彎重疊。
                 if ~isempty(all_waypoints)
                     cut_length = tangent_dist;
                     distances_from_end = vecnorm(all_waypoints(end:-1:1, 1:2) - p1, 2, 2);
@@ -92,6 +97,7 @@ function [waypoints, velocity] = fixed_path()
                     if end_angle > start_angle, end_angle = end_angle - 2*pi; end
                 end
 
+                % 依點距取樣圓弧，保持與 window 速度設定相容的路徑密度。
                 arc_length = abs(end_angle - start_angle) * effective_radius;
                 num_arc_points = max(3, round(arc_length / waypoint_spacing));
                 arc_angles = linspace(start_angle, end_angle, num_arc_points);
@@ -108,6 +114,7 @@ function [waypoints, velocity] = fixed_path()
             end
         end
 
+        % 將剩餘直線等距離離散，跳過相鄰段重複的首點。
         if seg_len > waypoint_spacing
             num_straight_points = round(seg_len / waypoint_spacing);
             straight_x = linspace(p1(1), p2(1), num_straight_points)';
@@ -126,6 +133,7 @@ function [waypoints, velocity] = fixed_path()
     num_waypoints = size(all_waypoints, 1);
     velocity = zeros(num_waypoints, 3);
 
+    % 速度方向採下一航點切線；末點沿用前一速度方向。
     for i = 1:num_waypoints
         if i < num_waypoints
             dir_vec = all_waypoints(i+1, :) - all_waypoints(i, :);

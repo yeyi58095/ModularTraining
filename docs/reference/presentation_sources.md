@@ -230,7 +230,7 @@ reward_history_preview.csv；四個100回合區間重新計算 mean(reward)、me
 
 ## 本次新增詳細流程頁
 
-架構：docs/architecture.json（已修正為目前程式）。
+架構：docs/diagrams/src/architecture.json（已修正為目前程式）。
 模型與快照：retry.m、training.m、+trainingmodels/load_profile.m、build_agent.m、validate_agent.m。
 重試與降級：runtime/checkpoint_supervisor.ps1、checkpoint_watchdog.ps1、checkpoint_open_pool.m、checkpoint_worker_diagnostics.ps1。
 訓練與存檔：runtime/checkpoint_attempt.m、training_engine.m、checkpoint_select_agent.m、checkpoint_save_final.m、checkpoint_mark_success.m。

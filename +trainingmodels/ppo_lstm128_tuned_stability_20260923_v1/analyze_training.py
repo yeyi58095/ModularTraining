@@ -1,3 +1,5 @@
+# 試驗配方證據重建：從完整 stdout 與 worker CSV 計算分窗、最佳尾均值及短回合比例。
+# 執行時寫 evidence.json；只讀日誌，不改 agent／訓練參數，不證明參數改善性能。
 """Rebuild tuning evidence from complete original stdout lines (stdlib only)."""
 import csv
 import argparse
@@ -25,6 +27,7 @@ rows, duplicates, attempts = parser.read_episodes(source)
 assert rows, 'No episode data'
 assert [r['episode'] for r in rows] == list(range(1, rows[-1]['episode'] + 1)), 'Episode gaps'
 
+# 將所選 episode 區間彙整為 reward、steps 等統計；只是日誌觀察，不代表 checkpoint 實際進度。
 def summarize(sample):
     rewards = [r['reward'] for r in sample]
     return dict(first=sample[0]['episode'], last=sample[-1]['episode'], n=len(sample),
