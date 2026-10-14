@@ -38,6 +38,13 @@ venv/
 .pytest_cache/
 tests/output/
 
+# Meeting authoring intermediates and duplicate unpacked offline resources.
+/.meeting-build/
+/output/meeting_training_20261014/
+/output/Meeting_Training_20261014_Offline.zip
+/output/meeting_training_labstyle_20261014/docs/
+/output/meeting_training_labstyle_20261014/assets/
+
 # Share only the bounded exporter output, not arbitrary files under reports.
 /reports/*
 !/reports/README.md
