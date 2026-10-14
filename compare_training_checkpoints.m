@@ -12,6 +12,7 @@ arguments
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
     opt.diagnostics (1,1) logical = false
     opt.rewardDiagnostics (1,1) logical = false
+    opt.routeMetrics (1,1) logical = false
     opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2","valid_history","progress_window"])} = "baseline"
 end
 if opt.rewardDiagnostics, opt.diagnostics=true; end
@@ -134,7 +135,8 @@ cacheRoot=fullfile(tempdir,['ce_' tag]);
 Simulink.fileGenControl('set','CacheFolder',fullfile(cacheRoot,'cache'), ...
     'CodeGenFolder',fullfile(cacheRoot,'codegen'),'createDir',true);
 report.cache_directory=cacheRoot;
-report.diagnostics_enabled=opt.diagnostics;
+report.diagnostics_enabled=opt.diagnostics || opt.routeMetrics;
+report.route_metrics_enabled=opt.routeMetrics;
 report.guidance_variant=char(opt.guidanceVariant);
 hadAgent=evalin('base',"exist('Agent_Stage2','var')==1"); oldAgent=[];
 if hadAgent, oldAgent=evalin('base','Agent_Stage2'); end
@@ -146,7 +148,7 @@ addpath(root,runtime,'-begin');
 try
     report.phase='load_model';
     modelFile=fullfile(runtime,'FAFA_Simulation.slx');
-    if opt.diagnostics || opt.guidanceVariant~="baseline"
+    if opt.diagnostics || opt.routeMetrics || opt.guidanceVariant~="baseline"
         modelFolder=fullfile(cacheRoot,'model'); mkdir(modelFolder);
         copyfile(modelFile,fullfile(modelFolder,'FAFA_Simulation.slx'));
         modelFile=fullfile(modelFolder,'FAFA_Simulation.slx');
@@ -189,6 +191,8 @@ try
             [rewardSignals,report.reward_definition]=checkpointreview.instrument_reward('FAFA_Simulation');
             report.diagnostic_signals=[report.diagnostic_signals rewardSignals];
         end
+    elseif opt.routeMetrics
+        report.diagnostic_signals=checkpointreview.instrument_positions('FAFA_Simulation');
     end
     for c=1:numel(paths)
         for s=1:numel(opt.stages)
@@ -222,7 +226,7 @@ try
                 row.turbulence=scenario.wind(3);
                 row.checkpoint_episode=episodes(c); row.stage_id=scenario.id; row.seed=seed;
                 trace=sprintf('ep%d_stage%d_seed%d.mat',episodes(c),opt.stages(s),seed);
-                if opt.diagnostics
+                if opt.diagnostics || opt.routeMetrics
                     simulationOutput=experience.SimulationInfo(1);
                     diagnostics=simulationOutput.get('review_signals');
                     assert(isa(diagnostics,'Simulink.SimulationData.Dataset'), ...
@@ -230,6 +234,13 @@ try
                     for signal=string({report.diagnostic_signals.name})
                         logged=diagnostics.getElement(char(signal));
                         assert(~isempty(logged.Values),'Evaluation:Logging','Missing signal: %s',signal);
+                    end
+                    if opt.routeMetrics
+                        east=diagnostics.getElement('P_E').Values;
+                        north=diagnostics.getElement('P_N').Values;
+                        assert(isequal(east.Time,north.Time),'Evaluation:PositionTime','Position time grids differ.');
+                        row.route_metrics=checkpointreview.route_metrics( ...
+                            scenario.waypoints(:,1:2),[east.Data(:),north.Data(:)],east.Time);
                     end
                     save(fullfile(out,trace),'experience','diagnostics','-v7.3');
                 else
