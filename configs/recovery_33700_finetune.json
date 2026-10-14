@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "environment": "spatial_route_progress_v1; not timed moving-target tracking",
+  "expected_runtime_model_sha256": "495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be",
+  "checkpoint_episode": 33700,
+  "expected_actor_learning_rate": 0.000025,
+  "actor_learning_rate_scale": 0.5,
+  "episodes_per_process": 100,
+  "max_additional_episodes": 3000,
+  "guard": {
+    "schema_version": 1,
+    "window": 100,
+    "patience": 3,
+    "reward_ratio": 0.5,
+    "steps_ratio": 0.5,
+    "min_reference_reward": 500,
+    "min_reference_steps": 500
+  }
+}
