@@ -11,8 +11,10 @@ arguments
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
     opt.diagnostics (1,1) logical = false
+    opt.rewardDiagnostics (1,1) logical = false
     opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2","valid_history","progress_window"])} = "baseline"
 end
+if opt.rewardDiagnostics, opt.diagnostics=true; end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
 restore=onCleanup(@() restoreCaller(oldPath,oldFolder,oldRng)); %#ok<NASGU>
@@ -183,6 +185,10 @@ try
     settingsGuard=checkpointreview.prepare_model('FAFA_Simulation',true,true); %#ok<NASGU>
     if opt.diagnostics
         report.diagnostic_signals=checkpointreview.instrument_model('FAFA_Simulation');
+        if opt.rewardDiagnostics
+            [rewardSignals,report.reward_definition]=checkpointreview.instrument_reward('FAFA_Simulation');
+            report.diagnostic_signals=[report.diagnostic_signals rewardSignals];
+        end
     end
     for c=1:numel(paths)
         for s=1:numel(opt.stages)
