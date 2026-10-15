@@ -48,6 +48,7 @@ info = retry(curriculum="curricula/fixed_to_random.json", start=false);
 `consecutive_windows:3` 是最近 300 回合切成三段全部符合，不是同一份日誌被規劃器讀三次，也不是三個重疊的 rolling average。
 
 最外層固定為 `{"schema_version":1,"model":"ppo_lstm128","stages":[...]}`。
+新版 schema 2 另外要求最外層 `"environment":"spatial_v1"`，新 run 依環境 manifest 保存 SLX 與相依檔快照；schema 1 仍相容。續訓不得換環境；舊 run 需先完成 [環境保存](environment-versions.md)。
 `id` 使用不重複的英文字母開頭名稱，例如 `trajectory_one`；MAT 檔名可以用中文。
 
 ## 條件字典

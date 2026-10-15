@@ -1,0 +1,17 @@
+{
+  "curriculum": "experiments/progressive_v2/curriculum.json",
+  "workers": 6,
+  "minWorkers": 1,
+  "fallbackWorkers": [4, 2, 1],
+  "device": "gpu",
+  "checkpointEvery": 100,
+  "episodesPerProcess": 100,
+  "averageWindow": 100,
+  "maxAttempts": 0,
+  "maxNoProgressFailures": 3,
+  "retryDelaySeconds": 30,
+  "startupTimeoutSeconds": 600,
+  "stallTimeoutSeconds": 1800,
+  "licenseRetryDelaySeconds": 60,
+  "start": false
+}

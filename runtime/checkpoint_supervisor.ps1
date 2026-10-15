@@ -108,7 +108,7 @@ function Get-Candidates {
     $files = @(Get-ChildItem -LiteralPath $sessionDir -Recurse -File -Filter '*.mat' |
         # Where-Object { ... } 是條件篩選；$_ 代表逐個進來的物件，.Name／.FullName 等取其屬性。
         Where-Object { ($_.Name -eq 'Agent_Final.mat' -or $_.Name -match '^Agent_?\d+\.mat$') -and
-            $_.FullName.Substring($sessionDir.Length) -notmatch '[\\/]runs[\\/]' } |
+            $_.FullName.Substring($sessionDir.Length) -notmatch '[\\/](runs|environment|environment\.preparing)[\\/]' } |
         # Sort-Object 按指定屬性排序；-Descending 由大到小，這裡用修改時間建立優先候選順序。
         Sort-Object LastWriteTimeUtc -Descending)
     # ForEach-Object 把每個檔案物件換成 .FullName 字串；外層 @() 保證零個／一個結果也保留陣列介面。

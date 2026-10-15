@@ -29,13 +29,14 @@ poolDiagnosticDir = "";
 agentFactory = [];
 agentValidator = [];
 curriculumContext = [];
+environmentModelFile = "";
 % Entrypoint/automatic supervisor supplies only these known settings.
 % 僅接收已知 overrides 欄位，避免入口把任意設定注入引擎。
 if exist('checkpointOverrides', 'var') && isstruct(checkpointOverrides)
     allowed = {'resumeAgentFile','numWorkers','minWorkers','checkpointEvery','maxEpisodes', ...
         'trainingDevice','fastRestart','targetReward','averageWindow', ...
         'trainingPlots','baseSeed','closePoolOnExit','outputRoot','poolDiagnosticDir', ...
-        'agentFactory','agentValidator','curriculumContext'};
+        'agentFactory','agentValidator','curriculumContext','environmentModelFile'};
     for settingIndex = 1:numel(allowed)
         settingName = allowed{settingIndex};
         if isfield(checkpointOverrides, settingName)
@@ -142,7 +143,12 @@ actInfo.UpperLimit = [1];
 modelName = "FAFA_Simulation";
 
 % Do not save changes to the original model.
-load_system(fullfile(scriptDir, modelName + ".slx"));
+if strlength(string(environmentModelFile))==0
+    environmentModelFile=fullfile(scriptDir,modelName+".slx"); % Legacy direct script use only.
+end
+addpath(fileparts(environmentModelFile),'-begin');
+cd(fileparts(environmentModelFile));
+loadEnvironmentModel(environmentModelFile);
 if ~strcmp(get_param(modelName, 'SimulationStatus'), 'stopped')
     error('Training:ModelBusy', 'Stop the current simulation before starting training.');
 end
@@ -354,6 +360,7 @@ numWorkers = pool.NumWorkers;
 addAttachedFiles(pool, {[mfilename('fullpath') '.m']});
 updateAttachedFiles(pool);
 workerConfig = struct('scriptDir', scriptDir, 'modelName', modelName, ...
+    'environmentModelFile',environmentModelFile, ...
     'targetSpeed', TARGET_SPEED, 'dt', DT, 'spacing', WAYPOINT_SPACING, ...
     'disableLogging', disableTrainingLogging, ...
     'disableAnimation', disableUAVAnimation);
@@ -495,7 +502,9 @@ function parallelWorkerState(action, config, dq)
         cacheRoot = tempname;
         Simulink.fileGenControl('set', 'CacheFolder', fullfile(cacheRoot, 'cache'), ...
             'CodeGenFolder', fullfile(cacheRoot, 'codegen'), 'createDir', true);
-        load_system(fullfile(config.scriptDir, config.modelName + ".slx"));
+        addpath(fileparts(config.environmentModelFile),'-begin');
+        cd(fileparts(config.environmentModelFile));
+        loadEnvironmentModel(config.environmentModelFile);
         modelGuard = prepareTrainingModel(config.modelName, ...
             config.disableLogging, config.disableAnimation);
     catch setupError
@@ -503,6 +512,16 @@ function parallelWorkerState(action, config, dq)
         filesystemGuard = [];
         rethrow(setupError);
     end
+end
+
+function loadEnvironmentModel(file)
+% RL may preload the same model on workers. Refuse only a different file.
+if bdIsLoaded('FAFA_Simulation')
+    loaded=char(java.io.File(get_param('FAFA_Simulation','FileName')).getCanonicalPath());
+    expected=char(java.io.File(char(file)).getCanonicalPath());
+    assert(strcmpi(loaded,expected),'Environment:AlreadyLoaded','A different FAFA model is already loaded.');
+end
+load_system(file);
 end
 
 function restoreWorkerFilesystem(previousFolder, previousPath, previousFileConfig)

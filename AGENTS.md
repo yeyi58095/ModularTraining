@@ -155,3 +155,18 @@
 - 實驗室 Agent31600 的本機 CPU 純sim：Stage5 10/10、Stage6既有10/10、新20/20、前三階段3/3，共43個不同組合全跑滿3000。四例獨立原始路線距離RMS8.86–10.57m；全程最大50m皆在初始t=0，10秒後最大18.50–21.28m。這不是完整合格或長訓練收斂證明。
 - configs/recovery_31600_progress_window.json 鎖定新 SLX SHA，31600另開分支、LR不變、100/段、最多新增10000至41600，guard保留。只提供實驗室啟動指令，不自行啟動正式訓練。保留舊階段紀錄不代表新環境已逐階訓練驗證；未來合格後仍需純腳本從頭重跑。
 - 操作及完整證據見 docs/guides/stage6-progress-training.md、docs/records/stage6-progress-validation-2026-10-13.md。目前 baseline 是空間循跡環境，舊候選不可重複套用；更新 runtime 前仍須確認副本沒有活動訓練。
+
+## 未來純腳本從頭重跑（2026-10-14）
+
+- 使用者確認未來從頭重跑時，從第一階段即使用目前正式空間循跡環境，包括初始化、末端 lookahead v2、有效歷史範圍及依飛機進度更新路段；這些處理也適用於無風，不等到有風階段才啟用。六階段共用一致任務規則，階段之間沿用同一 agent。
+- 未來另建新 run、初始化新 agent，固定並記錄環境版本，從第一階段驗證；既有31600評估不代表從頭收斂。沿用目前方案合格後再整理純腳本的安排。本次只記錄，未授權實作、啟動訓練或 commit/push。詳細決定見 docs/records/from-scratch-training-decision-2026-10-14.md。
+
+## 環境版本與遠端保存（2026-10-15）
+
+- 使用者授權實作環境版本架構，並確認遠端已停止或暫停。新 run 從 environments/ 選環境，保存 environment.json 與 environment/ 資產；retry 續訓與 attempt 必須驗證快照 SHA，不再隱式跟隨共用 SLX。
+- progressive_v2 使用 schema 2、environment=spatial_v1；目前仍是正式空間循跡與原 reward，未部署離線 reward v2 候選。schema 1 課程仍相容，未綁定環境的舊 run 續訓拒絕猜測。
+- 遠端更新前先單獨複製 preserve_training_environment.ps1，對停止且可取得排他鎖的舊 run 保存當地 runtime SLX／相依資產、核對預期 SHA；不搬移 run、不改 checkpoint／課程／guard。保存當下檔案不證明歷史版本；勿先更新後再冒充舊環境。
+- 已綁定 run 的評估及恢復分支使用快照；明確跨環境恢復尚未提供，配方 SHA 不符時拒絕。未綁定舊 run 的唯讀評估仍可使用當下 runtime，報告會標明不是歷史環境證據。
+- 共用引擎與 MATLAB／工具箱未整體封存，每次 attempt 記錄預檢的模型／引擎 SHA。正式 runtime SLX 保留相容且內容未改。操作與限制見 docs/guides/environment-versions.md。
+- 本機已通過 schema、start=false、假引擎、既有課程／恢復 guard、PowerShell 停止／鎖／雜湊／不可覆寫測試及 CPU 五步快照評估；未啟動正式訓練、未驗證遠端 GPU／多 workers、未 commit/push 或直接更新遠端。
+- 使用者後續明確授權提交與推送本次課程、reward 校準及環境管理修改。遠端操作由代理提供指令、使用者自行執行；不要自行連線修改遠端或啟動遠端訓練。保存環境必須先於更新程式。

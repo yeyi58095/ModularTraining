@@ -13,7 +13,7 @@ sourceSession=absolute(root,sourceSession); configFile=absolute(root,configFile)
 settings=jsondecode(fileread(configFile));
 assert(settings.schema_version==1,'Recovery:Schema','Unsupported settings.');
 % 指定環境的配方必須配對正確 SLX，避免只更新 JSON 就在舊環境續訓。
-if isfield(settings,'expected_runtime_model_sha256')
+if isfield(settings,'expected_runtime_model_sha256') && ~isfile(fullfile(sourceSession,'environment.json'))
     assert(strcmpi(settings.expected_runtime_model_sha256, ...
         checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'))), ...
         'Recovery:EnvironmentMismatch','Runtime model does not match this recovery recipe. Update the complete project before preparing.');
@@ -86,6 +86,19 @@ base=fullfile(root,'experiments',group,'runs'); if ~isfolder(base), mkdir(base);
 folder=fullfile(base,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_recovery_' tag(1:10)]);
 % 先在 .preparing 暫存目錄完成保存與驗證，未完整發布者 retry 拒絕接續。
 staging=[folder '.preparing']; mkdir(staging);
+if isfile(fullfile(sourceSession,'environment.json')) || isfolder(fullfile(sourceSession,'environment'))
+    [parentEnvironment,parentManifest]=trainingenv.resolve(sourceSession);
+    if isfield(settings,'expected_runtime_model_sha256')
+        assert(strcmpi(settings.expected_runtime_model_sha256,checkpointreview.sha256(parentEnvironment)), ...
+            'Recovery:EnvironmentMismatch','Recipe requests a different environment. Bound recovery currently inherits its parent environment.');
+    end
+    trainingenv.snapshot(fullfile(sourceSession,'environment.json'),fileparts(parentEnvironment),staging);
+else
+    assert(~isfield(plan,'environment'),'Environment:Unbound','Version 2 parent is missing its environment snapshot.');
+    trainingenv.capture_runtime(fullfile(root,'runtime'),staging);
+end
+[childEnvironment,childManifest]=trainingenv.resolve(staging);
+cfg.environmentId=childManifest.id;
 % On failure retain only a clearly labelled preparation directory; no launcher
 % accepts it until recovery.json is published complete.
 trainingcurriculum.snapshot(plan,fullfile(sourceSession,'curriculum.json'),staging);
@@ -117,7 +130,8 @@ lineage.parent_model_sha256=checkpointreview.sha256(fullfile(sourceSession,'mode
 lineage.child_checkpoint_sha256=checkpointreview.sha256(target);
 % These identify the local environment at preparation, not historical parent execution.
 % 環境指紋表示本機準備當下版本，不證明父 run 歷史執行過相同版本。
-lineage.prepared_runtime_model_sha256=checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx'));
+lineage.prepared_runtime_model_sha256=checkpointreview.sha256(childEnvironment);
+lineage.environment_id=childManifest.id;
 lineage.prepared_runtime_engine_sha256=checkpointreview.sha256(fullfile(root,'runtime','training_engine.m'));
 trainingcurriculum.write_json(fullfile(staging,'recovery.json'),lineage);
 trainingcurriculum.write_json(fullfile(staging,'status.json'), ...

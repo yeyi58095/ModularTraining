@@ -8,6 +8,7 @@ function info = retry(varargin)
 p = inputParser;
 p.addParameter('model',""); p.addParameter('resume',"");
 p.addParameter('curriculum',"");
+p.addParameter('environment',"");
 p.addParameter('workers',6); p.addParameter('fallbackWorkers',[4 2]);
 p.addParameter('minWorkers',1);
 % episodesPerProcess 是每個 MATLAB 程序新增的段落回合數；課程還會受階段／guard 剩餘預算限制。
@@ -25,7 +26,7 @@ root = fileparts(mfilename('fullpath'));
 runtime = fullfile(root,'runtime');
 required = {'checkpoint_supervisor.ps1','checkpoint_watchdog.ps1', ...
     'checkpoint_worker_diagnostics.ps1','checkpoint_attempt.m','checkpoint_open_pool.m', ...
-    'training_engine.m','checkpoint_run_log_dir.m','FAFA_Simulation.slx'};
+    'training_engine.m','checkpoint_run_log_dir.m'};
 % fullfile 依平台拼路徑，assert 在缺少依賴時立即中止，不等到訓練才發現。
 for k=1:numel(required)
     assert(isfile(fullfile(runtime,required{k})),'Modular:MissingDependency', ...
@@ -44,9 +45,16 @@ if strlength(string(opt.curriculum))>0
     assert(strlength(string(opt.model))==0 || strcmp(opt.model,plan.model), ...
         'Curriculum:Model','model must match the curriculum model.');
     opt.model=plan.model;
+    if isfield(plan,'environment')
+        assert(strlength(string(opt.environment))==0 || strcmp(opt.environment,plan.environment), ...
+            'Environment:Mismatch','Environment must match curriculum.');
+        opt.environment=plan.environment;
+    end
 end
 % 續訓讀既有快照；新建才從共享 profile／課程建立隔離 run。
 if isResume
+    assert(strlength(string(opt.environment))==0,'Environment:Immutable', ...
+        'Resume uses its environment snapshot; create a separate run to change it.');
     folder = projectPath(root,opt.resume);
     assert(~endsWith(folder,'.preparing'),'Recovery:Incomplete','Recovery preparation is incomplete.');
     assert(isfile(fullfile(folder,'model.json')) && isfile(fullfile(folder,'control.json')), ...
@@ -65,6 +73,9 @@ if isResume
     assert(isfolder(fullfile(folder,'model_source','+trainingmodels')), ...
         'Modular:MissingSnapshot','Saved model source is missing.');
 else
+    environmentId=string(opt.environment);
+    if strlength(environmentId)==0,environmentId="spatial_v1";end
+    [environmentManifest,environmentSource]=trainingenv.registry(root,environmentId);
     name = string(opt.model);
     if strlength(name)==0, name="ppo_lstm128"; end
     assert(isscalar(name) && ~isempty(regexp(name,'^[a-z][a-z0-9_]*$','once')), ...
@@ -125,6 +136,16 @@ if ~isfolder(folder), mkdir(folder); end
 lock=System.IO.File.Open(fullfile(folder,'supervisor.lock'), ...
     System.IO.FileMode.OpenOrCreate,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@() lock.Dispose());
+if isResume
+    [~,boundEnvironment]=trainingenv.resolve(folder);
+    if exist('savedPlan','var') && isfield(savedPlan,'environment')
+        assert(strcmp(savedPlan.environment,boundEnvironment.id),'Environment:Mismatch', ...
+            'Saved curriculum/environment mismatch.');
+    end
+else
+    boundEnvironment=trainingenv.snapshot(environmentManifest,environmentSource,folder);
+end
+cfg.environmentId=boundEnvironment.id;
 if ~isResume
     writeJson(fullfile(folder,'model.json'),spec);
     if ~isempty(plan), trainingcurriculum.snapshot(plan,planFile,folder); end

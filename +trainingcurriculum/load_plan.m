@@ -5,8 +5,14 @@ function plan = load_plan(filename, checkFiles)
 if nargin < 2, checkFiles = true; end
 plan = jsondecode(fileread(filename));
 % allowed／required 並用會拒絕未知欄位與缺漏；JSON 本身不支援 // 註解或任意新增說明鍵。
-keys(plan,{'schema_version','model','stages'}, {'schema_version','model','stages'});
-must(isequal(plan.schema_version,1),'schema_version must be 1.');
+keys(plan,{'schema_version','model','environment','stages'}, {'schema_version','model','stages'});
+must(isequal(plan.schema_version,1) || isequal(plan.schema_version,2),'schema_version must be 1 or 2.');
+if isequal(plan.schema_version,2)
+    must(isfield(plan,'environment') && ischar(plan.environment) && ...
+        ~isempty(regexp(plan.environment,'^[a-z][a-z0-9_]*$','once')),'Version 2 requires environment id.');
+else
+    must(~isfield(plan,'environment'),'environment requires schema_version 2.');
+end
 must(ischar(plan.model) && ~isempty(regexp(plan.model,'^[a-z][a-z0-9_]*$','once')), 'Invalid model name.');
 plan.stages = asCells(plan.stages);
 must(~isempty(plan.stages),'At least one stage is required.');

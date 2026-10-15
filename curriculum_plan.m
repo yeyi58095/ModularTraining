@@ -9,6 +9,9 @@ addpath(root,'-begin');
 plan=trainingcurriculum.load_plan(resolve_curriculum_path(filename),p.Results.checkFiles);
 trainingmodels.load_profile(plan.model);
 fprintf('Model retained across all stages: %s\n',plan.model);
+if isfield(plan,'environment')
+    fprintf('Pinned environment id: %s (files verified when preparing a run)\n',plan.environment);
+end
 for i=1:numel(plan.stages)
     s=plan.stages{i};
     fprintf('%d. %s | trajectory=%s | budget=%d stage episodes | on_limit=%s\n', ...

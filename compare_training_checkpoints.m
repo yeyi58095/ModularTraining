@@ -120,7 +120,14 @@ for i=1:numel(paths)
         'sha256',checkpointreview.sha256(paths(i)));
 end
 report.runtime_sha256=checkpointreview.sha256(fullfile(runtime,'training_engine.m'));
-report.model_sha256=checkpointreview.sha256(fullfile(runtime,'FAFA_Simulation.slx'));
+environmentModel=fullfile(runtime,'FAFA_Simulation.slx');
+report.environment_source='legacy_current_runtime_not_historical_proof';
+if isfile(fullfile(sessionDir,'environment.json')) || isfolder(fullfile(sessionDir,'environment'))
+    [environmentModel,environmentManifest]=trainingenv.resolve(sessionDir);
+    report.environment_source='run_snapshot';
+    report.environment_id=environmentManifest.id;
+end
+report.model_sha256=checkpointreview.sha256(environmentModel);
 report.curriculum_sha256=checkpointreview.sha256(fullfile(sessionDir,'curriculum.json'));
 report.random_path_sha256=checkpointreview.sha256(fullfile(root,'+checkpointreview','random_path.m'));
 report.turbulence_seed_policy='Internal noise seeds remain as stored in the model; MATLAB scenario seed does not independently seed every Simulink noise source.';
@@ -147,14 +154,26 @@ addpath(root,runtime,'-begin');
 % 模擬與報告可能失敗；入口捕捉並保留原始 phase／堆疊，不讓寫報告例外遮蓋原錯誤。
 try
     report.phase='load_model';
-    modelFile=fullfile(runtime,'FAFA_Simulation.slx');
+    modelFile=environmentModel;
+    addpath(fileparts(modelFile),'-begin');
     if opt.diagnostics || opt.routeMetrics || opt.guidanceVariant~="baseline"
         modelFolder=fullfile(cacheRoot,'model'); mkdir(modelFolder);
         copyfile(modelFile,fullfile(modelFolder,'FAFA_Simulation.slx'));
+        if exist('environmentManifest','var')
+            for assetIndex=1:numel(environmentManifest.files)
+                asset=environmentManifest.files(assetIndex).name;
+                if strcmp(asset,'FAFA_Simulation.slx'),continue;end
+                copyfile(fullfile(fileparts(environmentModel),asset),fullfile(modelFolder,asset));
+            end
+        end
         modelFile=fullfile(modelFolder,'FAFA_Simulation.slx');
         cd(modelFolder);
     end
+    cd(fileparts(modelFile));
     load_system(modelFile);
+    assert(strcmpi(char(java.io.File(get_param('FAFA_Simulation','FileName')).getCanonicalPath()), ...
+        char(java.io.File(char(modelFile)).getCanonicalPath())), ...
+        'Environment:WrongModel','Evaluation loaded a different model file.');
     modelGuard=onCleanup(@() close_system('FAFA_Simulation',0)); %#ok<NASGU>
     addpath(root,runtime,'-begin');
     if opt.guidanceVariant~="baseline"
@@ -260,7 +279,7 @@ try
             'Evaluation:SourceChanged','Source checkpoint changed during evaluation.');
     end
     report.status='complete'; report.weights_unchanged=true;
-    assert(strcmp(report.model_sha256,checkpointreview.sha256(fullfile(runtime,'FAFA_Simulation.slx'))), ...
+    assert(strcmp(report.model_sha256,checkpointreview.sha256(environmentModel)), ...
         'Evaluation:SourceChanged','Original runtime model changed during evaluation.');
 catch err
     % Keep this inline: even a pre-bound package handle can fail to resolve

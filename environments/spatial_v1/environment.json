@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "spatial_v1",
+  "model_file": "FAFA_Simulation.slx",
+  "reward_version": "legacy_spatial",
+  "provenance": "Published spatial route environment; initializer, endpoint v2, valid history and progress window. No reward candidate deployed.",
+  "files": [
+    {"name": "FAFA_Simulation.slx", "sha256": "495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be"}
+  ]
+}

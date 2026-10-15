@@ -18,6 +18,12 @@ function checkpoint_attempt(configFile)
     outcome=[];
     if isfield(cfg,'modularRoot')
         addpath(cfg.modularRoot);
+        [environmentModel,environmentManifest]=trainingenv.resolve(cfg.sessionDir);
+        checkpointOverrides.environmentModelFile=environmentModel;
+        trainingcurriculum.write_json(fullfile(cfg.attemptDir,'environment_used.json'), ...
+            struct('id',environmentManifest.id,'model_sha256',checkpointreview.sha256(environmentModel), ...
+            'engine_sha256',checkpointreview.sha256(fullfile(cfg.scriptDir,'training_engine.m')), ...
+            'scope','preflight_verified_before_guard_or_engine'));
         checkpointOverrides = training(cfg,checkpointOverrides);
         if (isfield(cfg,'curriculumEnabled') && cfg.curriculumEnabled) || isfile(fullfile(cfg.sessionDir,'curriculum.json'))
             % guard 優先；已暫停或達預算的 run 可在 engine 執行前直接返回。
