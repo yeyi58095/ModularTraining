@@ -1,5 +1,7 @@
 # Reward v2：單位修正與分數尺度校準
 
+> 後續進度：使用者已授權將本文件的 w=0.2 候選實作到獨立 `environments/spatial_v2`；詳見 [spatial_v2](../guides/spatial-v2.md)。下文「僅離線／未部署」描述的是當時校準階段，並不表示現在沒有新版 SLX。現有 v1 和 run 快照仍未更動，也尚未切換 progressive_v2 課程。
+
 2026-10-15，供 progressive_v2 從頭訓練前審視。候選版本為 `spatial_reward_v2_candidate_1`，目前只在離線重計分工具中實作，未部署正式 SLX。這份校準區分三件事：公式是否符合定義、固定飛行資料在新公式下的分數、使用新 reward 訓練後的行為。前兩者可以先測，不能據此宣稱第三者成立。
 
 ## 可重現的候選定義

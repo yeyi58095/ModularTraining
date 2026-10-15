@@ -9,6 +9,12 @@ assert(numel(ports.Inport)==10 && strcmp(get_param(sumBlock,'Inputs'),'+++++++++
     'RewardAudit:Graph','Unexpected reward sum.');
 signals=struct('name',{},'block',{},'port',{});
 definition=struct('terms',struct([]),'parameters',struct([]));
+c13=find(sfroot,'-isa','Stateflow.EMChart','Path',[mdl '/OBSERVATION/MATLAB Function13']);
+c22=find(sfroot,'-isa','Stateflow.EMChart','Path',[mdl '/OBSERVATION/MATLAB Function22']);
+assert(isscalar(c13) && isscalar(c22),'RewardAudit:Graph','Missing reward charts.');
+v2=[contains(c13.Script,'SPATIAL_REWARD_V2'),contains(c22.Script,'SPATIAL_REWARD_V2')];
+assert(all(v2) || ~any(v2),'RewardAudit:Version','Mixed reward versions.');
+if all(v2),definition.reward_version='spatial_reward_v2';else,definition.reward_version='legacy_spatial';end
 for i=1:10
     line=get_param(ports.Inport(i),'Line');src=get_param(line,'SrcPortHandle');
     block=get_param(src,'Parent');port=get_param(src,'PortNumber');

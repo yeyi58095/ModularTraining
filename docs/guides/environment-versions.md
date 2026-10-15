@@ -23,7 +23,7 @@ experiments/progressive_v2/
         attempt_*/environment_used.json  本次預檢模型／引擎 SHA
 ```
 
-`spatial_v1` 是目前已部署的空間循跡環境，模型 SHA 為 `495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be`。`spatial_reward_v2` 尚未發布；離線 reward 候選不會因架構更新就進入訓練。
+`spatial_v1` 是原有空間循跡環境，模型 SHA 為 `495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be`。後續已另建 `spatial_v2`（reward id 為 `spatial_reward_v2`），見 [新版 reward 環境](spatial-v2.md)。一般入口預設環境仍為 spatial_v1；progressive_v2 已明確選 spatial_v2，不會把既有實驗切到新版。
 
 環境 manifest 只接受明列的同層 `.slx/.mat/.m/.sldd` 檔及 SHA256，拒絕路徑跳脫、重複名稱與保留的訓練檔名。現有 spatial_v1 的正式模型是自包含 SLX；日後需要額外資產必須列入 manifest。引擎目前只支援 FAFA_Simulation 的既有 observation/action 介面，不代表可直接換成任意 Simulink 模型。
 
@@ -75,7 +75,7 @@ info = retry(args{:}); % 設定內 start=false，只建立草稿
 [modelFile, manifest] = trainingenv.resolve(info.sessionDir);
 ```
 
-課程目前選 spatial_v1，仍使用原 reward；reward 校準與正式部署另行處理。每次 retry 新建都產生另一個 run，請保存 sessionDir。續訓會使用這個 run 的快照，而不依賴 registry 或 runtime 中的 SLX 後續是否改動。
+progressive_v2 後續依使用者明確要求改選 spatial_v2（新版 reward）；較早建立的 spatial_v1 草稿維持原快照，需另建新 run。每次 retry 新建都產生另一個 run，請保存 sessionDir。續訓會使用這個 run 的快照，而不依賴 registry 或 runtime 中的 SLX 後續是否改動。
 
 ## 評估、恢復與限制
 

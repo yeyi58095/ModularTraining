@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "environment": "spatial_v1",
+  "environment": "spatial_v2",
   "model": "ppo_lstm128",
   "stages": [
     {

@@ -2,6 +2,12 @@
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
+## 最新環境進度（2026-10-15）
+
+已新增獨立 `environments/spatial_v2`，將已校準候選的距離 reward 寫入 SLX：取消曲率對直接距離懲罰的減半、取消舊目標距離加分，改以實際公尺計算10m內連續加分。`spatial_v1`、runtime SLX 與既有 run 保留。
+
+**progressive_v2 已依使用者要求指定 spatial_v2（新版 reward），新 run 從頭訓練。** 遠端先前建立的 v1 草稿維持原快照；請另建新 run，核對環境後再啟動。其他聊天室請先讀 [spatial_v2 進度、驗證與限制](docs/guides/spatial-v2.md) 及 [環境版本操作](docs/guides/environment-versions.md)，不要直接改寫舊實驗快照。
+
 [互動架構圖](docs/architecture.html)（2026-10-10 更新）：課程設定、實驗快照、訓練與續訓、遷移和診斷；詳細語意與驗證見 [架構說明](docs/reference/architecture-notes.md)。
 
 ## JSON 分階段訓練

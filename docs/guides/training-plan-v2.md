@@ -2,13 +2,15 @@
 
 > 2026-10-15 校準註記：下表 reward 門檻仍為未校準草案，不能作為 reward v2 的正式升級門檻。新候選目前只供離線重計分，未部署 SLX；遠端設定保持 start=false。公式、證據與限制見 [reward 校準](../research/reward-calibration-v2.md)。
 
-課程現使用 schema 2，指定 `environment: spatial_v1`；新 run 保存並核對自己的環境副本。舊遠端 run 更新前的保存順序見 [環境版本與遠端更新](environment-versions.md)。這不會部署 reward v2。
+2026-10-15 使用者明確指定本課程改用 schema 2、`environment: spatial_v2`。新 run 使用新版 reward 並保存環境快照；既有 spatial_v1 run 不改寫。
+
+使用獨立的 [spatial_v2 SLX](spatial-v2.md)，不更改共用 runtime SLX。下列課程數值維持原規劃，尚未經新 reward 從頭訓練校準，不代表保證過關或合格。
 
 2026-10-14 使用者確認另建 progressive_v2，供新 agent 從第一階段開始訓練。設定在 `experiments/progressive_v2/curriculum.json`，不接續 recovery checkpoint；階段之間則始終沿用同一 agent。這是可由現有 schema 執行的起始方案，尚未進行從頭訓練或校準門檻。
 
 ## 環境與模型
 
-從第一回合使用目前正式空間循跡環境：首次有效 window、末端 lookahead v2、有效歷史路徑、依飛機局部單調進度更新路段。無風與有風都適用；任務是沿指定路徑飛行，不是追蹤按原時序移動的目標。維持 reward 公式與終止門檻。
+從第一回合使用目前正式空間循跡環境：首次有效 window、末端 lookahead v2、有效歷史路徑、依飛機局部單調進度更新路段。無風與有風都適用；任務是沿指定路徑飛行，不是追蹤按原時序移動的目標。reward 改用 spatial_reward_v2，終止門檻不變。
 
 `spatial_v1` 的模型 SHA256 為 `495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be`。環境 manifest 與 run 副本會核對此 SHA；共用引擎和工具箱版本仍須另記錄。現有 31600 的評估不能替代新 agent 的從頭收斂驗證。
 

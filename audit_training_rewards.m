@@ -15,7 +15,9 @@ audit=struct('schema_version',1,'evaluation',char(evaluationDir), ...
     'definition',report.reward_definition,'results',{cell(1,numel(rows))});
 for i=1:numel(rows)
     x=load(fullfile(evaluationDir,rows(i).trace),'experience','diagnostics');
-    row=checkpointreview.reward_breakdown(x.experience,x.diagnostics);
+    rewardVersion='legacy_spatial';
+    if isfield(report.reward_definition,'reward_version'),rewardVersion=report.reward_definition.reward_version;end
+    row=checkpointreview.reward_breakdown(x.experience,x.diagnostics,rewardVersion);
     assert(abs(row.episode_reward-rows(i).reward)<1e-8,'RewardAudit:Report','Trace/report mismatch.');
     row.checkpoint_episode=rows(i).checkpoint_episode;row.stage_id=rows(i).stage_id;row.seed=rows(i).seed;
     audit.results{i}=row;

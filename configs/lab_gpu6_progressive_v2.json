@@ -1,5 +1,6 @@
 {
   "curriculum": "experiments/progressive_v2/curriculum.json",
+  "environment": "spatial_v2",
   "workers": 6,
   "minWorkers": 1,
   "fallbackWorkers": [4, 2, 1],

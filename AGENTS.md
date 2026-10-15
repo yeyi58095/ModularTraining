@@ -170,3 +170,17 @@
 - 共用引擎與 MATLAB／工具箱未整體封存，每次 attempt 記錄預檢的模型／引擎 SHA。正式 runtime SLX 保留相容且內容未改。操作與限制見 docs/guides/environment-versions.md。
 - 本機已通過 schema、start=false、假引擎、既有課程／恢復 guard、PowerShell 停止／鎖／雜湊／不可覆寫測試及 CPU 五步快照評估；未啟動正式訓練、未驗證遠端 GPU／多 workers、未 commit/push 或直接更新遠端。
 - 使用者後續明確授權提交與推送本次課程、reward 校準及環境管理修改。遠端操作由代理提供指令、使用者自行執行；不要自行連線修改遠端或啟動遠端訓練。保存環境必須先於更新程式。
+
+## spatial_v2 新 reward 環境（2026-10-15 後續）
+
+- 使用者要求建立獨立 environments/spatial_v2，並將進度寫入 AGENTS／README 供其他聊天室接續。已建立 SLX 與 environment.json；reward_version=spatial_reward_v2，模型 SHA256 為 997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557。
+- 只有 OBSERVATION/MATLAB Function13、Function22 的 reward 程式更改：取消曲率減半距離懲罰、取消局部 waypoint 距離30～150m加分；以公尺 d 計算 cross_track=0.2-0.2*d/30、distance_bonus=0.1+0.05*max(0,1-d/10)。輸入 d/30 先還原單位；其餘八項 reward、guidance、WindowManager、observation、IsDone、PPO 不變。d 仍是 guidance 局部橫向距離，不是原始有限折線距離。
+- spatial_v1 與 runtime SLX SHA 仍為495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be。新模型存檔另有 UUID／版本號／視窗 metadata 差異，不能說二進位檔只改兩行。
+- 通過實際 SLX 兩個 chart 的128組距離／曲率／目標距離測試；原 reward 與新 reward 的診斷均可辨識。CPU 固定 Agent31600、Stage6 seed205 純 sim 跑滿3000步，新分數2666.49527155，舊分數2823.42477063；與離線候選逐步最大差4.44e-16，比對位置／姿態／guidance d／動作變化扣分一致，checkpoint SHA 與權重未改。這不是新 reward 訓練或收斂證明；未驗證GPU／多 workers。
+- progressive_v2 的共享 curriculum.json 仍指定 spatial_v1，尚未校準新 reward 的正式訓練門檻，不要自動切換。使用者貼回的遠端草稿為 D:\daniel\ModularTraining\experiments\progressive_v2\runs\20261015_134932_tpfcac90bf_7392_48ff_b6d6_e7b07dec087e，當時 start=false 且綁定spatial_v1；不是對遠端目前程序狀態的即時確認。不要改該 run 的環境／課程快照，未來使用 spatial_v2 應另建新 run。
+- 本批尚未 commit/push、未直接更新遠端、未啟動正式訓練。遠端仍由代理提供指令、使用者執行。完整位置、建置工具、測試與限制見 docs/guides/spatial-v2.md；README 已加入進度入口。
+
+## progressive_v2 選用 spatial_v2（2026-10-15 明確授權）
+
+- 使用者要求 progressive_v2 使用 spatial_v2 並 push、提供遠端啟動指令，取代前述「尚未切換」決定。共享課程與 configs/lab_gpu6_progressive_v2.json 均指定 spatial_v2；start=false 保留預檢，驗證後由使用者 retry(resume=新run) 啟動。
+- 新 reward 門檻維持八階段起始設定，尚未長訓練校準。先前134932草稿仍屬 spatial_v1，不改快照、不用它開始新版訓練。本機不啟動正式訓練，不將凍結策略評估當作收斂證據。
