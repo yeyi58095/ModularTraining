@@ -184,3 +184,9 @@
 
 - 使用者要求 progressive_v2 使用 spatial_v2 並 push、提供遠端啟動指令，取代前述「尚未切換」決定。共享課程與 configs/lab_gpu6_progressive_v2.json 均指定 spatial_v2；start=false 保留預檢，驗證後由使用者 retry(resume=新run) 啟動。
 - 新 reward 門檻維持八階段起始設定，尚未長訓練校準。先前134932草稿仍屬 spatial_v1，不改快照、不用它開始新版訓練。本機不啟動正式訓練，不將凍結策略評估當作收斂證據。
+
+## 凍結策略探索對照（2026-10-16）
+
+- progressive_v2恢復分支18000–18200在Stage4 seeds601:606關閉探索皆跑滿；18300已退步。不可因此直接續訓或認定探索為根因。
+- compare_training_checkpoints新增useExploration，預設false不變；true僅在記憶體agent上以CPU純sim抽樣動作，報告記錄use_exploration。不train、不改父run或guard。同seed配對scenario，不等於重現訓練worker隨機序列。
+- 操作與限制見docs/guides/exploration-evaluation.md。實驗室保持paused，先用既有18次無探索結果與同組探索評估比較。

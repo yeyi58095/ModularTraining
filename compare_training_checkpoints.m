@@ -13,6 +13,7 @@ arguments
     opt.diagnostics (1,1) logical = false
     opt.rewardDiagnostics (1,1) logical = false
     opt.routeMetrics (1,1) logical = false
+    opt.useExploration (1,1) logical = false
     opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2","valid_history","progress_window"])} = "baseline"
 end
 if opt.rewardDiagnostics, opt.diagnostics=true; end
@@ -110,7 +111,7 @@ reports=fullfile(sessionDir,'reports'); if ~isfolder(reports), mkdir(reports); e
 out=fullfile(reports,"evaluation_"+string(datetime('now','Format','yyyyMMdd_HHmmss'))+"_"+tag); mkdir(out);
 report=struct('schema_version',2,'status','running','session_id',char(extractAfter(sessionDir, ...
     strlength(fileparts(sessionDir))+1)),'outputDir',char(out), ...
-    'matlab_release',version('-release'),'device','cpu','use_exploration',false, ...
+    'matlab_release',version('-release'),'device','cpu','use_exploration',opt.useExploration, ...
     'max_steps',opt.maxSteps,'seeds',opt.seeds,'stages',opt.stages, ...
     'scope','Paired seeded paths and sampled integer winds at model initial state; diagnostic scenarios, not certified generalization.', ...
     'termination_detail','Terminal observation threshold evidence only; not instrumented IsDone branch attribution.', ...
@@ -225,7 +226,9 @@ try
                 clear data
                 actor=getActor(agent); actor.UseDevice='cpu'; agent=setActor(agent,actor);
                 critic=getCritic(agent); critic.UseDevice='cpu'; agent=setCritic(agent,critic);
-                agent.UseExplorationPolicy=false;
+                % Evaluation only: sample the frozen policy when requested.
+                % This never enables learning or changes the saved checkpoint.
+                agent.UseExplorationPolicy=opt.useExploration;
                 beforeActor=getLearnableParameters(getActor(agent));
                 beforeCritic=getLearnableParameters(getCritic(agent));
                 assignin('base','Agent_Stage2',agent);
