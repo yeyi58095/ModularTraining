@@ -190,3 +190,4 @@
 - progressive_v2恢復分支18000–18200在Stage4 seeds601:606關閉探索皆跑滿；18300已退步。不可因此直接續訓或認定探索為根因。
 - compare_training_checkpoints新增useExploration，預設false不變；true僅在記憶體agent上以CPU純sim抽樣動作，報告記錄use_exploration。不train、不改父run或guard。同seed配對scenario，不等於重現訓練worker隨機序列。
 - 操作與限制見docs/guides/exploration-evaluation.md。實驗室保持paused，先用既有18次無探索結果與同組探索評估比較。
+- 2026-10-17新增評估專用explorationStdScale，預設1；useExploration=true時允許(0,1]，只縮放記憶體Gaussian actor的std輸出，不改可學權重、均值函式或原checkpoint。scale=0.5是待測候選，不代表正式訓練配方。完整限制與指令仍見exploration-evaluation.md。

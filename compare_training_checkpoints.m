@@ -14,8 +14,11 @@ arguments
     opt.rewardDiagnostics (1,1) logical = false
     opt.routeMetrics (1,1) logical = false
     opt.useExploration (1,1) logical = false
+    opt.explorationStdScale (1,1) double {mustBePositive,mustBeFinite} = 1
     opt.guidanceVariant (1,1) string {mustBeMember(opt.guidanceVariant,["baseline","endpoint_lookahead","endpoint_lookahead_v2","valid_history","progress_window"])} = "baseline"
 end
+assert(opt.explorationStdScale<=1 && (opt.useExploration || opt.explorationStdScale==1), ...
+    'Evaluation:ExplorationScale','Use a scale in (0,1], and enable exploration when scaling.');
 if opt.rewardDiagnostics, opt.diagnostics=true; end
 root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
@@ -112,6 +115,7 @@ out=fullfile(reports,"evaluation_"+string(datetime('now','Format','yyyyMMdd_HHmm
 report=struct('schema_version',2,'status','running','session_id',char(extractAfter(sessionDir, ...
     strlength(fileparts(sessionDir))+1)),'outputDir',char(out), ...
     'matlab_release',version('-release'),'device','cpu','use_exploration',opt.useExploration, ...
+    'exploration_std_scale',opt.explorationStdScale, ...
     'max_steps',opt.maxSteps,'seeds',opt.seeds,'stages',opt.stages, ...
     'scope','Paired seeded paths and sampled integer winds at model initial state; diagnostic scenarios, not certified generalization.', ...
     'termination_detail','Terminal observation threshold evidence only; not instrumented IsDone branch attribution.', ...
@@ -224,7 +228,9 @@ try
                 if ~any(strcmp({variables.name},agentName)), agentName='Agent_Stage2'; end
                 data=load(paths(c),agentName); agent=data.(agentName);
                 clear data
-                actor=getActor(agent); actor.UseDevice='cpu'; agent=setActor(agent,actor);
+                actor=getActor(agent); actor.UseDevice='cpu';
+                actor=checkpointreview.scale_exploration_actor(actor,opt.explorationStdScale);
+                agent=setActor(agent,actor);
                 critic=getCritic(agent); critic.UseDevice='cpu'; agent=setCritic(agent,critic);
                 % Evaluation only: sample the frozen policy when requested.
                 % This never enables learning or changes the saved checkpoint.
