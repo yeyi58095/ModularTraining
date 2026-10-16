@@ -11,6 +11,10 @@ guard=onCleanup(@() path(oldPath)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
 sourceSession=absolute(root,sourceSession); configFile=absolute(root,configFile);
 settings=jsondecode(fileread(configFile));
+scaleActor=@trainingmodels.scale_std_actor;
+if isfield(settings,'exploration_std_scale')
+    validateattributes(settings.exploration_std_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
+end
 assert(settings.schema_version==1,'Recovery:Schema','Unsupported settings.');
 % 指定環境的配方必須配對正確 SLX，避免只更新 JSON 就在舊環境續訓。
 if isfield(settings,'expected_runtime_model_sha256') && ~isfile(fullfile(sourceSession,'environment.json'))
@@ -75,6 +79,11 @@ actorBefore=getLearnableParameters(getActor(agent)); criticBefore=getLearnablePa
 % 同步調整 model spec 與 agent optimizer；前後核對 actor／critic 權重不變。
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
+if isfield(settings,'exploration_std_scale')
+    assert(~isfield(spec,'explorationStdScale'),'Recovery:StdLayout','Already scaled parent; do not scale again.');
+    agent=setActor(agent,scaleActor(getActor(agent),settings.exploration_std_scale));
+    spec.explorationStdScale=settings.exploration_std_scale;
+end
 trainingmodels.validate_agent(agent,spec);
 assert(isequaln(actorBefore,getLearnableParameters(getActor(agent))) && ...
     isequaln(criticBefore,getLearnableParameters(getCritic(agent))), ...
@@ -103,6 +112,13 @@ cfg.environmentId=childManifest.id;
 % accepts it until recovery.json is published complete.
 trainingcurriculum.snapshot(plan,fullfile(sourceSession,'curriculum.json'),staging);
 copyfile(fullfile(sourceSession,'model_source'),fullfile(staging,'model_source'));
+if isfield(settings,'exploration_std_scale')
+    % The child explicitly snapshots support for its changed actor layout.
+    for file=["build_agent.m","validate_agent.m","scale_std_actor.m"]
+        copyfile(fullfile(root,'+trainingmodels',file), ...
+            fullfile(staging,'model_source','+trainingmodels',file));
+    end
+end
 trainingcurriculum.write_json(fullfile(staging,'model.json'),spec);
 trainingcurriculum.write_json(fullfile(staging,'curriculum_state.json'),forkState);
 mkdir(fullfile(staging,'checkpoints'));

@@ -23,6 +23,9 @@ net = connectLayers(net,'ip_out',stdLayers(1).Name);
 actor = rlContinuousGaussianActor(net,obsInfo,actInfo, ...
     'ObservationInputNames','observation','ActionMeanOutputNames','mp_out', ...
     'ActionStandardDeviationOutputNames','sdev','UseDevice',device);
+if isfield(spec,'explorationStdScale')
+    actor=trainingmodels.scale_std_actor(actor,spec.explorationStdScale);
+end
 % critic 使用自己的網路參數，不與 actor 共享可學習權重。
 criticLayers = [inputLayers(spec.lstmUnits,'lstm_value'); ...
     hiddenLayers(spec.criticHidden,'cv'); fullyConnectedLayer(1,'Name','value')];

@@ -4,6 +4,12 @@ function validate_agent(agent,spec)
 % Prevent a checkpoint with a different architecture from silently resuming.
 assert(isa(agent,'rl.agent.rlPPOAgent'),'Modular:AgentType','Expected a PPO checkpoint.');
 a = getModel(getActor(agent)); c = getModel(getCritic(agent));
+if isfield(spec,'explorationStdScale')
+    idx=find(strcmp({a.Layers.Name},'sdev'));
+    assert(isscalar(idx) && isa(a.Layers(idx),class(scalingLayer)) && ...
+        isequal(a.Layers(idx).Scale,spec.explorationStdScale), ...
+        'Modular:StdScale','Checkpoint std scale differs from model specification.');
+end
 checkLayers(a.Layers,spec.lstmUnits,[spec.actorHidden(:)' 1 spec.meanHidden(:)' 1 spec.stdHidden(:)' 1]);
 checkLayers(c.Layers,spec.lstmUnits,[spec.criticHidden(:)' 1]);
 checkNamed(a.Layers,'ip',spec.actorHidden);

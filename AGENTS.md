@@ -1,5 +1,12 @@
 # 專案背景與工作規則
 
+## 2026-10-17 Stage 4 探索減半短續訓
+
+- 實驗室 Agent18000 新 seeds701:712 原探索11/12、std乘0.5為12/12跑滿；seed705從302變3000步。這不是訓練收斂或唯一根因證明。
+- configs/recovery_v2_18000_std_half.json 從162607恢復分支的18000另開run，actor LR維持2.5e-5、spatial_v2不變、100/段、最多新增500至18500，保留80%雙指標兩區間guard。使用者在遠端自行啟動。
+- prepare可一次性將actor softplus後加0.5固定倍率，保存model.json探索倍率與子run建構/驗證程式快照；不改父run，拒絕重複套用。底層std仍可學習，不保證後續噪音不會增加；optimizer私有狀態未驗證保留。
+- 新分支checkpoint評估用useExploration=true、預設explorationStdScale=1，因checkpoint已含0.5。操作與限制見docs/guides/progressive-v2-std-recovery.md。
+
 ## 來源與獨立定位
 
 - 使用者於 2026-10-09 確認，本專案是**複製**出來的，不是搬移；原資料夾仍存在。
