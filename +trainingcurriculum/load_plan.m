@@ -24,7 +24,7 @@ for i=1:numel(plan.stages)
     must(ischar(s.id) && ~isempty(regexp(s.id,'^[a-z][a-z0-9_]*$','once')),'Invalid stage id.');
     must(~any(ids==string(s.id)),'Stage ids must be unique.'); ids(end+1)=string(s.id); %#ok<AGROW>
     positiveInteger(s.max_episodes,'max_episodes');
-    must(any(strcmp(s.on_limit,{'pause','advance'})),'on_limit must be pause or advance.');
+    must(any(strcmp(s.on_limit,{'pause','advance','continue'})),'on_limit must be pause, advance or continue.');
     t=s.trajectory;
     must(isstruct(t) && isscalar(t) && isfield(t,'type'),'trajectory.type is required.');
     % 固定內建、random、MAT 的允許欄位各自不同，不能把 retry 硬體參數混入 trajectory。

@@ -54,6 +54,7 @@ end
 trainingcurriculum.write_json(stateFile,state);
 % remainingEpisodes 是此階段預算減去已保存階段回合，attempt 會把本段長度裁到剩餘量。
 context.remainingEpisodes=context.stage.max_episodes-(numel(rewards)-state.start_episode);
+if strcmp(context.stage.on_limit,'continue'),context.remainingEpisodes=Inf;end
 % 同一 agent 延續到下一階段，只切換環境軌跡／風與訓練條件。
 context.environment=struct('trajectory',context.stage.trajectory,'wind',context.stage.wind);
 if strcmp(context.stage.trajectory.type,'mat')

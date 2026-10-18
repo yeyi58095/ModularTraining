@@ -13,10 +13,28 @@ assessment.episode=episode; assessment.stage_index=state.stage_index;
 assessment.stage_id=plan.stages{state.stage_index}.id;
 assessment.checkpoint=char(agentFile); assessment.reason='continue';
 validateattributes(rules.origin_episode,{'numeric'},{'scalar','integer','nonnegative','<=',episode});
-validateattributes(rules.max_additional_episodes,{'numeric'},{'scalar','integer','positive','finite'});
+budgetEnabled=true; regressionAction='pause';
+if isfield(rules,'budget_enabled')
+    validateattributes(rules.budget_enabled,{'logical'},{'scalar'});
+    budgetEnabled=rules.budget_enabled;
+end
+if isfield(rules,'regression_action'),regressionAction=rules.regression_action;end
+assert(any(strcmp(regressionAction,{'pause','monitor'})),'Guard:Action','Invalid regression action.');
+if budgetEnabled
+    validateattributes(rules.max_additional_episodes,{'numeric'},{'scalar','integer','positive','finite'});
+else
+    validateattributes(rules.max_additional_episodes,{'numeric'},{'scalar','integer','nonnegative','finite'});
+end
+assessment.regression_action=regressionAction;
+assessment.budget_enabled=budgetEnabled;
 % 疑似退步優先於總預算用盡；兩者都只是 pause 理由，不推論根因。
-if assessment.suspected_regression, assessment.reason='suspected_regression';
-elseif episode-rules.origin_episode>=rules.max_additional_episodes, assessment.reason='recovery_budget'; end
+if assessment.suspected_regression && strcmp(regressionAction,'pause'), assessment.reason='suspected_regression';
+elseif budgetEnabled && episode-rules.origin_episode>=rules.max_additional_episodes, assessment.reason='recovery_budget'; end
+assessment.warning='';
+if assessment.suspected_regression && strcmp(regressionAction,'monitor')
+    assessment.warning='suspected_regression';
+    fprintf('Guard warning at saved episode %d: suspected_regression; monitor-only, continuing.\n',episode);
+end
 % Persist pause until a new branch is deliberately prepared. retry cannot
 % accidentally bypass it merely because guard state was recalculated.
 stateFile=fullfile(sessionDir,'training_guard_state.json');

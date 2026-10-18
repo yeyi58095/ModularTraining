@@ -1,5 +1,12 @@
 # 專案背景與工作規則
 
+## 連續訓練與雙機同步（2026-10-19 後續）
+
+- 使用者明確授權檢查、測試並推送先前未提交的 continuous-training 程式與配方；不包含簡報、診斷 ZIP、模型或啟動訓練。未設定的舊配方維持原暫停行為。
+- continuous_training=true 僅在 prepare 的新分支啟用 on_limit=continue、budget_enabled=false、regression_action=monitor；原過關條件、父 run 保留，既有暫停鎖不繞過。這不是自動 LR／回滾控制器，也不保證收斂；18500 配方是歷史恢復用途，不是完成39300後的新訓練指令。操作與測試見 docs/guides/continuous-training.md。
+- MATLAB 三組合成／假引擎測試及 Python 42 項測試通過，沒有 train/sim。實驗室由使用者執行更新；其未追蹤 configs/recovery_v2_18000_guarded.json 須先保留，避免阻擋 pull；不得 reset/clean 或覆蓋其本機簡報說明修改。
+- 上述 Release 已由實驗室成功上傳並下載驗證，本機也已 sync 並通過 ZIP／逐檔 SHA256，共105檔、58,971,797 bytes，位於 artifacts/results/result-20261017_071436_recovery_tp323769ed-49e0834c5ef8，含 Agent_Success.mat。此紀錄取代下方早期「尚未傳輸／驗證」狀態。尚未核對 success 與受評估 checkpoint 的可學權重是否相同。
+
 ## GitHub 雙機成果同步（2026-10-19）
 
 - 使用者決定程式碼維持 Git push/pull、成功模型／環境／完整評估透過同 repo Release 附件同步；不把活動 run 相互覆蓋、不將 MAT／完整日誌加入 Git 歷史。

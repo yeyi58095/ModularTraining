@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "expected_runtime_model_sha256": "997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557",
+  "checkpoint_episode": 18500,
+  "expected_actor_learning_rate": 0.000025,
+  "actor_learning_rate_scale": 1,
+  "continuous_training": true,
+  "episodes_per_process": 100,
+  "max_additional_episodes": 0,
+  "guard": {
+    "schema_version": 1,
+    "window": 100,
+    "patience": 2,
+    "reward_ratio": 0.8,
+    "steps_ratio": 0.8,
+    "min_reference_reward": 500,
+    "min_reference_steps": 500
+  }
+}

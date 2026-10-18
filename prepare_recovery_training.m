@@ -11,6 +11,11 @@ guard=onCleanup(@() path(oldPath)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
 sourceSession=absolute(root,sourceSession); configFile=absolute(root,configFile);
 settings=jsondecode(fileread(configFile));
+continuous=false;
+if isfield(settings,'continuous_training')
+    validateattributes(settings.continuous_training,{'logical'},{'scalar'});
+    continuous=settings.continuous_training;
+end
 scaleActor=@trainingmodels.scale_std_actor;
 if isfield(settings,'exploration_std_scale')
     validateattributes(settings.exploration_std_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
@@ -25,7 +30,11 @@ end
 validateattributes(settings.checkpoint_episode,{'numeric'},{'scalar','integer','positive'});
 validateattributes(settings.actor_learning_rate_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
 validateattributes(settings.episodes_per_process,{'numeric'},{'scalar','integer','positive'});
-validateattributes(settings.max_additional_episodes,{'numeric'},{'scalar','integer','positive'});
+if continuous
+    assert(settings.max_additional_episodes==0,'Recovery:Budget','Continuous mode requires max_additional_episodes=0 (unbounded).');
+else
+    validateattributes(settings.max_additional_episodes,{'numeric'},{'scalar','integer','positive','finite'});
+end
 trainingguard.assess([],[],0,settings.guard);
 assert(mod(settings.max_additional_episodes,settings.episodes_per_process)==0, ...
     'Recovery:Budget','Budget must contain whole segments.');
@@ -110,6 +119,9 @@ end
 cfg.environmentId=childManifest.id;
 % On failure retain only a clearly labelled preparation directory; no launcher
 % accepts it until recovery.json is published complete.
+if continuous
+    for k=1:numel(plan.stages),plan.stages{k}.on_limit='continue';end
+end
 trainingcurriculum.snapshot(plan,fullfile(sourceSession,'curriculum.json'),staging);
 copyfile(fullfile(sourceSession,'model_source'),fullfile(staging,'model_source'));
 if isfield(settings,'exploration_std_scale')
@@ -135,6 +147,10 @@ cfg.maxAttempts=0;
 trainingcurriculum.write_json(fullfile(staging,'control.json'),cfg);
 rules=settings.guard; rules.origin_episode=episode;
 rules.max_additional_episodes=settings.max_additional_episodes;
+if continuous
+    rules.budget_enabled=false;
+    rules.regression_action='monitor';
+end
 trainingcurriculum.write_json(fullfile(staging,'training_guard.json'),rules);
 lineage=struct('schema_version',1,'status','prepared','parent_session',char(sourceSession), ...
     'parent_checkpoint',char(checkpoint),'parent_sha256',parentHash,'parent_episode',episode, ...
@@ -157,7 +173,8 @@ fid=fopen(fullfile(staging,'STOP'),'w'); assert(fid~=-1); fclose(fid);
 assert(strcmp(parentHash,checkpointreview.sha256(checkpoint)),'Recovery:SourceChanged','Parent changed.');
 movefile(staging,folder);
 info=struct('sessionDir',folder,'parentEpisode',episode,'stageIndex',stage, ...
-    'actorLearnRate',spec.actorLearnRate,'maxAdditionalEpisodes',settings.max_additional_episodes);
+    'actorLearnRate',spec.actorLearnRate,'maxAdditionalEpisodes',settings.max_additional_episodes, ...
+    'continuousTraining',continuous);
 disp(info); fprintf('Prepared only. Start explicitly with retry(resume=info.sessionDir).\n');
 end
 function value=absolute(root,value)

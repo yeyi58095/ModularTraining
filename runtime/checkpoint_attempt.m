@@ -37,8 +37,10 @@ function checkpoint_attempt(configFile)
                 guardFile=fullfile(cfg.sessionDir,'training_guard.json');
                 if isfile(guardFile)
                     rules=jsondecode(fileread(guardFile));
-                    remaining=rules.origin_episode+rules.max_additional_episodes-context.resumeEpisode;
-                    checkpointOverrides.maxEpisodes=min(checkpointOverrides.maxEpisodes,remaining);
+                    if ~isfield(rules,'budget_enabled') || rules.budget_enabled
+                        remaining=rules.origin_episode+rules.max_additional_episodes-context.resumeEpisode;
+                        checkpointOverrides.maxEpisodes=min(checkpointOverrides.maxEpisodes,remaining);
+                    end
                 end
             end
         end
