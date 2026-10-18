@@ -16,6 +16,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
@@ -299,9 +300,18 @@ def gh(*args):
 
 
 def release_info(repo, tag):
-    # Resolve absence separately from authentication/network failures.
-    data = json.loads(gh('api', '--paginate', '--slurp', f'repos/{repo}/releases?per_page=100'))
-    return next((r for page in data for r in page if r['tag_name'] == tag), None)
+    # gh's exact-tag lookup supports drafts, whose browser URLs may be untagged-*.
+    # Do not depend on the repository release listing immediately after creation.
+    try:
+        data = json.loads(gh('release', 'view', tag, '--repo', repo,
+                             '--json', 'tagName,isDraft,body,assets,url'))
+    except RuntimeError as exc:
+        if re.search(r'failed:\s*release not found\s*$', str(exc), re.IGNORECASE):
+            return None
+        raise  # Authentication/network errors are never interpreted as absence.
+    require(data['tagName'] == tag, 'GitHub returned a different release tag')
+    return dict(tag_name=data['tagName'], draft=data['isDraft'], body=data.get('body'),
+                assets=data['assets'], url=data.get('url'))
 
 
 def download(repo, tag, directory):
@@ -322,8 +332,16 @@ def publish(descriptor, repo):
                          'Exporter commit is not evidence of the historical training code.\n', encoding='utf-8')
         gh('release', 'create', tag, '--repo', repo, '--draft', '--target', meta['exporter_commit'],
            '--title', 'Training result '+meta['run_id'], '--notes-file', str(notes))
-        existing = release_info(repo, tag)
-    require(existing is not None and marker in (existing.get('body') or ''), 'Existing release belongs to different content')
+        for attempt in range(3):
+            if attempt:
+                time.sleep(attempt)
+            existing = release_info(repo, tag)
+            if existing is not None:
+                break
+    require(existing is not None,
+            f'Release was created but is not yet visible. Keep the package; retry upload with {descriptor}')
+    require(marker in (existing.get('body') or ''),
+            'Release SHA256 marker differs from this package; no assets overwritten')
     assets = {a['name'] for a in existing['assets']}
     expected = {archive.name, Path(descriptor).name}
     require(assets.issubset(expected), 'Unexpected release assets; refusing mutation')
@@ -399,6 +417,8 @@ def main():
     p = sub.add_parser('sync'); p.add_argument('--tag', required=True)
     p = sub.add_parser('verify'); p.add_argument('descriptor', type=Path)
     p = sub.add_parser('import'); p.add_argument('descriptor', type=Path)
+    p = sub.add_parser('upload', help='Upload an existing verified package without repacking')
+    p.add_argument('descriptor', type=Path)
     args = parser.parse_args()
     try:
         if args.command in ('pack', 'publish'):
@@ -410,6 +430,10 @@ def main():
                 publish(descriptor, repo)
         elif args.command == 'sync':
             sync(args.tag, repository())
+        elif args.command == 'upload':
+            repo = repository()
+            gh('auth', 'status', '--hostname', 'github.com')
+            publish(args.descriptor, repo)
         elif args.command == 'import':
             install(args.descriptor)
         else:

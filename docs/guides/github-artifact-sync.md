@@ -36,6 +36,14 @@ python training_artifacts.py publish --session "experiments/progressive_v2/runs/
 
 若只想先產生與檢查本機包，將 `publish` 換成 `pack`；pack 不需要 gh 或網路。封裝成功後再用相同 publish 指令會重用內容相同的包。
 
+若已產生 ZIP／JSON，但上傳中斷或更新了封裝工具，使用 `upload` 接續原本的包，不重新計算 exporter commit 或產生新 tag：
+
+```powershell
+python training_artifacts.py upload "artifacts/packages/<原本tag>.json"
+```
+
+2026-10-19 首次實驗室發布回報 `Existing release belongs to different content`，但後續 `gh release view` 確認正確 tag、draft 與 SHA256 說明已存在。原程式把「建立後查不到」與「SHA 不符」合併成同一訊息；現改用 gh 的精確 tag 查詢，建立後查不到最多重試三次，仍不可見時給接續指令，真正 marker 不符則繼續拒絕上傳。瀏覽器草稿 URL 出現 `untagged-*` 不是模型 tag 遺失的證明。
+
 ## 宿舍：一個指令下載並核對
 
 在宿舍專案更新程式、登入 gh 後，使用發布端印出的實際 tag：

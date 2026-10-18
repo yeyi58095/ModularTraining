@@ -2,6 +2,7 @@
 from contextlib import redirect_stdout
 import io
 import json
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -154,8 +155,12 @@ class ArtifactTests(unittest.TestCase):
         state = dict(release=None, assets={}, upload_count=0)
 
         def fake_gh(*args):
-            if args[0] == 'api':
-                return json.dumps([[state['release']] if state['release'] else []])
+            if args[:2] == ('release', 'view'):
+                if state['release'] is None:
+                    raise RuntimeError('gh release failed: release not found')
+                r = state['release']
+                return json.dumps(dict(tagName=r['tag_name'], isDraft=r['draft'], body=r['body'],
+                                       assets=r['assets'], url='https://github.com/owner/repo/releases/tag/untagged-123'))
             if args[:2] == ('release', 'create'):
                 self.assertIn('--draft', args)
                 state['release'] = dict(tag_name=args[2], draft=True, assets=[],
@@ -197,6 +202,45 @@ class ArtifactTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 art.publish(descriptor, 'owner/repo')
             self.assertEqual(cli.call_count, 1)
+
+    def test_exact_draft_lookup_and_error_classification(self):
+        response = dict(tagName='result-example', isDraft=True, body='marker', assets=[],
+                        url='https://github.com/owner/repo/releases/tag/untagged-example')
+        with patch.object(art, 'gh', return_value=json.dumps(response)) as cli:
+            info = art.release_info('owner/repo', 'result-example')
+            self.assertTrue(info['draft'])
+            self.assertEqual(cli.call_args.args[:3], ('release', 'view', 'result-example'))
+        with patch.object(art, 'gh', side_effect=RuntimeError('gh release failed: release not found')):
+            self.assertIsNone(art.release_info('owner/repo', 'result-example'))
+        with patch.object(art, 'gh', side_effect=RuntimeError('gh release failed: HTTP 401')):
+            with self.assertRaises(RuntimeError):
+                art.release_info('owner/repo', 'result-example')
+
+    def test_created_but_not_visible_is_not_reported_as_content_mismatch(self):
+        descriptor = self.pack()
+        with patch.object(art, 'release_info', return_value=None), patch.object(art, 'gh') as cli, \
+                patch.object(art.time, 'sleep'):
+            with self.assertRaisesRegex(ValueError, 'not yet visible'):
+                art.publish(descriptor, 'owner/repo')
+            self.assertEqual(cli.call_count, 1)
+            self.assertEqual(cli.call_args.args[:2], ('release', 'create'))
+
+    def test_real_marker_mismatch_never_uploads(self):
+        descriptor = self.pack()
+        with patch.object(art, 'release_info', return_value=dict(body='different')), patch.object(art, 'gh') as cli:
+            with self.assertRaisesRegex(ValueError, 'marker differs'):
+                art.publish(descriptor, 'owner/repo')
+            cli.assert_not_called()
+
+    def test_upload_command_does_not_repack(self):
+        descriptor = self.pack()
+        with patch.object(sys, 'argv', ['training_artifacts.py', 'upload', str(descriptor)]), \
+                patch.object(art, 'repository', return_value='owner/repo'), \
+                patch.object(art, 'gh'), patch.object(art, 'pack') as pack, \
+                patch.object(art, 'publish') as publish:
+            self.assertEqual(art.main(), 0)
+            pack.assert_not_called()
+            publish.assert_called_once_with(descriptor, 'owner/repo')
 
 
 if __name__ == '__main__':
