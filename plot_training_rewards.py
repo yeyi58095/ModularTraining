@@ -27,6 +27,7 @@ import tempfile
 import warnings
 import threading
 import webbrowser
+from curriculum_progress import panel as progress_panel
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -343,6 +344,7 @@ def segment_label(segment):
 # 依保存邊界畫橘線與軸下階段標籤，不從預算或 reward 猜測換階段時間。
 def annotate_stages(ax, stages, first_episode, last_episode):
     visible = [s for s in stages if s["start"] < last_episode]
+    lane_ends = []
     for i, stage in enumerate(visible):
         boundary = stage["start"] + 0.5  # between N and N+1, not on either episode
         if stage["index"] > 1 and boundary >= first_episode:
@@ -354,9 +356,23 @@ def annotate_stages(ax, stages, first_episode, last_episode):
         if next_start < first_episode:
             continue
         position = max(stage.get('label_start', boundary), first_episode)
-        label = f"Stage {stage['index']}\n{stage['id']}"
+        if stage["start"] == 0:
+            transition = "Episode 1 starts course"
+        else:
+            transition = (f"Episode {stage['start']} (last old) → "
+                          f"{stage['start'] + 1} (first new)")
+        label = f"{transition}\nStage {stage['index']}: {stage['id']}"
+        # Greedy lanes in physical points: densely spaced early stages must
+        # not overlap merely because their indices alternate odd/even.
+        width = ax.figure.get_figwidth() * 72 * ax.get_position().width
+        left = (position-first_episode) / max(1, last_episode-first_episode) * width
+        label_width = max(map(len, label.splitlines())) * 8 * 0.62 + 12
+        lane = next((j for j, end in enumerate(lane_ends) if end < left), len(lane_ends))
+        if lane == len(lane_ends):
+            lane_ends.append(0)
+        lane_ends[lane] = left + label_width
         ax.annotate(label, xy=(position, 0), xycoords=ax.get_xaxis_transform(),
-                    xytext=(3, -40 - (i % 2) * 30), textcoords="offset points",
+                    xytext=(3, -40 - lane * 30), textcoords="offset points",
                     ha="left", va="top", fontsize=8, color="#92400e",
                     annotation_clip=False)
 
@@ -397,7 +413,18 @@ def draw(session, output, plt, include_parents=True, roots=()):
 
     with plt.rc_context({"font.size": 11, "axes.spines.top": False,
                          "axes.spines.right": False}):
-        fig, ax = plt.subplots(figsize=(15, 7 + 0.25 * len(segments)), layout="constrained")
+        progress_lines = progress_panel(session, rows, read_stages(session))
+        extra = max(1.8, 0.22 * len(progress_lines)) if progress_lines else 0
+        fig = plt.figure(figsize=(15, 7 + 0.25 * len(segments) + extra), layout="constrained")
+        if progress_lines:
+            grid = fig.add_gridspec(2, 1, height_ratios=[7 + 0.25 * len(segments), extra])
+            ax = fig.add_subplot(grid[0])
+            progress_ax = fig.add_subplot(grid[1])
+            progress_ax.axis('off')
+            progress_ax.text(0, 1, '\n'.join(progress_lines), va='top', fontsize=9,
+                             family='monospace', linespacing=1.4)
+        else:
+            ax = fig.add_subplot(111)
         # Reserve footer space below the alternating stage labels.
         fig.get_layout_engine().set(rect=(0, 0.06, 1, 0.94))
         ax.plot(plot_x, rewards, color="#8aafcf", linewidth=0.6, alpha=0.5,

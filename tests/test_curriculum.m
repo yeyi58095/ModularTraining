@@ -15,7 +15,12 @@ stage.advance_when=struct('all',{{struct('metric','stage_episodes','at_least',6)
 stage.max_episodes=10;
 assert(strcmp(trainingcurriculum.decide(stage,ones(5,1)*100,ones(5,1)).action,'continue'));
 assert(strcmp(trainingcurriculum.decide(stage,ones(6,1)*100,ones(6,1)).action,'advance'));
+progress=trainingcurriculum.progress(stage,ones(6,1)*100,ones(6,1)*3000);
+assert(progress.passed && contains(progress.compact,'stage_episodes 6.00 >= 6'));
+assert(isempty(progress.missing));
 assert(strcmp(trainingcurriculum.decide(stage,[0;0;200;200;200;200],ones(6,1)).action,'continue'));
+progress=trainingcurriculum.progress(stage,[0;0;200;200;200;200],ones(6,1));
+assert(~progress.passed && ~isempty(progress.missing));
 assert(strcmp(trainingcurriculum.decide(stage,zeros(10,1),ones(10,1)).action,'pause'));
 stage.on_limit='advance';
 d=trainingcurriculum.decide(stage,zeros(10,1),ones(10,1));
@@ -122,6 +127,28 @@ assert(result.pause && ~result.success && result.stageEpisodes==4);
 % Verify current MATLAB accepts the non-reward curriculum stop criterion.
 opts=rlTrainingOptions('MaxEpisodes',2,'StopTrainingCriteria','EpisodeCount','StopTrainingValue',2);
 assert(strcmp(opts.StopTrainingCriteria,'EpisodeCount'));
+
+% Custom curriculum callback preserves the segment episode cap and parser-compatible rows.
+logStage=struct('id','log_fixture','max_episodes',104,'advance_when',struct('all',{{ ...
+    struct('metric','stage_episodes','at_least',2), ...
+    struct('metric','reward_mean','window',2,'consecutive_windows',2,'at_least',20), ...
+    struct('metric','steps_mean','window',2,'consecutive_windows',2,'at_least',9), ...
+    struct('metric','full_length_rate','window',2,'consecutive_windows',2, ...
+        'steps_at_least',10,'at_least',0.5)}}));
+stats=struct('EpisodeIndex',(101:104)','EpisodeReward',[20;21;22;23], ...
+    'EpisodeSteps',[10;10;10;9],'AverageReward',[20;20.5;21;21.5], ...
+    'TotalAgentSteps',[10;20;30;39],'EpisodeQ0',zeros(4,1));
+captured=evalc('stop=trainingcurriculum.progress_callback(stats,logStage,2,2,100,104);');
+assert(stop && contains(captured,'Episode: 104/104') && contains(captured,'Stage 2/2 log_fixture'));
+assert(contains(captured,'full_length_rate') && contains(captured,'stage episodes 4/104'));
+stop=trainingcurriculum.progress_callback(stats,logStage,2,2,100,105);
+assert(~stop);
+% Exercise the installed MATLAB stop hook without train(), a pool or Simulink.
+opts=rlTrainingOptions('MaxEpisodes',105,'StopTrainingCriteria','Custom', ...
+    'StopTrainingValue',@(s)trainingcurriculum.progress_callback(s,logStage,2,2,100,105));
+assert(~rl.internal.trainmgr.util.stopTrainingFunction(opts,struct(),stats));
+stats.EpisodeIndex(end)=105;
+assert(rl.internal.trainmgr.util.stopTrainingFunction(opts,struct(),stats));
 fprintf('PASS: curriculum schema, all/any, windows, rate, budget, MAT snapshot, stage resume, completion, pause.\n');
 end
 

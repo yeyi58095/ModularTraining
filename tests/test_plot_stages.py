@@ -6,10 +6,20 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from plot_training_rewards import read_stages, select_session, annotate_stages, save_png, main
+from plot_training_rewards import EPISODE, read_stages, select_session, annotate_stages, save_png, main
 
 
 class StagePlotTests(unittest.TestCase):
+    # New progress suffixes stay after the legacy fields consumed by the reward parser.
+    def test_episode_row_with_progress_suffix(self):
+        line = ("Episode: 39200/39300 | Episode reward: 2500.0 | Episode steps: 3000 | "
+                "Average reward: 2490.0 | Step Count: 90000000 | Episode Q0: 4.0 | "
+                "Stage 8/8 random_full_wind | as of Ep 39200: stage episodes 9900/40000; "
+                "all{stage_episodes 9900/10000 ✓; full_length_rate 98.0%/95.0% 3/3 ✓}")
+        match = EPISODE.search(line)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.groups()[:3], ("39200", "2500.0", "3000"))
+
     # 驗證 stage 線使用已保存邊界，兼容 MATLAB singleton object，而非預算推估。
     def test_saved_boundaries_not_budget(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -31,7 +41,9 @@ class StagePlotTests(unittest.TestCase):
             fig, ax = plt.subplots()
             annotate_stages(ax, stages, 1, 3960)
             self.assertEqual(list(ax.lines[0].get_xdata()), [3000.5, 3000.5])
-            self.assertIn("Stage 2", ax.texts[1].get_text())
+            label = ax.texts[1].get_text()
+            self.assertIn("Episode 3000 (last old) → 3001 (first new)", label)
+            self.assertIn("Stage 2: gentle_s", label)
             plt.close(fig)
             state["start_episode"] = 2999
             (root / "curriculum_state.json").write_text(json.dumps(state))

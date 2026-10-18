@@ -389,10 +389,15 @@ trainingOpts = rlTrainingOptions( ...
 trainingOpts.ParallelizationOptions.Mode = "sync";
 % 課程以本段 EpisodeCount 結束，不用跨階段平均 reward 提前通關。
 if ~isempty(curriculumContext)
-    % Stage decisions are made only after the segment is saved. Do not let
-    % whole-experiment reward history trigger the legacy global success rule.
-    trainingOpts.StopTrainingCriteria = "EpisodeCount";
-    trainingOpts.StopTrainingValue = resumeEpisode + maxEpisodes;
+    % The callback mirrors the existing MaxEpisodes boundary and adds the
+    % stage summary to MATLAB's parser-compatible episode row. Formal course
+    % decisions still happen only after the completed segment is saved.
+    stopEpisode=resumeEpisode+maxEpisodes;
+    trainingOpts.Verbose=false;
+    trainingOpts.StopTrainingCriteria="Custom";
+    trainingOpts.StopTrainingValue=@(stats) trainingcurriculum.progress_callback( ...
+        stats,curriculumContext.stage,curriculumContext.state.stage_index, ...
+        curriculumContext.stageCount,curriculumContext.state.start_episode,stopEpisode);
 end
 % 1:numWorkers 產生 n 個連續偏移，與實際 pool 對齊；不同 attempt 的 baseSeed 會改變。
 trainingOpts.ParallelizationOptions.WorkerRandomSeeds = baseSeed + (1:numWorkers);

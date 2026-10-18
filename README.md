@@ -2,6 +2,10 @@
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
+## 課程完成與後續（2026-10-18）
+
+實驗室回報 progressive_v2 的 `20261017_071436_recovery_tp323769ed` 於 39300 回合依 conditions_met 完成課程；尚待全階段獨立評估。已新增 [圖表／狀態／日誌過關進度](docs/guides/training-progress-display.md)，並整理 [下一輪 JSON 自動決策提案與驗收指令](docs/research/autonomous-curriculum-proposal-2026-10-18.md)。自動調整 LR／選恢復分支目前只是提案，未啟用。
+
 ## 最新環境進度（2026-10-15）
 
 已新增獨立 `environments/spatial_v2`，將已校準候選的距離 reward 寫入 SLX：取消曲率對直接距離懲罰的減半、取消舊目標距離加分，改以實際公尺計算10m內連續加分。`spatial_v1`、runtime SLX 與既有 run 保留。
