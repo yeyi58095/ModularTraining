@@ -1,5 +1,13 @@
 # 專案背景與工作規則
 
+## GitHub 雙機成果同步（2026-10-19）
+
+- 使用者決定程式碼維持 Git push/pull、成功模型／環境／完整評估透過同 repo Release 附件同步；不把活動 run 相互覆蓋、不將 MAT／完整日誌加入 Git 歷史。
+- 新 training_artifacts.py：pack 離線封裝；publish 封裝並建立 Draft Release、上傳後重新下載驗證；sync 依明確 tag 下載到 artifacts/results/。使用 gh 既有登入、origin 推導 repo、SHA256 manifest；重跑不 clobber、不修改既有來源／快照、不自動公開 release、不啟動訓練。詳見 docs/guides/github-artifact-sync.md。
+- 包含 Agent_Success 與實際受評估 checkpoint，不以相同回合數宣稱權重相同。這是評估封存包，不是可直接 retry 的完整 run；不要自行補 supervisor.lock 或修改原機器控制路徑當作跨機續訓。
+- 使用者貼回 evaluation_20261018_234801_tpc304c6c6：39300、八階段各10次、seeds901:910、useExploration=false，共80次全跑滿3000。前三固定路徑的多 seed 結果重複，不當作十條不同路徑；尚未在本機核驗完整模型／traces，也未證明從頭自主訓練成功。
+- 工具以合成檔案及 mock gh 驗證，尚未建立真實 Release／傳輸實驗室模型；首次實際發布由使用者在實驗室執行。依本對話既有 push 授權提交同步工具，保留其他未提交修改；不自行啟動新一輪訓練。
+
 ## 訓練結束後自動接續的顯示改善（2026-10-18 已實作）
 
 - 使用者貼回目標 run 在 2026-10-18 19:31:16 +08:00 的成功結果：attempt 224、39300 episodes、conditions_met、Agent_Success.mat，pool 關閉且正常退出；後續確認另一端執行已終止，授權接手現有修改。本機修改前未發現 MATLAB 程序。這是使用者提供的遠端完成證據，不是代理即時連線檢查。

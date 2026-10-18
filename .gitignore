@@ -15,6 +15,7 @@ sessions/
 !/experiments/*/runs/*/reports/report.json
 training_diagnostics/
 /diagnostic_packages/
+/artifacts/
 runtime/training_runs_parallel_checkpointed/
 checkpoints/
 attempt_*/
