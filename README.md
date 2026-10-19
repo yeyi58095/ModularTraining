@@ -1,12 +1,14 @@
 # ModularTraining
 
+先看 [目前狀態與接續入口](docs/records/current-status.md)、[配方分類](configs/README.md)及[兩端資料夾整理](docs/guides/workspace-layout.md)。
+
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
 雙機同步：程式碼用 Git push/pull，成功模型與完整評估用同一 repository 的 Draft Release。`training_artifacts.py publish` 封裝／上傳／下載驗證，另一端 `sync --tag ...` 下載並核對 SHA256；結果放在獨立 `artifacts/results/`。首次設定與實驗室指令見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。
 
 ## 課程完成與後續（2026-10-18）
 
-實驗室回報 progressive_v2 的 `20261017_071436_recovery_tp323769ed` 於 39300 回合依 conditions_met 完成課程；尚待全階段獨立評估。已新增 [圖表／狀態／日誌過關進度](docs/guides/training-progress-display.md)，並整理 [下一輪 JSON 自動決策提案與驗收指令](docs/research/autonomous-curriculum-proposal-2026-10-18.md)。自動調整 LR／選恢復分支目前只是提案，未啟用。
+實驗室 progressive_v2 的 `20261017_071436_recovery_tp323769ed` 於39300回合完成；後續無探索80次、探索50次皆跑滿，模型與評估已同步核驗，仍有後段接近距離門檻的案例，見[驗收紀錄](docs/records/success-evaluation-2026-10-19.md)。已新增 [圖表／狀態／日誌過關進度](docs/guides/training-progress-display.md)，並整理 [下一輪 JSON 自動決策提案](docs/research/autonomous-curriculum-proposal-2026-10-18.md)。自動調整 LR／選恢復分支目前只是提案，未啟用。
 
 ## 最新環境進度（2026-10-15）
 

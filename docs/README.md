@@ -1,5 +1,7 @@
 # 文件入口
 
+**先看 [目前狀態與接續入口](records/current-status.md)**：最新驗收、待辦、成果位置與限制。[資料夾整理](guides/workspace-layout.md)說明兩端操作；[配方索引](../configs/README.md)區分歷史恢復與現有準備設定。
+
 平常從這三個入口開始即可：
 
 - [文件首頁](index.html)：可搜尋全部文件，依操作、研究與紀錄分類。
