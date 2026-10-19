@@ -26,7 +26,7 @@
 在 MATLAB 切到專案根目錄：
 
 ```matlab
-inputs = prepare_progressive_training();
+inputs = trainingtools.prepare_progressive_training();
 info = retry(curriculum=inputs.planFile, workers=4, minWorkers=1, ...
     device="cpu", checkpointEvery=100, episodesPerProcess=1000, start=false);
 % 檢查 info.sessionDir 中的 model.json、control.json、curriculum.json 後，
@@ -46,7 +46,7 @@ info = retry(curriculum=inputs.planFile, workers=4, minWorkers=1, ...
 
 已實作：沿用 checkpoint 與模型權重、階段內統計、連續區間門檻、預算用盡暫停，以及匯出報告時的疑似退步診斷。課程切換後不拿上一種任務的高分直接當新任務基準。
 
-尚未實作：持續背景監測、自動因退步停訓／回滾、獨立評估選最佳 checkpoint，以及每階段學習率／探索量排程。不能把本計畫當成已具備這些能力的無人值守系統。現在可定期執行 `export_training_report.py <session> --machine lab` 或 `dorm`，分享小型報告；診斷規則見 `learning-health.md`。
+尚未實作：持續背景監測、自動因退步停訓／回滾、獨立評估選最佳 checkpoint，以及每階段學習率／探索量排程。不能把本計畫當成已具備這些能力的無人值守系統。現在可定期執行 `tools/export_training_report.py <session> --machine lab` 或 `dorm`，分享小型報告；診斷規則見 `learning-health.md`。
 
 若同一階段先學會、之後長期變差，先保存目前狀態與報告，確認任務、worker 數、重啟與 checkpoint 接續是否改變，再比較退步前後 checkpoint 的相同測試任務。不要僅依 reward 曲線直接降低 learning rate，或不保留證據就覆寫／回滾 agent。到階段預算而暫停時也應先檢查資料；不要手改實驗內的課程快照來繞過門檻。
 

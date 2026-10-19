@@ -6,7 +6,7 @@ arguments
     sourceSession (1,1) string
     configFile (1,1) string = "configs/recovery_actor_half.json"
 end
-root=fileparts(mfilename('fullpath')); oldPath=path;
+root=fileparts(fileparts(mfilename('fullpath'))); oldPath=path;
 guard=onCleanup(@() path(oldPath)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
 sourceSession=absolute(root,sourceSession); configFile=absolute(root,configFile);

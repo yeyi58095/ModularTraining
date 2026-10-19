@@ -3,7 +3,7 @@ function batch=review_stage6_candidates(sessionDir)
 arguments
     sessionDir (1,1) string
 end
-root=fileparts(mfilename('fullpath'));
+root=fileparts(fileparts(mfilename('fullpath')));
 expected='495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be';
 assert(strcmpi(checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx')),expected), ...
     'CandidateReview:Environment','Unexpected runtime environment.');

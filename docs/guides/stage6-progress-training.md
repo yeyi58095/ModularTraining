@@ -23,13 +23,13 @@ MATLAB（只準備一次新分支）：
 
 ```matlab
 cd D:\daniel\ModularTraining
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 rehash
 if bdIsLoaded('FAFA_Simulation'), close_system('FAFA_Simulation',0); end
 root=fileparts(which('retry'));
 parentSession=fullfile(root,'experiments','progressive_v1','runs', ...
     '20261012_080431_recovery_tpfaf0be04');
-next=prepare_recovery_training(parentSession, ...
+next=trainingtools.prepare_recovery_training(parentSession, ...
     fullfile(root,'configs','recovery_31600_progress_window.json'));
 info=retry(resume=next.sessionDir);
 disp(info.sessionDir)

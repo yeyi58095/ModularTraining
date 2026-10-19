@@ -8,7 +8,7 @@ recipe=rmfield(recipe,'expected_runtime_model_sha256');recipe.checkpoint_episode
 fixture=tempname(fullfile(root,'tests','output'));mkdir(fixture);
 recipeFile=fullfile(fixture,'recipe.json');trainingcurriculum.write_json(recipeFile,recipe);
 src=fullfile(source,'checkpoints','Agent2.mat');hash=checkpointreview.sha256(src);
-child=prepare_recovery_training(source,recipeFile);
+child=trainingtools.prepare_recovery_training(source,recipeFile);
 spec=jsondecode(fileread(fullfile(child.sessionDir,'model.json')));
 x=load(src); original=x.Agent_Stage2;
 y=load(fullfile(child.sessionDir,'checkpoints','Agent2.mat'));agent=y.Agent_Stage2;

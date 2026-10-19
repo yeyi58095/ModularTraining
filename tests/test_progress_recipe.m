@@ -9,7 +9,7 @@ s.expected_runtime_model_sha256=repmat('0',1,64);
 file=[tempname '.json'];trainingcurriculum.write_json(file,s);
 cleanup=onCleanup(@() delete(file)); %#ok<NASGU>
 try
- prepare_recovery_training(fullfile(root,'nonexistent_test_parent'),file);
+ trainingtools.prepare_recovery_training(fullfile(root,'nonexistent_test_parent'),file);
  error('Test:ExpectedFailure','Mismatched environment accepted.');
 catch err
  assert(strcmp(err.identifier,'Recovery:EnvironmentMismatch'));

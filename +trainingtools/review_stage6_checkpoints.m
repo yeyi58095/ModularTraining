@@ -4,7 +4,7 @@ function batch = review_stage6_checkpoints(sessionDir)
 arguments
     sessionDir (1,1) string
 end
-root=fileparts(mfilename('fullpath'));
+root=fileparts(fileparts(mfilename('fullpath')));
 expected='495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be';
 assert(strcmpi(checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx')),expected), ...
     'Stage6Review:Environment','Runtime differs from the spatial-route environment. Do not mix evaluation versions.');
@@ -39,7 +39,7 @@ try
     detail=compare_training_checkpoints(sessionDir,episodes=episodes, ...
         includeLatest=false,stages=6,seeds=[202 205],rewardDiagnostics=true);
     batch.detail=detail.outputDir;saveManifest();
-    audit_training_rewards(detail.outputDir);
+    trainingtools.audit_training_rewards(detail.outputDir);
     copyfile(fullfile(detail.outputDir,'evaluation.json'),fullfile(out,'detail.json'));
     copyfile(fullfile(detail.outputDir,'reward_breakdown.json'),fullfile(out,'reward_breakdown.json'));
     saveManifest();

@@ -5,7 +5,7 @@
 ```powershell
 cd D:\daniel\ModularTraining
 git pull --ff-only
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\pack_training_diagnostics.ps1 -SessionPath ".\experiments\progressive_v1\runs\20261010_155437_recovery_tpebed29a8" -EvaluationName "evaluation_20261010_183235_tp0d559eeb"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\pack_training_diagnostics.ps1 -SessionPath ".\experiments\progressive_v1\runs\20261010_155437_recovery_tpebed29a8" -EvaluationName "evaluation_20261010_183235_tp0d559eeb"
 ```
 
 預設選取 Agent10600／10700、runs/r000001 的初始 agent／訓練選項／腳本快照、課程及恢復設定、指定完整 evaluation 的 JSON 與 traces、稽核 JSON 及 attempt 診斷日誌。可用 -Episodes 10600,10700,11000（直接以 PowerShell 呼叫腳本時）調整 checkpoint；預設兩個足以調查第一次退步。不納入模型快取或全部歷史 checkpoint。這是診斷子集，不能用作完整續訓備份。

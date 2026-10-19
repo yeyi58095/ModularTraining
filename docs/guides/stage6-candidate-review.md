@@ -4,11 +4,11 @@
 保持訓練暫停，更新Git後在MATLAB根目錄執行：
 
 ```matlab
-clear compare_training_checkpoints review_stage6_candidates
+clear compare_training_checkpoints trainingtools.review_stage6_candidates
 rehash
 session=fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261014_000404_recovery_tp3b623159");
-batch=review_stage6_candidates(session);
+batch=trainingtools.review_stage6_candidates(session);
 disp(batch.summaryZip)
 ```
 

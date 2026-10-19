@@ -30,10 +30,10 @@ reward、環境、Stage6門檻不改。評估高分不能直接寫成課程完�
 PowerShell先 `git pull --ff-only`，MATLAB於專案根目錄執行：
 
 ```matlab
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 parentSession=fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261014_000404_recovery_tp3b623159");
-fine=prepare_recovery_training(parentSession,"configs/recovery_33700_finetune.json");
+fine=trainingtools.prepare_recovery_training(parentSession,"configs/recovery_33700_finetune.json");
 info=retry(resume=fine.sessionDir);
 disp(info.sessionDir)
 ```

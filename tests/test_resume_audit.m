@@ -16,7 +16,7 @@ copyfile(file,fullfile(initialDir,'Agent_Initial.mat'));
 resumeAgentFile='Z:\old_machine\checkpoints\Agent1.mat'; numWorkers=1;
 optionsForDisk=struct('ParallelizationOptions',struct('WorkerRandomSeeds',10001));
 save(fullfile(initialDir,'TrainingOptions.mat'),'resumeAgentFile','numWorkers','optionsForDisk');
-a=audit_training_resume(fixture,episodes=[1 2 3]);
+a=trainingtools.audit_training_resume(fixture,episodes=[1 2 3]);
 assert(numel(a.checkpoints)==3 && a.checkpoints{1}.actor_vs_first.exact_equal);
 assert(a.initial_snapshot_count==1,'Expected synthetic initial snapshot backed by a real agent.');
 for k=1:numel(a.initial_snapshots)

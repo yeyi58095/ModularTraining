@@ -11,10 +11,10 @@ training_status(info.sessionDir);
 ```
 
 ```powershell
-python plot_training_rewards.py "<run 路徑>" --watch 60 --view
+python tools/plot_training_rewards.py "<run 路徑>" --watch 60 --view
 ```
 
-Python 畫圖現在需要一起帶上根目錄 `curriculum_progress.py`。更新 MATLAB 顯示要一起帶上 `+trainingcurriculum/progress.m`、`progress_callback.m`、`log_history.m`、`decide.m`、`training_status.m` 及引擎修改，且應等副本沒有活動訓練。此次只修改本機，沒有直接更新遠端或 commit/push。
+Python 畫圖現在需要一起帶上根目錄 `tools/curriculum_progress.py`。更新 MATLAB 顯示要一起帶上 `+trainingcurriculum/progress.m`、`progress_callback.m`、`log_history.m`、`decide.m`、`training_status.m` 及引擎修改，且應等副本沒有活動訓練。此次只修改本機，沒有直接更新遠端或 commit/push。
 
 ## 暫算與正式判定
 

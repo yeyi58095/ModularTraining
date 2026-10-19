@@ -9,11 +9,11 @@ Agent31600、Agent33700、Agent41600。缺檔即停止，不以其他 checkpoint
 確認模型視窗已關閉，再於 MATLAB 的專案根目錄執行：
 
 ```matlab
-clear compare_training_checkpoints audit_training_rewards review_stage6_checkpoints
+clear compare_training_checkpoints trainingtools.audit_training_rewards trainingtools.review_stage6_checkpoints
 rehash
 session=fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261014_000404_recovery_tp3b623159");
-batch=review_stage6_checkpoints(session);
+batch=trainingtools.review_stage6_checkpoints(session);
 disp(batch.summaryZip)
 ```
 

@@ -19,7 +19,7 @@ fixture=tempname(fullfile(root,'tests','output')); mkdir(fixture);
 settings.checkpoint_episode=2; settings.episodes_per_process=1; settings.max_additional_episodes=4;
 settings.guard.window=1; settings.guard.min_reference_reward=1; settings.guard.min_reference_steps=1;
 ruleFile=fullfile(fixture,'recipe.json'); trainingcurriculum.write_json(ruleFile,settings);
-info=prepare_recovery_training(source,ruleFile);
+info=trainingtools.prepare_recovery_training(source,ruleFile);
 state=jsondecode(fileread(fullfile(info.sessionDir,'curriculum_state.json')));
 assert(state.stage_index==2 && state.start_episode==1);
 spec=jsondecode(fileread(fullfile(info.sessionDir,'model.json')));
@@ -31,13 +31,13 @@ assert(strcmp(lineage.prepared_runtime_model_sha256,checkpointreview.sha256(full
 startup=jsondecode(fileread(fullfile(root,'configs','recovery_startup_fix.json')));
 startup.checkpoint_episode=2;
 startupFile=fullfile(fixture,'startup.json'); trainingcurriculum.write_json(startupFile,startup);
-fresh=prepare_recovery_training(info.sessionDir,startupFile);
+fresh=trainingtools.prepare_recovery_training(info.sessionDir,startupFile);
 assert(fresh.actorLearnRate==2.5e-5 && fresh.stageIndex==2);
 assert(~strcmp(fresh.sessionDir,info.sessionDir));
 freshSpec=jsondecode(fileread(fullfile(fresh.sessionDir,'model.json')));
 assert(isequaln(freshSpec,spec));
 try
-    prepare_recovery_training(source,startupFile);
+    trainingtools.prepare_recovery_training(source,startupFile);
     error('Test:UnexpectedSource','Wrong learning-rate parent accepted.');
 catch err
     assert(strcmp(err.identifier,'Recovery:SourceRate'));

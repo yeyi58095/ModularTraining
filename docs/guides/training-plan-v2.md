@@ -48,11 +48,11 @@
 在專案根目錄的 MATLAB 執行：
 
 ```matlab
-inputs = prepare_progressive_v2_training();
+inputs = trainingtools.prepare_progressive_v2_training();
 % 只生成 v2/assets 的直線及 S 彎，並呼叫 curriculum_plan 驗證。
 ```
 
-函式不建立 run、agent 或 pool。既有 MAT 內容不同時拒絕覆寫。MAT 不納入 Git，兩台電腦各自生成。舊的 `prepare_progressive_training()` 與 `configs/lab_gpu6.json` 仍指向 v1，不會自動切到 v2。
+函式不建立 run、agent 或 pool。既有 MAT 內容不同時拒絕覆寫。MAT 不納入 Git，兩台電腦各自生成。舊的 `trainingtools.prepare_progressive_training()` 與 `configs/lab_gpu6.json` 仍指向 v1，不會自動切到 v2。
 
 若僅閱讀尚未生成 MAT 的計畫，可執行：
 
@@ -79,7 +79,7 @@ JSON 的門檻只看 checkpoint 保存的訓練歷史，通過後會由現有引
 確認遠端副本沒有活動訓練，依環境更新指南先保存舊 run 的當地環境，再同步包含這次新增檔案的提交。遠端在專案根目錄執行：
 
 ```matlab
-inputs = prepare_progressive_v2_training();
+inputs = trainingtools.prepare_progressive_v2_training();
 cfg = jsondecode(fileread("configs/lab_gpu6_progressive_v2.json"));
 args = namedargs2cell(cfg);
 info = retry(args{:}); % start=false，只建立新 run 設定快照

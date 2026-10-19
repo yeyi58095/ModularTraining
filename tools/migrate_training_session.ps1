@@ -1,4 +1,4 @@
-# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
+﻿# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
 # [string]／[int]／[bool] 是型別標註或轉型；函式呼叫用「名稱 參數」，不是 MATLAB 的括號呼叫。
 # @() 把輸出收集成陣列，@{} 是名稱→值的表；| 把左側輸出的物件交給右側命令。
 # { } 包住 if／foreach／function 的內容；$_ 是管線當前物件，參數名的 - 前綴不是減號。
@@ -14,7 +14,7 @@ param(
 # PowerShell 內建變數：Stop 將可處理的命令錯誤提升成例外，使 try/catch/finally 能接住。
 $ErrorActionPreference = 'Stop'
 # [IO.Path]::GetFullPath 是 .NET 靜態方法，將位置規範成絕對路徑；:: 呼叫型別方法，. 呼叫物件成員。
-$root = [IO.Path]::GetFullPath($PSScriptRoot)
+$root = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent))
 # Resolve-Path 先確認來源存在；括號取得命令回傳物件，再用 .Path 取路徑字串與 TrimEnd 去尾端分隔符。
 $source = (Resolve-Path -LiteralPath $SourceSession).Path.TrimEnd('\','/')
 $targetParent = Join-Path (Join-Path (Join-Path $root 'experiments') $CurriculumName) 'runs'
@@ -114,7 +114,7 @@ try {
     Write-Progress -Activity 'Copy and SHA256 verification' -Completed
     Write-Output "Migration complete. Original preserved: $source"
     Write-Output "New session: $target"
-    Write-Output 'No training started. Run verify_training_session in MATLAB before retry(resume=...).'
+    Write-Output 'No training started. Run trainingtools.verify_training_session in MATLAB before retry(resume=...).'
 # finally 無論成功、return 或例外都執行；Dispose 釋放本次鎖／串流，不代表刪除訓練成果。
 } finally {
     if ($null -ne $lock) { $lock.Dispose() }

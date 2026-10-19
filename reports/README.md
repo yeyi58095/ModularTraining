@@ -9,7 +9,7 @@
 同一實驗更新同一檔案，避免每次匯出新增一份；Git 歷史仍會累積，建議在異常或重要里程碑時更新。
 
 ```powershell
-python export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --machine lab
+python tools/export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --machine lab
 ```
 
 只需 Python 標準函式庫，不需 MATLAB 或 matplotlib。資料可以來自活動中的實驗，匯出只讀檔，不控制訓練。
@@ -22,7 +22,7 @@ python export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料�
 若想放大圖中異常區間：
 
 ```powershell
-python export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
+python tools/export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
 ```
 
 這只調整 `focus.windows` 的區間；全期摘要與最後 100 回合仍保留，同一 report.json 會更新。
@@ -43,7 +43,7 @@ python export_training_report.py "實驗資料夾" --machine lab --from-episode 
 缺回合會重置低迷連續次數；未滿區間保留為 pending_records，不混進完整區間判斷。以 latest_completed_window 的 episode 範圍判讀時效。
 
 ```powershell
-python export_training_report.py "實驗資料夾" --machine lab --regression-window 1000 --regression-patience 5 --regression-ratio 0.5 --regression-min-reference 500
+python tools/export_training_report.py "實驗資料夾" --machine lab --regression-window 1000 --regression-patience 5 --regression-ratio 0.5 --regression-min-reference 500
 ```
 
 這些是可調的工程門檻，尚未用實驗室真實資料校準。診斷一律看完整歷史，不受 `--from-episode`／`--to-episode` 的圖表聚焦範圍影響。只在執行匯出時更新，不自動輪詢、推播、停訓或回滾。處理策略見 [learning-health.md](../docs/learning-health.md)。

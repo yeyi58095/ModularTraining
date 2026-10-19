@@ -16,7 +16,7 @@ Set-Content -LiteralPath (Join-Path $session 'reward_history.png') -Value 'image
 Set-Content -LiteralPath (Join-Path $session 'reward_history.csv') -Value 'csv fixture'
 $legacy=Join-Path $session 'legacy.json'
 @{session_id=(Split-Path $session -Leaf);machine='lab'} | ConvertTo-Json | Set-Content -LiteralPath $legacy
-$tool=Join-Path $root 'organize_training_reports.ps1'
+$tool=Join-Path $root 'tools/organize_training_reports.ps1'
 $before=(Get-FileHash -LiteralPath (Join-Path $session 'curriculum_state.json')).Hash
 & $tool -SessionPath $session -LegacyReportPath $legacy
 & $tool -SessionPath $session -LegacyReportPath $legacy

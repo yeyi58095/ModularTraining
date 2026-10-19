@@ -4,7 +4,7 @@
 
 ## 已實作：診斷訊號
 
-`learning_health.py` 由 `export_training_report.py` 呼叫。每 1000 個連續回合形成一個不重疊區間；若已有平均 >=500 的參考區間，後面連續 5 個完整區間平均低於先前最佳區間的 50%，標記 `suspected_regression`。例如先前最佳區間平均 1800，連續 5000 回合分段平均都小於 900 才觸發。這避免單回合尖峰或少量失敗立即触發停損。
+`tools/learning_health.py` 由 `tools/export_training_report.py` 呼叫。每 1000 個連續回合形成一個不重疊區間；若已有平均 >=500 的參考區間，後面連續 5 個完整區間平均低於先前最佳區間的 50%，標記 `suspected_regression`。例如先前最佳區間平均 1800，連續 5000 回合分段平均都小於 900 才觸發。這避免單回合尖峰或少量失敗立即触發停損。
 
 門檻皆可用 CLI 調整；它們只是初始工程規則，不是已驗證的 PPO 收斂判準。輸出會保存門檻、參考區間、最近完成區間、連續低迷次數與未滿區間的資料數。缺回合會打斷連續低迷計數；舊的最佳區間仍可當參考。
 
@@ -31,4 +31,4 @@ compare_training_checkpoints 已提供停止後的固定無風任務比較，不
 
 ## 2026-10-10：恢復分支的 runtime guard
 
-現在也支援 [恢復試驗](recovery-training.md) 的保存後自動暫停。這是 +trainingguard 的另一組規則，並非本文件原本 learning_health.py 的匯出診斷：每段100回合、連續3個窗口、reward 和 steps 同時下降，或新增1000回合預算用完則暫停。原本沒有 training_guard.json 的實驗不會自動啟用。狀態與有限來源資訊可由 exporter 的 recovery_monitor 分享。
+現在也支援 [恢復試驗](recovery-training.md) 的保存後自動暫停。這是 +trainingguard 的另一組規則，並非本文件原本 tools/learning_health.py 的匯出診斷：每段100回合、連續3個窗口、reward 和 steps 同時下降，或新增1000回合預算用完則暫停。原本沒有 training_guard.json 的實驗不會自動啟用。狀態與有限來源資訊可由 exporter 的 recovery_monitor 分享。

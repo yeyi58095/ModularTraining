@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 import export_training_report as report
 
 
@@ -85,7 +85,7 @@ class Reports(unittest.TestCase):
         folder = self.log(1, episode(1))
         original = (folder / "stdout.log").read_bytes()
         output = Path(self.temp.name) / "report.json"
-        command = [sys.executable, str(report.ROOT / "export_training_report.py"), str(self.session),
+        command = [sys.executable, str(report.ROOT / "tools/export_training_report.py"), str(self.session),
                    "--machine", "lab", "--output", str(output)]
         completed = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)

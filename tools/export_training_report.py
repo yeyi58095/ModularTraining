@@ -19,7 +19,7 @@ import statistics
 from plot_training_rewards import log_files, read_episodes, select_session
 from learning_health import assess_learning
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 1_500_000
 CONTROL_KEYS = ("numWorkers", "minWorkers", "fallbackWorkers", "checkpointEvery", "episodesPerProcess",
                 "targetReward", "averageWindow", "trainingDevice", "maxAttempts",
@@ -237,15 +237,15 @@ def export_report(session, machine, diagnostics=None, first=None, last=None, hea
     source = session / "model_source"
     snapshot_paths = list((source / "+trainingmodels").glob("*.m"))
     snapshot_paths += list((source / "+trainingmodels").glob("*/*.m"))
-    local_paths = [ROOT / name for name in ("retry.m", "training.m", "export_training_report.py",
-                                          "plot_training_rewards.py", "learning_health.py")]
+    local_paths = [ROOT / name for name in ("retry.m", "training.m", "tools/export_training_report.py",
+                                          "tools/plot_training_rewards.py", "tools/learning_health.py")]
     local_paths += list((ROOT / "runtime").glob("*.m")) + list((ROOT / "runtime").glob("*.ps1"))
     local_paths += list((ROOT / "runtime").glob("*.slx"))
     local_paths += list((ROOT / "+trainingmodels").glob("*.m"))
     local_paths += list((ROOT / "+trainingmodels").glob("*/*.m"))
     local_paths += list((ROOT / "+trainingcurriculum").glob("*.m"))
     local_paths += list((ROOT / "+trainingguard").glob("*.m"))
-    local_paths += [ROOT / "prepare_recovery_training.m"]
+    local_paths += list((ROOT / "+trainingtools").glob("*.m"))
     if not snapshot_paths:
         warnings.append("missing:model_source snapshot")
     model_name = model.get("name", "unknown")

@@ -30,18 +30,18 @@ experiments/progressive_v1/
 
 ```powershell
 git pull --ff-only
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\organize_training_reports.ps1 -SessionPath "D:\daniel\ModularTraining\experiments\progressive_v1\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" -Machine lab
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\organize_training_reports.ps1 -SessionPath "D:\daniel\ModularTraining\experiments\progressive_v1\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" -Machine lab
 ```
 
 此工具將根目錄 reports/lab/<實驗>/report.json、run 根目錄舊 reward_history.png／.csv 複製到 run/reports，逐檔比對 SHA256，原件保留。不存在的來源會提示略過；已有相同內容可重跑，不同內容則拒絕覆蓋。若舊報告另存他處，可提供 -LegacyReportPath。來源報告必須符合 session_id 與 machine，避免混入其他實驗。
 
-之後原本匯出／畫圖指令不變，自動寫入 run/reports；--output 仍可明確選擇其他輸出位置。要重建頂層 assets，可在 MATLAB 執行 prepare_progressive_training()，不啟動訓練；目前停止的 Stage 3 問題尚未處理，不因更新目錄而自動續訓。
+之後原本匯出／畫圖指令不變，自動寫入 run/reports；--output 仍可明確選擇其他輸出位置。要重建頂層 assets，可在 MATLAB 執行 trainingtools.prepare_progressive_training()，不啟動訓練；目前停止的 Stage 3 問題尚未處理，不因更新目錄而自動續訓。
 
 ## 舊版遷移背景：活動訓練的處理
 
 1. 保留目前 `+trainingmodels/ppo_lstm128/runs/20261009_201547_...` 原位，讓既有 supervisor 繼續執行。不需要為分類改變而停止訓練。
 2. 不搬移、不改名、不刪除該實驗，也不編輯其 control／curriculum 快照。活動中的程序持有舊絕對路徑，移動資料可能造成後續讀寫失敗。
-3. 現在若只要 stage 分界圖，只複製新版 `plot_training_rewards.py` 到實驗室，停止並重新啟動畫圖工具。不要在訓練中整包更新會被後續 attempt 載入的執行程式。畫圖工具只讀訓練資料、寫圖與 CSV；停止它不會停止訓練。
+3. 現在若只要 stage 分界圖，只複製新版 `tools/plot_training_rewards.py` 到實驗室，停止並重新啟動畫圖工具。不要在訓練中整包更新會被後續 attempt 載入的執行程式。畫圖工具只讀訓練資料、寫圖與 CSV；停止它不會停止訓練。
 4. 等訓練正常結束／暫停、supervisor 與 worker 都退出後，將整個實驗資料夾備份到另一位置；不要只備份單一 MAT。課程狀態、輸入與模型快照也需要保留。
 5. 再更新完整程式。可指定原路徑續訓，或使用下方工具把已停止的實驗複製到新結構；不支援活動實驗搬移或跨課程匯入。
 
@@ -53,7 +53,7 @@ GitHub 的精簡 report.json 不是模型備份；MAT 與完整實驗仍留在�
 
 ```powershell
 git pull --ff-only
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\migrate_training_session.ps1 -SourceSession "D:\daniel\ModularTraining\+trainingmodels\ppo_lstm128\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" -CurriculumName progressive_v1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\migrate_training_session.ps1 -SourceSession "D:\daniel\ModularTraining\+trainingmodels\ppo_lstm128\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" -CurriculumName progressive_v1
 ```
 
 工具取得 supervisor 排他鎖、拒絕活動狀態／已存在目的地／外置 diagnostics／連結目錄。完整複製到暫存位置，逐檔 SHA256 比對並保留原檔；只修正新副本的 control.json 執行路徑與 status／STOP，完成後才發布到 `experiments/progressive_v1/runs/<原實驗 ID>/`。模型、課程狀態、輸入與歷史日誌保持原始內容；歷史日誌裡的舊路徑不改寫。複製全部資料需額外磁碟空間，雜湊驗證也可能花時間。
@@ -63,17 +63,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\migrate_training_sessi
 MATLAB 的 Current Folder 切到實驗室專案根目錄：
 
 ```matlab
-clear retry verify_training_session
+clear retry trainingtools.verify_training_session
 newSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4");
-verified = verify_training_session(newSession);
+verified = trainingtools.verify_training_session(newSession);
 % 上行成功並確認顯示的 episode/stage 合理後，才執行：
 info = retry(resume=newSession);
 ```
 
 驗證函式讀取最新可用 PPO checkpoint、真實累計回合數與課程位置，不啟動 pool 或訓練。不可讀的最新檔案會列出並嘗試較舊候選；若候選皆無效或早於目前階段起點，拒絕通過，不能從零開始冒充續訓。停止前未存檔回合仍需重跑。原件保留但不要同時續跑兩份。
 
-畫圖工具請停止舊 watch 並重新指向 `newSession` 的新完整路徑；MATLAB 的 info 在續訓後也會指向新位置。GPU、workers、階段及既有模型設定由副本保留，無須重跑 prepare_progressive_training 或新實驗入口。
+畫圖工具請停止舊 watch 並重新指向 `newSession` 的新完整路徑；MATLAB 的 info 在續訓後也會指向新位置。GPU、workers、階段及既有模型設定由副本保留，無須重跑 trainingtools.prepare_progressive_training 或新實驗入口。
 
 ## 圖上的階段分界
 
@@ -86,7 +86,7 @@ info = retry(resume=newSession);
 啟動指令不變，務必指定正在跑的實驗完整路徑，避免自動選到別的測試實驗：
 
 ```powershell
-python plot_training_rewards.py "D:\daniel\ModularTraining\+trainingmodels\ppo_lstm128\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" --watch 30
+python tools/plot_training_rewards.py "D:\daniel\ModularTraining\+trainingmodels\ppo_lstm128\runs\20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4" --watch 30
 ```
 
 驗證：MATLAB 以 start=false 確認新目錄、舊課程目錄原位續用、非課程模型目錄相容；Python 驗證新舊搜尋、3000.5 分界、無課程／無效狀態，以及既有報告／退步診斷。另用合成資料產圖檢查標籤，非實驗室真實曲線。不重跑真實訓練。

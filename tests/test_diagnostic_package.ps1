@@ -14,12 +14,12 @@ foreach ($file in @('control.json','model.json','curriculum.json','curriculum_st
 Set-Content -LiteralPath (Join-Path $fixture 'status.json') -Value '{"state":"paused"}'
 Set-Content -LiteralPath (Join-Path $fixture 'reports/evaluation_test/evaluation.json') -Value '{"status":"complete","results":[{"trace":"ep10600_stage1_seed101.mat"}]}'
 $before=(Get-FileHash -LiteralPath (Join-Path $fixture 'checkpoints/Agent10600.mat')).Hash
-$output=& (Join-Path $root 'pack_training_diagnostics.ps1') -SessionPath $fixture -EvaluationName evaluation_test
+$output=& (Join-Path $root 'tools/pack_training_diagnostics.ps1') -SessionPath $fixture -EvaluationName evaluation_test
 $output | Write-Output
 if (-not ($output -match '^Verified ZIP:')) { throw 'No verified archive.' }
 if ($before -ne (Get-FileHash -LiteralPath (Join-Path $fixture 'checkpoints/Agent10600.mat')).Hash) { throw 'Source changed.' }
 Set-Content -LiteralPath (Join-Path $fixture 'status.json') -Value '{"state":"running"}'
 $rejected=$false
-try { & (Join-Path $root 'pack_training_diagnostics.ps1') -SessionPath $fixture -EvaluationName evaluation_test } catch { $rejected=$_.Exception.Message -match 'Stop training' }
+try { & (Join-Path $root 'tools/pack_training_diagnostics.ps1') -SessionPath $fixture -EvaluationName evaluation_test } catch { $rejected=$_.Exception.Message -match 'Stop training' }
 if (-not $rejected) { throw 'Active session was not rejected.' }
 Write-Output 'PASS: ZIP contents hash-verified, source preserved, active session rejected.'

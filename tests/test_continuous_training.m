@@ -9,7 +9,7 @@ recipe=jsondecode(fileread(fullfile(root,'configs','recovery_v2_18500_continuous
 recipe=rmfield(recipe,'expected_runtime_model_sha256');recipe.checkpoint_episode=2;
 fixture=tempname(fullfile(root,'tests','output'));mkdir(fixture);
 recipeFile=fullfile(fixture,'recipe.json');trainingcurriculum.write_json(recipeFile,recipe);
-child=prepare_recovery_training(parent,recipeFile);
+child=trainingtools.prepare_recovery_training(parent,recipeFile);
 assert(child.continuousTraining && child.maxAdditionalEpisodes==0);
 plan=trainingcurriculum.load_plan(fullfile(child.sessionDir,'curriculum.json'),true);
 original=trainingcurriculum.load_plan(fullfile(parent,'curriculum.json'),true);

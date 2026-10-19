@@ -6,7 +6,7 @@ arguments
     sessionDir (1,1) string
     opt.episodes (1,:) double {mustBeInteger,mustBePositive} = [10600 10700 11000]
 end
-root=fileparts(mfilename('fullpath')); previous=path;
+root=fileparts(fileparts(mfilename('fullpath'))); previous=path;
 cleanup=onCleanup(@()path(previous)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
 if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end

@@ -3,7 +3,7 @@
 訓練維持 paused/stopped，在專案根目錄執行：
 
 ```matlab
-audit = audit_training_resume(info.sessionDir,episodes=[10600 10700 11000]);
+audit = trainingtools.audit_training_resume(info.sessionDir,episodes=[10600 10700 11000]);
 disp(jsonencode(audit,PrettyPrint=true))
 ```
 

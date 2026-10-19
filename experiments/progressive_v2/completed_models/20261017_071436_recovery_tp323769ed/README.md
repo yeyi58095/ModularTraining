@@ -19,9 +19,9 @@
 在專案根目錄執行（需要既有 gh 登入與 Draft Release 存取權）：
 
 ```powershell
-python training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-e177d217bc1f"
+python tools/training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-e177d217bc1f"
 # 若也需要無探索的完整評估：
-python training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-49e0834c5ef8"
+python tools/training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-49e0834c5ef8"
 ```
 
 下載至 `artifacts/results/<tag>/`，工具核驗 SHA256；模型是其中的 `Agent_Success.mat`。sync 目前不會自動複製到 completed_models。此處本機副本已存在，另一台可直接從核驗後封存載入模型。封存內同時提供課程與環境快照、恢復 metadata 和評估 traces；不是完整可直接 retry 的 run。

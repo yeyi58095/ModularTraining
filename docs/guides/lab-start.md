@@ -17,7 +17,7 @@ MATLAB 的 Current Folder 切到這份 ModularTraining 根目錄。以下所有�
 ## 新實驗：直接啟動
 
 ```matlab
-prepare_progressive_training();
+trainingtools.prepare_progressive_training();
 cfg = jsondecode(fileread("configs/lab_gpu6.json"));
 args = namedargs2cell(cfg);
 info = retry(args{:});
@@ -70,7 +70,7 @@ info = retry(resume="此處換成原實驗資料夾完整路徑");
 分享精簡診斷，在終端機執行：
 
 ```powershell
-python export_training_report.py "此處換成實驗資料夾完整路徑" --machine lab
+python tools/export_training_report.py "此處換成實驗資料夾完整路徑" --machine lab
 ```
 
 完整日誌與 MAT 留在實驗室，僅 reports 下的指定 report.json 可納入 Git。訓練流程與尚未實作的獨立評估／退步回滾見 `training-plan-v1.md`。

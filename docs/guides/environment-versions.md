@@ -33,13 +33,13 @@ experiments/progressive_v2/
 
 使用者已確認遠端停止或暫停。仍由工具在操作當下檢查 status 與排他鎖。以下在遠端執行，不需將 checkpoint 搬回本機。
 
-**第一步：只先把 `preserve_training_environment.ps1` 複製到遠端。不要先更新／覆蓋 runtime。** 腳本可獨立執行，不依賴新版 MATLAB 程式。每個未來需要續訓的舊 run 都要各自保存。
+**第一步：只先把 `tools/preserve_training_environment.ps1` 複製到遠端。不要先更新／覆蓋 runtime。** 腳本可獨立執行，不依賴新版 MATLAB 程式。每個未來需要續訓的舊 run 都要各自保存。
 
 若目標 run 最後使用的是已核對的正式空間循跡模型，在 PowerShell 執行（替換實驗路徑）：
 
 ```powershell
 $session = 'D:\你的遠端專案\experiments\progressive_v1\runs\你的實驗ID'
-.\preserve_training_environment.ps1 -SessionDir $session `
+.\tools\preserve_training_environment.ps1 -SessionDir $session `
   -ExpectedModelSha256 '495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be'
 ```
 
@@ -68,7 +68,7 @@ info = retry(resume=sessionDir,start=false);            % 更新控制路徑，�
 ## 遠端的新 progressive_v2
 
 ```matlab
-inputs = prepare_progressive_v2_training();
+inputs = trainingtools.prepare_progressive_v2_training();
 cfg = jsondecode(fileread("configs/lab_gpu6_progressive_v2.json"));
 args = namedargs2cell(cfg);
 info = retry(args{:}); % 設定內 start=false，只建立草稿
@@ -80,7 +80,7 @@ progressive_v2 後續依使用者明確要求改選 spatial_v2（新版 reward�
 ## 評估、恢復與限制
 
 - 已綁定 run 的 compare_training_checkpoints 使用其環境快照，必要時將所有列出的資產複製到評估暫存資料夾。沒有綁定的舊 run 保留既有唯讀診斷功能，但報告明列 `legacy_current_runtime_not_historical_proof`，不能當歷史環境重現。
-- 已綁定父 run 的 prepare_recovery_training 繼承環境快照；配方要求另一個 SLX SHA 時拒絕，不暗中換環境。舊未綁定父 run 的既有恢復配方仍保存 prepare 當下 runtime 並明列來源，不回寫父 run。
+- 已綁定父 run 的 trainingtools.prepare_recovery_training 繼承環境快照；配方要求另一個 SLX SHA 時拒絕，不暗中換環境。舊未綁定父 run 的既有恢復配方仍保存 prepare 當下 runtime 並明列來源，不回寫父 run。
 - 環境快照固定 SLX 與列出資產；**共用 engine、課程引擎、MATLAB／工具箱版本並未全部封存**。每次 attempt 在 guard／engine 前記錄當下 engine SHA，guard 暫停時不代表已執行 engine。這不是整台電腦的完全可重現映像，也不會保留 optimizer 私有狀態的額外解讀。
 - 本次不提供自動跨環境 checkpoint 移植，也不修改活動實驗的課程快照。要改 reward 或任務規則，應另發布環境版本並建立明確的新實驗。
 - 保留 runtime SLX 是遷移相容安排；直接跑 training_engine.m 的舊方式仍可能使用它。正式實驗應走 retry／checkpoint_attempt，才能取得環境綁定與驗證。

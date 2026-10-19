@@ -1,6 +1,6 @@
 # 停訓後比較 checkpoint
 
-`compare_training_checkpoints` 使用 `sim`，不呼叫 `train`、不回滾、不改寫課程狀態或 MAT checkpoint。先評估再決定是否續訓；另開分支使用 prepare_recovery_training。
+`compare_training_checkpoints` 使用 `sim`，不呼叫 `train`、不回滾、不改寫課程狀態或 MAT checkpoint。先評估再決定是否續訓；另開分支使用 trainingtools.prepare_recovery_training。
 
 ## 實驗室操作
 

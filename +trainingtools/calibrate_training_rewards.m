@@ -6,7 +6,7 @@ arguments
     evaluationDir (1,1) string
     outputDir (1,1) string
 end
-root=fileparts(mfilename('fullpath')); old=path;
+root=fileparts(fileparts(mfilename('fullpath'))); old=path;
 cleanup=onCleanup(@()path(old)); %#ok<NASGU>
 addpath(root);
 evaluationDir=absolute(evaluationDir,root);outputDir=absolute(outputDir,root);

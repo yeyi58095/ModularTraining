@@ -22,7 +22,7 @@ Put 'curriculum.json' '{"schema_version":1}'
 Put 'curriculum_state.json' '{"stage_index":2,"start_episode":3000}'
 Put 'model.json' '{"name":"ppo_lstm128"}'
 Put 'checkpoints\Agent7000.mat' 'synthetic bytes for copy/hash test, not a MATLAB checkpoint'
-$tool=Join-Path $root 'migrate_training_session.ps1'
+$tool=Join-Path $root 'tools/migrate_training_session.ps1'
 $rejected=$false
 try { & $tool -SourceSession $source -CurriculumName $name } catch { $rejected=$true }
 if (-not $rejected) { throw 'Running experiment must be rejected.' }

@@ -16,7 +16,7 @@ fid=fopen(fullfile(fixture,'supervisor.lock'),'w');fclose(fid);
 [manifest,assets]=trainingenv.registry(root,'spatial_v2');trainingenv.snapshot(manifest,assets,fixture);
 report=compare_training_checkpoints(fixture,episodes=31600,includeLatest=false, ...
     stages=6,seeds=205,maxSteps=3000,rewardDiagnostics=true);
-audit=audit_training_rewards(report.outputDir);
+audit=trainingtools.audit_training_rewards(report.outputDir);
 assert(report.weights_unchanged && strcmp(report.environment_id,'spatial_v2'));
 assert(strcmp(audit.results{1}.reward_version,'spatial_reward_v2'));
 assert(strcmp(before,checkpointreview.sha256(checkpoint)));

@@ -1,4 +1,4 @@
-# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
+﻿# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
 # [string]／[int]／[bool] 是型別標註或轉型；函式呼叫用「名稱 參數」，不是 MATLAB 的括號呼叫。
 # @() 把輸出收集成陣列，@{} 是名稱→值的表；| 把左側輸出的物件交給右側命令。
 # { } 包住 if／foreach／function 的內容；$_ 是管線當前物件，參數名的 - 前綴不是減號。
@@ -34,7 +34,7 @@ try {
     # 把不需顯示的回傳物件指派給 $null；命令仍會執行，但不污染呼叫端收到的資料或終端輸出。
     $null=New-Item -ItemType Directory -Path $destDir -Force
     $report=$LegacyReportPath
-    if (-not $report) { $report=Join-Path $PSScriptRoot "reports\$Machine\$([IO.Path]::GetFileName($session))\report.json" }
+    if (-not $report) { $report=Join-Path (Split-Path $PSScriptRoot -Parent) "reports\$Machine\$([IO.Path]::GetFileName($session))\report.json" }
     $sources=@(
         @{source=$report;name='report.json'},
         @{source=(Join-Path $session 'reward_history.png');name='reward_history.png'},

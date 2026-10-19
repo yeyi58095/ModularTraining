@@ -4,9 +4,9 @@
 """Plot MATLAB training logs across attempts. Requires: pip install matplotlib.
 
 Examples:
-  python plot_training_rewards.py
-  python plot_training_rewards.py +trainingmodels/ppo_lstm128/runs/SESSION_NAME
-  python plot_training_rewards.py SESSION_PATH --watch 60
+  python tools/plot_training_rewards.py
+  python tools/plot_training_rewards.py +trainingmodels/ppo_lstm128/runs/SESSION_NAME
+  python tools/plot_training_rewards.py SESSION_PATH --watch 60
 
 With no path, select the newest session in curriculum experiments, model runs or sessions.
 Logs are only read. The original Flower project is not required.
@@ -279,7 +279,7 @@ def read_history(session, include_parents=True, roots=()):
     segments, issues, seen = [], [], set()
     current, upper = session.resolve(), None
     roots = [Path(r).expanduser().resolve() for r in roots]
-    roots.append(Path(__file__).resolve().parent)
+    roots.append(Path(__file__).resolve().parents[1])
     while True:
         if current in seen:
             issues.append(f"Cycle in parent chain at {current.name}; ancestry stopped")
@@ -514,7 +514,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("session", nargs="?", type=Path,
-                        default=Path(__file__).resolve().parent,
+                        default=Path(__file__).resolve().parents[1],
                         help="Session directory, or parent containing sessions (newest selected)")
     parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reports/reward_history.png)")
     parser.add_argument("--watch", type=float, default=0, metavar="SECONDS",

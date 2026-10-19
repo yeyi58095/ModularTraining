@@ -1,13 +1,14 @@
 # 工作區整理與兩端同步
 
-核心位置保持不變：根目錄是操作入口，`+training*/` 與 `+checkpointreview/` 是 MATLAB 套件，`runtime/` 是引擎，`environments/` 是環境版本，`experiments/<課程>/runs/` 保存實驗。程式依自身位置推導根目錄，不能任意將入口搬入 scripts。
+核心位置保持不變：根目錄是操作入口，`+training*/` 與 `+checkpointreview/` 是 MATLAB 套件，`runtime/` 是引擎，`environments/` 是環境版本，`experiments/<課程>/runs/` 保存實驗。日常 MATLAB 入口保留；Python／PowerShell 工具收在 tools/，準備／稽核 MATLAB 工具收在 +trainingtools/，均已更新根目錄推導與測試。
 
 資料分工：
 
 ```text
 ModularTraining/
 ├─ README.md / retry.m          查找入口／訓練入口
-├─ +training*/                 MATLAB 套件
+├─ +training*/                 MATLAB 套件（含 +trainingtools 準備／稽核）
+├─ tools/                      Python／PowerShell 工具及整理指令
 ├─ runtime/                    執行引擎
 ├─ environments/               版本環境
 ├─ curricula/                  課程範例與模板
@@ -31,7 +32,7 @@ ModularTraining/
 └─ tests/                      驗證與可重建產物
 ```
 
-這次統一查找入口及成果分類，不搬既有 runs、sessions、diagnostic_packages 或根目錄執行工具。歷史資料仍保留原來的相容路徑。後續每個完成模型另建成果目錄；登錄規則見 [成果索引](../../experiments/README.md)。
+這次統一查找入口及成果分類，並縮編根目錄工具；不搬既有 runs、sessions、diagnostic_packages。歷史資料仍保留原來的相容路徑。後續每個完成模型另建成果目錄；登錄規則見 [成果索引](../../experiments/README.md)。
 
 | 位置 | 用途 |
 | --- | --- |
@@ -51,9 +52,9 @@ ModularTraining/
 ```powershell
 git pull --ff-only
 if ($LASTEXITCODE -ne 0) { throw '請先處理 pull 錯誤，勿強制覆寫。' }
-.\organize_workspace.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1
 # 確認清單後執行：
-.\organize_workspace.ps1 -Apply
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1 -Apply
 git status --short
 ```
 
@@ -63,6 +64,16 @@ Git pull 同步工具與文件，不會替另一台電腦移動未追蹤資料�
 
 ## 本次遠端更新與模型下載
 
+根目錄工具已移至 `tools/`／`+trainingtools/`。Git pull 會同步受追蹤程式的搬移；本機忽略資料需各端另外整理：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/compact_workspace.ps1
+# 檢查清單後：
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/compact_workspace.ps1 -Apply
+```
+
+這只在該次 PowerShell 程序放行腳本，沒有永久改系統執行原則。工具詳情與舊／新入口見 [tools/README](../../tools/README.md)。第三組先依 [開訓前準備](round3-fresh-training.md) 核對，不使用歷史恢復配方。
+
 先確認該副本沒有活動訓練，再在實驗室專案根目錄執行。若專案仍位於 `D:\daniel\ModularTraining`，可先 `Set-Location -LiteralPath 'D:\daniel\ModularTraining'`；實際位置不同請替換。
 
 ```powershell
@@ -71,8 +82,8 @@ git branch --show-current
 # 本次提交在 main；確認目前也是 main 再執行：
 git pull --ff-only origin main
 if ($LASTEXITCODE -ne 0) { throw '更新失敗，請保留本機修改並貼回錯誤。' }
-.\organize_workspace.ps1
-# 預覽內容正確時，再執行 .\organize_workspace.ps1 -Apply
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1
+# 預覽內容正確時，再執行 powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1 -Apply
 ```
 
 若 pull 因本機修改或同名未追蹤檔停止，保留原件並先釐清差異，不使用 reset --hard、clean 或強制覆寫。既有簡報修改不需為了這次更新一併提交。
@@ -80,7 +91,7 @@ if ($LASTEXITCODE -ne 0) { throw '更新失敗，請保留本機修改並貼回�
 若也要讓另一台的課程資料夾有模型本體，可執行下列步驟。它從已核驗封存複製，不覆寫已有不同模型：
 
 ```powershell
-python training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-e177d217bc1f"
+python tools/training_artifacts.py sync --tag "result-20261017_071436_recovery_tp323769ed-e177d217bc1f"
 if ($LASTEXITCODE -ne 0) { throw '成果下載或驗證失敗。' }
 $modelFolder = 'experiments/progressive_v2/completed_models/20261017_071436_recovery_tp323769ed'
 $modelSource = 'artifacts/results/result-20261017_071436_recovery_tp323769ed-e177d217bc1f/Agent_Success.mat'

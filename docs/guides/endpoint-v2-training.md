@@ -17,13 +17,13 @@ MATLAB：
 
 ```matlab
 cd D:\daniel\ModularTraining
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 rehash
 if bdIsLoaded('FAFA_Simulation'), close_system('FAFA_Simulation',0); end
 root=fileparts(which('retry'));
 parentSession=fullfile(root,'experiments','progressive_v1','runs', ...
     '20261010_224522_recovery_tpc1c4f06e');
-next=prepare_recovery_training(parentSession, ...
+next=trainingtools.prepare_recovery_training(parentSession, ...
     fullfile(root,'configs','recovery_21600_endpoint_v2.json'));
 info=retry(resume=next.sessionDir);
 disp(info.sessionDir)

@@ -3,7 +3,7 @@ function audit=audit_training_rewards(evaluationDir)
 arguments
     evaluationDir (1,1) string
 end
-root=fileparts(mfilename('fullpath'));old=path;guard=onCleanup(@()path(old)); %#ok<NASGU>
+root=fileparts(fileparts(mfilename('fullpath')));old=path;guard=onCleanup(@()path(old)); %#ok<NASGU>
 addpath(root);
 if ~java.io.File(char(evaluationDir)).isAbsolute(),evaluationDir=fullfile(root,evaluationDir);end
 report=jsondecode(fileread(fullfile(evaluationDir,'evaluation.json')));

@@ -6,7 +6,7 @@ $runtime=Join-Path $fixture 'runtime';$null=New-Item -ItemType Directory -Path $
 [IO.File]::WriteAllText((Join-Path $runtime 'FAFA_Simulation.slx'),'synthetic model bytes')
 [IO.File]::WriteAllText((Join-Path $runtime 'dependency.mat'),'synthetic asset bytes')
 $hash=(Get-FileHash -LiteralPath (Join-Path $runtime 'FAFA_Simulation.slx')).Hash
-$script=Join-Path $project 'preserve_training_environment.ps1'
+$script=Join-Path $project 'tools/preserve_training_environment.ps1'
 function New-Case([string]$name,[string]$state='paused') {
     $dir=Join-Path $fixture $name;$null=New-Item -ItemType Directory -Path $dir
     [IO.File]::WriteAllText((Join-Path $dir 'supervisor.lock'),'')

@@ -1,4 +1,4 @@
-﻿param([switch]$Apply, [string]$ProjectRoot=$PSScriptRoot)
+﻿param([switch]$Apply, [string]$ProjectRoot=(Split-Path $PSScriptRoot -Parent))
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path -LiteralPath $ProjectRoot).Path.TrimEnd('\','/')
 if(-not (Test-Path -LiteralPath (Join-Path $root '.git'))){throw 'Expected a Git working directory.'}

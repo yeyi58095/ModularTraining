@@ -1,6 +1,6 @@
 # GitHub 雙機成果同步
 
-程式碼、課程 JSON、精簡報告維持 Git push/pull；模型與完整評估使用同一個 repository 的 **Draft Release 附件**。`git pull` 不會下載附件，`training_artifacts.py sync` 才會下載並驗證它們。兩端的活動 run 不互相覆蓋。
+程式碼、課程 JSON、精簡報告維持 Git push/pull；模型與完整評估使用同一個 repository 的 **Draft Release 附件**。`git pull` 不會下載附件，`tools/training_artifacts.py sync` 才會下載並驗證它們。兩端的活動 run 不互相覆蓋。
 
 ## 一次性準備
 
@@ -29,7 +29,7 @@ python --version
 ```powershell
 cd D:\daniel\ModularTraining
 git pull --ff-only
-python training_artifacts.py publish --session "experiments/progressive_v2/runs/20261017_071436_recovery_tp323769ed" --evaluation "evaluation_20261018_234801_tpc304c6c6"
+python tools/training_artifacts.py publish --session "experiments/progressive_v2/runs/20261017_071436_recovery_tp323769ed" --evaluation "evaluation_20261018_234801_tpc304c6c6"
 ```
 
 完成會印出 `Uploaded and download-verified DRAFT`、tag，以及另一台可直接貼上的完整 `sync` 指令。把這段輸出貼回聊天即可。這次 run 的資料來自使用者回報：39300 回合完成，seeds901:910、八階段共80次無探索評估全跑滿；模型與完整 traces 尚未由代理在本機驗證。
@@ -39,7 +39,7 @@ python training_artifacts.py publish --session "experiments/progressive_v2/runs/
 若已產生 ZIP／JSON，但上傳中斷或更新了封裝工具，使用 `upload` 接續原本的包，不重新計算 exporter commit 或產生新 tag：
 
 ```powershell
-python training_artifacts.py upload "artifacts/packages/<原本tag>.json"
+python tools/training_artifacts.py upload "artifacts/packages/<原本tag>.json"
 ```
 
 2026-10-19 首次實驗室發布回報 `Existing release belongs to different content`，但後續 `gh release view` 確認正確 tag、draft 與 SHA256 說明已存在。原程式把「建立後查不到」與「SHA 不符」合併成同一訊息；現改用 gh 的精確 tag 查詢，建立後查不到最多重試三次，仍不可見時給接續指令，真正 marker 不符則繼續拒絕上傳。瀏覽器草稿 URL 出現 `untagged-*` 不是模型 tag 遺失的證明。
@@ -49,7 +49,7 @@ python training_artifacts.py upload "artifacts/packages/<原本tag>.json"
 在宿舍專案更新程式、登入 gh 後，使用發布端印出的實際 tag：
 
 ```powershell
-python training_artifacts.py sync --tag "<發布端印出的完整 tag>"
+python tools/training_artifacts.py sync --tag "<發布端印出的完整 tag>"
 ```
 
 結果在腳本所在專案的 `artifacts/results/<tag>/`。兩端專案根目錄不同沒關係；不會把檔案寫進 `experiments/` 或父 run，不會改寫 JSON 裡保存的原機器路徑。那些路徑是歷史 metadata，不代表下載後可直接使用。
@@ -65,7 +65,7 @@ python training_artifacts.py sync --tag "<發布端印出的完整 tag>"
 - manifest.json：每個檔案的路徑、大小和 SHA256，以及 run、回合、evaluation、封裝工具當下的 Git commit／dirty 狀態。封裝工具版本**不等於歷史訓練執行版本證據**。
 - ZIP 外另有同名 JSON，保存 ZIP 大小、SHA256 及 manifest 身分。tag 由 run 名稱與 manifest hash 前12碼生成；資料不同建立另一版本，不覆蓋舊版本。
 
-來源包在 `artifacts/packages/`，下載包在 `artifacts/downloads/`，三個目錄均受 Git 忽略。可保留本機包以便離線搬移：先搬同名 ZIP／JSON，再執行 `python training_artifacts.py import <JSON路徑>`，仍有完整雜湊檢查。
+來源包在 `artifacts/packages/`，下載包在 `artifacts/downloads/`，三個目錄均受 Git 忽略。可保留本機包以便離線搬移：先搬同名 ZIP／JSON，再執行 `python tools/training_artifacts.py import <JSON路徑>`，仍有完整雜湊檢查。
 
 ## 停止、重跑與失敗語意
 

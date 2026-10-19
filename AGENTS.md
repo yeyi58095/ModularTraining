@@ -17,7 +17,7 @@
 
 - 根目錄retry.m為入口；+trainingmodels/為模型，runtime/為引擎，environments/為版本環境，experiments/<課程>/runs/<實驗>/為課程實驗。舊sessions及模型runs保留相容性；不為整理搬移run。
 - Git同步程式、JSON、文件與指定精簡report.json；MAT、完整日誌、快取遵守.gitignore。成果透過training_artifacts.py及GitHub Draft Release同步至artifacts/results，驗證SHA；這是評估封存，不是可直接retry的完整run。
-- 根目錄工具依自身位置推導root，不任意搬入scripts。整理規則見docs/guides/workspace-layout.md；diagnostic_packages含分析腳本，不當成可刪快取。保留使用者未提交檔案。
+- 日常 MATLAB 入口留根目錄；Python／PowerShell 工具在 tools/，MATLAB 準備與稽核在 +trainingtools/，均依自身位置推導專案 root。歷史根目錄指令依 tools/README.md 對照新入口。整理規則見docs/guides/workspace-layout.md；diagnostic_packages含分析腳本，不當成可刪快取。保留使用者未提交檔案。
 
 ## 課程、環境與評估語義
 
@@ -35,5 +35,5 @@
 ## 目前接續邊界
 
 - 目標run 20261017_071436_recovery_tp323769ed已39300回合完成；80次無探索與50次探索皆跑滿，模型權重比對及來源見current-status。Stage8 seed902仍有47.59m後段偏離，不能稱全面穩健。
-- 進度可觀察性已實作，無須重做舊待辦。下一輪新agent、八階段、固定spatial_v2及JSON決策仍在準備／提案階段，未啟動正式run；不要把18500歷史恢復配方當成下一輪指令。
+- 進度可觀察性已實作，無須重做舊待辦。第三組新agent、八階段、固定spatial_v2的 preflight 已實作於 trainingtools.preflight_round3；先完成使用者 push／遠端 pull，再建立並核對新 run，尚未啟動正式run。JSON自動決策仍是提案；不要把18500歷史恢復配方當成下一輪指令。
 - 測試依改動範圍執行；合成／假引擎通過不冒稱GPU、多workers或長期收斂已驗證。不得因測試需求擅自啟動正式訓練。

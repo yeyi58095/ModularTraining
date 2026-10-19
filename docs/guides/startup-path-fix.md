@@ -56,10 +56,10 @@ disp(jsonencode(evaluation.results,PrettyPrint=true))
 使用者後續決定另開實驗。`configs/recovery_startup_fix.json` 指定从第一個 recovery 分支10600接續，要求來源actor LR=2.5e-5、scale=1，不再減半；100回合/段、新增上限1000，保留原guard規則與父control的硬體設定。prepare仍不啟動，正式執行由使用者呼叫retry。
 
 ```matlab
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 parentSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261010_155437_recovery_tpebed29a8");
-fresh = prepare_recovery_training(parentSession,"configs/recovery_startup_fix.json");
+fresh = trainingtools.prepare_recovery_training(parentSession,"configs/recovery_startup_fix.json");
 info = retry(resume=fresh.sessionDir);
 ```
 
@@ -74,10 +74,10 @@ info = retry(resume=fresh.sessionDir);
 `configs/recovery_11600_overnight.json` 從新環境分支11600另開run，LR不變、100/段、總上限21600，保留guard及課程過關/暫停規則。回合數不是保證運行時數；可能因退步、課程暫停或錯誤提前停止。啟動前更新，啟動後不要更新runtime。
 
 ```matlab
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 parentSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261010_201201_recovery_tp0241db13");
-overnight = prepare_recovery_training(parentSession,"configs/recovery_11600_overnight.json");
+overnight = trainingtools.prepare_recovery_training(parentSession,"configs/recovery_11600_overnight.json");
 info = retry(resume=overnight.sessionDir);
 disp(info.sessionDir)
 ```

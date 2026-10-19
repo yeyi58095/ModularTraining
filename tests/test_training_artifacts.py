@@ -234,7 +234,7 @@ class ArtifactTests(unittest.TestCase):
 
     def test_upload_command_does_not_repack(self):
         descriptor = self.pack()
-        with patch.object(sys, 'argv', ['training_artifacts.py', 'upload', str(descriptor)]), \
+        with patch.object(sys, 'argv', ['tools/training_artifacts.py', 'upload', str(descriptor)]), \
                 patch.object(art, 'repository', return_value='owner/repo'), \
                 patch.object(art, 'gh'), patch.object(art, 'pack') as pack, \
                 patch.object(art, 'publish') as publish:

@@ -1,4 +1,4 @@
-# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
+﻿# 閱讀語法：$name 是變數；= 存值；$null 表示沒有值，$true／$false 是布林值。
 # [string]／[int]／[bool] 是型別標註或轉型；函式呼叫用「名稱 參數」，不是 MATLAB 的括號呼叫。
 # @() 把輸出收集成陣列，@{} 是名稱→值的表；| 把左側輸出的物件交給右側命令。
 # { } 包住 if／foreach／function 的內容；$_ 是管線當前物件，參數名的 - 前綴不是減號。
@@ -81,7 +81,7 @@ try {
         # foreach ($item in $collection) 逐項處理集合；本輪 $item 代表目前元素，continue 跳下一項。
         foreach ($name in @('stdout.log','stderr.log','result.json','pool_error.json')) { Add-Source "$($folder.Name)/$name" $false }
     }
-    $out=Join-Path $PSScriptRoot 'diagnostic_packages'
+    $out=Join-Path (Split-Path $PSScriptRoot -Parent) 'diagnostic_packages'
     # -band 是位元 AND，檢查屬性是否包含 ReparsePoint；拒絕連結避免來源走到預期範圍之外。
     if ((Test-Path -LiteralPath $out) -and ((Get-Item -LiteralPath $out).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Output folder must not be a link.' }
     # 把不需顯示的回傳物件指派給 $null；命令仍會執行，但不污染呼叫端收到的資料或終端輸出。

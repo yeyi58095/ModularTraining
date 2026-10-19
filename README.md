@@ -4,11 +4,15 @@
 
 ## 課程與成果入口
 
+根目錄已縮編：日常 MATLAB 入口保留，Python／PowerShell 改從 [tools/](tools/README.md) 呼叫，MATLAB 準備／稽核改為 [trainingtools 套件](+trainingtools/README.md)。例如 `python tools/training_artifacts.py ...` 與 `trainingtools.prepare_progressive_v2_training()`。舊根目錄同名檔已搬移，歷史指令需依此換入口。
+
+[第三組從頭訓練準備](docs/guides/round3-fresh-training.md)：同步完成後先 preflight；尚未建立正式新 run 或開始訓練。
+
 [全部課程成果](experiments/README.md) → [progressive_v2](experiments/progressive_v2/README.md) → [已完成模型](experiments/progressive_v2/completed_models/README.md)。成果介紹與來源隨 Git 同步；大型模型透過 Release 下載。完整目錄分工與遠端更新步驟見 [工作區整理](docs/guides/workspace-layout.md)。
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
-雙機同步：程式碼用 Git push/pull，成功模型與完整評估用同一 repository 的 Draft Release。`training_artifacts.py publish` 封裝／上傳／下載驗證，另一端 `sync --tag ...` 下載並核對 SHA256；結果放在獨立 `artifacts/results/`。首次設定與實驗室指令見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。
+雙機同步：程式碼用 Git push/pull，成功模型與完整評估用同一 repository 的 Draft Release。`tools/training_artifacts.py publish` 封裝／上傳／下載驗證，另一端 `sync --tag ...` 下載並核對 SHA256；結果放在獨立 `artifacts/results/`。首次設定與實驗室指令見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。
 
 ## 課程完成與後續（2026-10-18）
 
@@ -28,7 +32,7 @@
 
 新課程實驗按計畫存入 `experiments/<課程>/runs/<實驗>/`，模型為計畫參數。舊模型目錄實驗原位保留、可續訓，非課程訓練維持原分類。活動實驗保留、備份與分階段更新方式見 [課程分類與相容性](docs/guides/curriculum-layout.md)。
 
-已停止的舊實驗可用 `migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
+已停止的舊實驗可用 `tools/migrate_training_session.ps1` 完整複製到新結構，保留原件並逐檔驗證；再由 MATLAB `trainingtools.verify_training_session` 檢查 checkpoint，依新路徑續訓。詳細指令見上述文件，不要直接剪下活動資料夾。
 
 用設定檔描述「固定／MAT 軌跡 → 下一條軌跡 → random」，沿用同一個 agent。模型只指定一次，各階段自行設定風場、過關條件與回合預算。
 
@@ -50,10 +54,10 @@ info = retry(curriculum="curricula/fixed_to_random.json",start=false);
 在產生日誌的電腦執行（只需 Python，不需 matplotlib）：
 
 ```powershell
-python export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --machine lab
+python tools/export_training_report.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --machine lab
 # 宿舍的實驗改用 --machine dorm
 # 放大退步附近的區間：
-python export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
+python tools/export_training_report.py "實驗資料夾" --machine lab --from-episode 170000 --to-episode 190000
 ```
 
 產生 `<實驗>/reports/report.json`，限制在 1.5 MB 內；標準課程實驗的此檔案可提交 GitHub 後跨機閱讀。完整日誌、checkpoint、圖表與快取由 `.gitignore` 排除。舊報告整理方式見 [課程與報告目錄](docs/guides/curriculum-layout.md)。
@@ -70,9 +74,9 @@ python export_training_report.py "實驗資料夾" --machine lab --from-episode 
 
 ```powershell
 python -m pip install -r requirements-plot.txt
-python plot_training_rewards.py
-python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾"
-python plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --watch 60
+python tools/plot_training_rewards.py
+python tools/plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾"
+python tools/plot_training_rewards.py "+trainingmodels/ppo_lstm128/runs/實驗資料夾" --watch 60
 ```
 
 未指定路徑時，依日誌修改時間選擇本專案最新的實驗；也可以指定模型資料夾或其 `runs/`。輸出預設為實驗 `reports/` 內的 `reward_history.png` 和 `reward_history.csv`，可用 `--output 路徑.png` 改位置。圖表包含每回合 reward、日誌記錄的平均 reward 與重啟分界；重複 episode 使用較新 attempt 的紀錄。工具只讀取日誌，Ctrl+C 停止圖表更新不影響訓練。
@@ -213,7 +217,7 @@ ModularTraining/
 
 實驗室正式啟動步驟見 [6 workers＋GPU 操作說明](docs/guides/lab-start.md)，硬體與重試參數在 `configs/lab_gpu6.json`。此組合尚未實測；本機真實短測僅使用 CPU／1 worker。
 
-六階段訓練方案見 [training-plan-v1](docs/guides/training-plan-v1.md)，可執行設定為 `experiments/progressive_v1/curriculum.json`。先在 MATLAB 執行 `prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
+六階段訓練方案見 [training-plan-v1](docs/guides/training-plan-v1.md)，可執行設定為 `experiments/progressive_v1/curriculum.json`。先在 MATLAB 執行 `trainingtools.prepare_progressive_training()` 產生直線與平緩 S 彎輸入、驗證設定；此步不啟動訓練。門檻仍須長期實驗校準。
 
 `tests/test_curriculum_end_to_end.m`：明確呼叫才啟動 CPU／1 worker 真實 UAV 訓練，固定路徑、MAT、random 各一回合，驗證跨程序續訓、階段切換與 actor／critic 權重接續；使用測試用回合門檻，不代表學會任務。
 
@@ -230,4 +234,4 @@ ModularTraining/
 
 ## 有上限的恢復試驗
 
-`prepare_recovery_training(parentSession)` 依 `configs/recovery_actor_half.json` 從指定 checkpoint 另建新實驗；預設 10600、actor LR 減半，每段100回合、最多新增1000回合。具備同階段退步的保存後暫停規則，沒有自動回滾／啟動。詳見 [實驗室操作與限制](docs/guides/recovery-training.md)。
+`trainingtools.prepare_recovery_training(parentSession)` 依 `configs/recovery_actor_half.json` 從指定 checkpoint 另建新實驗；預設 10600、actor LR 減半，每段100回合、最多新增1000回合。具備同階段退步的保存後暫停規則，沒有自動回滾／啟動。詳見 [實驗室操作與限制](docs/guides/recovery-training.md)。

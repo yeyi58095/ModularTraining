@@ -29,7 +29,7 @@ Function13 保留原輸入介面，直接傳遞正規化 d，取消依曲率將�
 
 ## 評估與重現
 
-`instrument_reward` 會辨識兩個 chart 的新版標記並寫出 reward_version。`audit_training_rewards` 依記錄版本核對逐步得分，舊報告沒有版本欄位時仍依舊公式處理。混合標記或不相符的數值會拒絕；不把新版 traces 當舊公式分析。
+`instrument_reward` 會辨識兩個 chart 的新版標記並寫出 reward_version。`trainingtools.audit_training_rewards` 依記錄版本核對逐步得分，舊報告沒有版本欄位時仍依舊公式處理。混合標記或不相符的數值會拒絕；不把新版 traces 當舊公式分析。
 
 ```matlab
 addpath('tests');
@@ -75,9 +75,9 @@ disp(manifest.files.sha256)
 已保存的舊 run 環境與先前 spatial_v1 草稿不改寫。於 MATLAB 專案根目錄執行：
 
 ```matlab
-clear retry prepare_progressive_v2_training
+clear retry trainingtools.prepare_progressive_v2_training
 rehash
-prepare_progressive_v2_training();
+trainingtools.prepare_progressive_v2_training();
 cfg=jsondecode(fileread("configs/lab_gpu6_progressive_v2.json"));
 assert(strcmp(cfg.environment,"spatial_v2") && ~cfg.start);
 args=namedargs2cell(cfg);

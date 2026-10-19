@@ -16,7 +16,7 @@ MATLAB 在專案根目錄執行以下「準備」命令，尚不會訓練：
 ```matlab
 parentSession = fullfile(pwd,"experiments","progressive_v1","runs", ...
     "20261009_201547_tpf1292058_f8ca_4ccd_bc7f_a66b20ee91b4");
-recovery = prepare_recovery_training(parentSession);
+recovery = trainingtools.prepare_recovery_training(parentSession);
 ```
 
 它會在同課程的 runs/ 下建立一個新 `_recovery_` 實驗；讀取父實驗 Agent10600 的真實歷史，依已記錄分界重建當時階段。完整保留該 checkpoint 的 actor／critic 權重與截至 10600 的訓練歷史，只將記憶體內 agent 的 actor learning rate 乘 0.5，再另存新實驗。同步改新 model.json 以通過續訓 validator，不修改父 MAT 或原課程／model_source。GPU、workers=6、minWorkers=1、fallback 等硬體設定沿用父 control。

@@ -3,7 +3,7 @@ function info = prepare_progressive_v2_training()
 % 回傳課程與輸入位置；內容不同的既有 MAT 拒絕覆寫，不啟動正式訓練。
 % Generate reproducible starter trajectories and validate the eight-stage plan.
 % No training, pool, or experiment is started. Existing differing MATs are refused.
-root=fileparts(mfilename('fullpath')); old=path;
+root=fileparts(fileparts(mfilename('fullpath'))); old=path;
 guard=onCleanup(@() path(old)); %#ok<NASGU>
 addpath(root,'-begin');
 folder=fullfile(root,'experiments','progressive_v2','assets');

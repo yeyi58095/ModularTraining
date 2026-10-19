@@ -19,7 +19,7 @@ import tempfile
 import time
 import zipfile
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 STORE = ROOT / 'artifacts'
 MAX_ASSET = 2 * 1024**3
 REQUIRED = ['Agent_Success.mat', 'model.json', 'environment.json', 'curriculum.json',
@@ -356,7 +356,7 @@ def publish(descriptor, repo):
         require(remote == meta, 'Uploaded package differs from local package')
     label = 'DRAFT' if existing['draft'] else 'existing published release'
     print(f'Uploaded and download-verified {label}: {tag}\nRepository: {repo}\n'
-          f'Other computer: python training_artifacts.py sync --tag {tag}', flush=True)
+          f'Other computer: python tools/training_artifacts.py sync --tag {tag}', flush=True)
 
 
 def install(descriptor, store=STORE):

@@ -44,11 +44,11 @@ With training paused, pull the update in PowerShell. In MATLAB:
 
 ```matlab
 cd D:\daniel\ModularTraining
-clear prepare_recovery_training retry
+clear trainingtools.prepare_recovery_training retry
 rehash
 parentSession = fullfile(pwd,"experiments","progressive_v2","runs", ...
     "20261016_162607_recovery_tpf699ae87");
-trial = prepare_recovery_training(parentSession, ...
+trial = trainingtools.prepare_recovery_training(parentSession, ...
     "configs/recovery_v2_18000_std_half.json");
 info = retry(resume=trial.sessionDir);
 training_status(info.sessionDir);
