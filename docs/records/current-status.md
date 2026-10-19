@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 使用者貼回第三組正式準備結果：experiments/progressive_v2/runs/20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0，遠端根目錄 D:\daniel\ModularTraining。以 start=false 新建，spatial_v2 的 run 快照 ID 與 SHA 斷言通過，診斷目錄在該 run/diagnostics。這是新 agent 從頭訓練的獨立 run，尚未收到 Supervisor PID／啟動結果；後續只對此 run 啟動，不再次執行建立新 run 的 retry(args{:})。
+
 - 使用者後續貼回：實驗室 compact Apply 完成 2 個根快取檔的搬移與雜湊驗證（receipt：artifacts/incoming/layout-20261019-164754-6f8532bb）；第三組 preflight 通過，ppo_lstm128、八階段、spatial_v2，runCreated=0、trainingStarted=0。遠端課程 SHA 7bfc6c733c369ad8f6c29111cabd0b20f6f618afbd3e4f8a2e9c2aea37edebfc 與本機同檔轉 CRLF 的 SHA 完全一致；本機 LF 為 6dc1ee14695C3E210A4F1E215A56DF0890FC0F8D10BC61BDA52FC676C9ACF3E6。環境 SHA 仍為 997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557。尚未收到第三組正式 run-id 或啟動結果。
 
 - 使用者貼回實驗室輸出，確認已 fast-forward 至 7ded2ea。compact_workspace 僅預覽根目錄 2 個 Python 快取檔，尚未 Apply；未收到第三組 MATLAB preflight 結果。使用者已授權後續已授權修改由代理自行 commit/push，詳見 AGENTS。
@@ -26,7 +28,7 @@
 ## 下一步
 
 1. 依[整理工具](../guides/workspace-layout.md)統一兩端目錄用途；遠端由使用者執行。
-2. 實驗室已完成目錄重構、快取整理與第三組 preflight；下一步以 start=false 建立新的獨立 run，核對快照及記錄 run-id 後再啟動。尚未收到正式新 run-id 或啟動結果。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
+2. 第三組 run 20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0 已於實驗室準備並驗證環境；下一步由使用者對此 run 執行 retry(resume=...,start=true)，再確認 Supervisor PID 與 training_status。尚未收到啟動結果。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
 3. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)仍是提案：先可重播的shadow判斷，再獨立validation、有限延長與恢復。未實作自動LR／選分支。
 4. Stage8 seed902後段47.59m偏離保留為回歸案例；根因尚未分析，不能藉放寬50m門檻宣稱修復。
 
