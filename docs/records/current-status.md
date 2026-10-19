@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 使用者後續貼回：實驗室 compact Apply 完成 2 個根快取檔的搬移與雜湊驗證（receipt：artifacts/incoming/layout-20261019-164754-6f8532bb）；第三組 preflight 通過，ppo_lstm128、八階段、spatial_v2，runCreated=0、trainingStarted=0。遠端課程 SHA 7bfc6c733c369ad8f6c29111cabd0b20f6f618afbd3e4f8a2e9c2aea37edebfc 與本機同檔轉 CRLF 的 SHA 完全一致；本機 LF 為 6dc1ee14695C3E210A4F1E215A56DF0890FC0F8D10BC61BDA52FC676C9ACF3E6。環境 SHA 仍為 997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557。尚未收到第三組正式 run-id 或啟動結果。
+
 - 使用者貼回實驗室輸出，確認已 fast-forward 至 7ded2ea。compact_workspace 僅預覽根目錄 2 個 Python 快取檔，尚未 Apply；未收到第三組 MATLAB preflight 結果。使用者已授權後續已授權修改由代理自行 commit/push，詳見 AGENTS。
 
 - 根目錄縮編完成：19 個工具移至 tools/ 與 +trainingtools/，呼叫與根目錄定位已更新；簡報建置資料／根快取 118 檔已搬移核驗、12 份腳本保留原稿後調整路徑。43 項 Python、5 組 PowerShell、6 組 MATLAB 檢查通過；其中一組包含合成 CPU PPO 兩回合，無正式飛行訓練。詳細證據、資料保護與限制見 [重構紀錄](layout-refactor-2026-10-19.md)。本次由使用者後續 push；遠端未更新本次重構。
@@ -24,7 +26,7 @@
 ## 下一步
 
 1. 依[整理工具](../guides/workspace-layout.md)統一兩端目錄用途；遠端由使用者執行。
-2. 實驗室已 pull 目錄重構至 7ded2ea；可完成快取整理，再於 MATLAB 執行第三組輸入準備與 preflight。尚未收到其核對結果，未建立正式新 run 或啟動。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
+2. 實驗室已完成目錄重構、快取整理與第三組 preflight；下一步以 start=false 建立新的獨立 run，核對快照及記錄 run-id 後再啟動。尚未收到正式新 run-id 或啟動結果。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
 3. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)仍是提案：先可重播的shadow判斷，再獨立validation、有限延長與恢復。未實作自動LR／選分支。
 4. Stage8 seed902後段47.59m偏離保留為回歸案例；根因尚未分析，不能藉放寬50m門檻宣稱修復。
 
