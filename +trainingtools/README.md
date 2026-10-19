@@ -6,6 +6,7 @@ MATLAB 切到專案根目錄（或 `addpath` 專案根目錄），用套件名�
 | --- | --- |
 | 八階段輸入準備 | `trainingtools.prepare_progressive_v2_training()` |
 | 第三組從頭驗證的開訓前檢查 | `trainingtools.preflight_round3()` |
+| 建立獨立連續飛行模擬 SLX（已存在則拒絕覆寫） | `trainingtools.build_continuous_flight()` |
 | 舊六階段輸入準備 | `trainingtools.prepare_progressive_training()` |
 | 恢復分支準備 | `trainingtools.prepare_recovery_training(...)` |
 | 續訓來源／獎勵稽核 | `trainingtools.audit_training_resume(...)`、`trainingtools.audit_training_rewards(...)` |

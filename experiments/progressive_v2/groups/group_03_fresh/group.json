@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "group_id": "group_03_fresh",
+  "curriculum": "progressive_v2",
+  "purpose": "Third group: new agent from scratch, same eight-stage spatial_v2 curriculum",
+  "runs": [
+    {"id": "20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0", "role": "fresh_agent", "evidence": "User-provided remote retry(start=false) output and environment assertions"}
+  ]
+}

@@ -4,6 +4,8 @@
 
 ## 課程與成果入口
 
+[按組別查看 progressive_v2](experiments/progressive_v2/groups/README.md)：第二組恢復鏈與第三組從頭訓練分開查找。另有 [連續飛行模擬副本](simulations/continuous_flight/README.md)，取消 episode 終止的效果，供 Simulink 持續觀察使用；訓練與標準評估模型不變。
+
 根目錄已縮編：日常 MATLAB 入口保留，Python／PowerShell 改從 [tools/](tools/README.md) 呼叫，MATLAB 準備／稽核改為 [trainingtools 套件](+trainingtools/README.md)。例如 `python tools/training_artifacts.py ...` 與 `trainingtools.prepare_progressive_v2_training()`。舊根目錄同名檔已搬移，歷史指令需依此換入口。
 
 [第三組從頭訓練準備](docs/guides/round3-fresh-training.md)：同步完成後先 preflight；尚未建立正式新 run 或開始訓練。

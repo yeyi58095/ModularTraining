@@ -4,7 +4,9 @@
 
 ## 已完成
 
-- 使用者確認學長的手動模擬規則：非訓練時 isdone 接 Stop Simulation。唯讀檢查本機 spatial_v2 SLX XML：isdone（SID362）輸出目前接至 RL Agent（SID445）第3輸入，未找到 BlockType=Stop／名稱含 stop 的方塊；compare_training_checkpoints 使用 rlSimulinkEnv 與 sim(env,agent,...)，prepare_model 只暫改 logging／動畫／FastRestart，沒有接停止方塊。未執行模擬驗證或改 SLX，不能推定遠端 GUI 當前接線，也不能據此宣稱既有 RL 評估失效。手動模擬接線應另用工作副本核對。
+- 使用者已更正 isDone 規則，並確認需求是 Simulink 連續模擬、不是實機。新增 simulations/continuous_flight/FAFA_ContinuousFlight.slx：RL Agent done 固定 false，原 done 保留紀錄，StopTime=300；原 spatial_v2 SHA 不變，21 個嵌入程式相同，結構測試通過但未做完整飛行 sim。新增英文 groups/group_02_recovery 與 group_03_fresh 查找層級；捷徑工具不搬動任何原始 run。詳見 [本次驗證與限制](continuous-flight-and-groups-2026-10-19.md)。
+
+- 先前「非訓練時 isdone 接 Stop Simulation」的說法已由使用者更正撤回，以上方連續模擬規則為準。原始唯讀接線證據仍成立：spatial_v2 的 isdone（SID362）接至 RL Agent（SID445）第3輸入；compare_training_checkpoints 使用 rlSimulinkEnv 與 sim(env,agent,...)。標準訓練／評估保持此接線，不能把連續模擬模式當原門檻驗收。
 
 - 使用者貼回第三組正式準備結果：experiments/progressive_v2/runs/20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0，遠端根目錄 D:\daniel\ModularTraining。以 start=false 新建，spatial_v2 的 run 快照 ID 與 SHA 斷言通過，診斷目錄在該 run/diagnostics。這是新 agent 從頭訓練的獨立 run，尚未收到 Supervisor PID／啟動結果；後續只對此 run 啟動，不再次執行建立新 run 的 retry(args{:})。
 

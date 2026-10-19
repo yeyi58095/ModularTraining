@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "purpose": "continuous Simulink flight simulation only",
+  "source": "environments/spatial_v2/FAFA_Simulation.slx",
+  "source_sha256": "997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557",
+  "model_file": "FAFA_ContinuousFlight.slx",
+  "sha256": "3b8081d6a53a56ff1335cb15d5350576302e3b50e5dba2348810cd6b66a3dc04",
+  "episode_termination_enabled": false,
+  "original_done_logged_as": "isDoneDiagnostic",
+  "stop_time_seconds": 300,
+  "standard_evaluation": false,
+  "hardware_deployment": false,
+  "changes": [
+    "RL Agent done input replaced with boolean false",
+    "Original isdone retained as logged diagnostic",
+    "Finite StopTime set to 300 seconds"
+  ]
+}

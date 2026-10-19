@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "group_id": "group_02_recovery",
+  "curriculum": "progressive_v2",
+  "purpose": "Previous completed recovery branch; earlier ancestry not fully catalogued",
+  "runs": [
+    {"id": "20261017_005709_recovery_tp1d90ab61", "role": "parent_checkpoint_18500", "evidence": "Completed bundle recovery.json parent_session"},
+    {"id": "20261017_071436_recovery_tp323769ed", "role": "completed_39300", "evidence": "Verified completed model and evaluation bundle"}
+  ]
+}

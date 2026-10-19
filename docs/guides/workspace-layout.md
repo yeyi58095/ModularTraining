@@ -11,6 +11,7 @@ ModularTraining/
 ├─ tools/                      Python／PowerShell 工具及整理指令
 ├─ runtime/                    執行引擎
 ├─ environments/               版本環境
+├─ simulations/continuous_flight/ 獨立連續飛行模擬（非訓練／標準評估）
 ├─ curricula/                  課程範例與模板
 ├─ configs/                    準備／恢復配方（見分類 README）
 ├─ experiments/
@@ -20,6 +21,7 @@ ModularTraining/
 │     ├─ curriculum.json       目前課程定義
 │     ├─ assets/               該課程輸入資產（若有）
 │     ├─ runs/<run-id>/         原始實驗，保持原位
+│     ├─ groups/<group-id>/     按組別瀏覽；group.json、README 與本機 run 捷徑
 │     └─ completed_models/
 │        ├─ README.md          完成模型清單
 │        └─ <run-id>/

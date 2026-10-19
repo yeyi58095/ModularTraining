@@ -8,6 +8,13 @@ sessions/
 !/experiments/*/curriculum.json
 !/experiments/README.md
 !/experiments/*/README.md
+!/experiments/*/groups/
+/experiments/*/groups/*
+!/experiments/*/groups/README.md
+!/experiments/*/groups/*/
+/experiments/*/groups/*/*
+!/experiments/*/groups/*/README.md
+!/experiments/*/groups/*/group.json
 !/experiments/*/completed_models/
 /experiments/*/completed_models/*
 !/experiments/*/completed_models/README.md

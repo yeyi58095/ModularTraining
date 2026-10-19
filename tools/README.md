@@ -9,6 +9,7 @@
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |
 | 根目錄建置資料／快取整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/compact_workspace.ps1` |
+| 按組別查找原始 run（本機資料夾捷徑） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/link_experiment_groups.ps1`；預覽後加 `-Apply` |
 | 其餘 PowerShell 工具 | `migrate_training_session.ps1`、`organize_training_reports.ps1`、`pack_training_diagnostics.ps1`、`preserve_training_environment.ps1` 均在本目錄 |
 
 兩個整理工具預設僅預覽，`-Apply` 才移動。compact 將 `.meeting-build/` 移至 `output/meeting_training_20261014/build/`，根目錄 Python 快取封存至唯一 `artifacts/incoming/layout-*/root-python-cache/`。不刪除檔案；已有目的目錄、連結或 tracked 來源會拒絕。重跑已完成搬移不重複處理；中斷時依 manifest 找原位／目的地，不強制覆寫。
