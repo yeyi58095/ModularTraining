@@ -1,0 +1,10 @@
+{
+  "source_run": "20261017_071436_recovery_tp323769ed",
+  "checkpoint_episode": 39300,
+  "source_model": "artifacts/results/result-20261017_071436_recovery_tp323769ed-e177d217bc1f/Agent_Success.mat",
+  "release_tag": "result-20261017_071436_recovery_tp323769ed-e177d217bc1f",
+  "file": "Agent_Success.mat",
+  "sha256": "9b4aeb016dafcca917ce2a479baee65f8a7a8342bab9ab19c9e893c56e559cd1",
+  "purpose": "Completed model for inspection and evaluation; not a complete resumable run",
+  "copied_date": "2026-10-19"
+}

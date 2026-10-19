@@ -4,6 +4,12 @@
 
 ## 已完成
 
+- 2026-10-19 後續整理：根 README、文件入口、課程首頁與完成模型卡串接；workspace-layout 補完整目錄分工、遠端 main 的 pull 指令及驗證後複製模型步驟。整理工具預覽回報 Nothing to organize，沒有搬動 run。PowerShell 核對上述 Markdown 本機連結、模型 SHA256、Git 白名單與 MAT／日誌／未知 JSON 排除均通過；git diff --check 通過。Python 系統別名不可執行，故用 PowerShell 完成檢查，未執行 MATLAB 或訓練。簡報與 ZIP 的使用者變更排除於本次提交。
+
+- 課程成果展示入口已加入 [experiments](../../experiments/README.md) 與 [progressive_v2](../../experiments/progressive_v2/README.md)。Git 白名單只放行課程／成果 README 和逐模型 provenance.json，MAT 與完整日誌仍忽略。39300 成果卡保留恢復來源、評估限制及下載指令；未宣稱從頭收斂。未實作自動登錄或完整訓練歷程封裝，未新增曲線。這次僅調整文件與忽略規則，未啟動訓練。
+
+- 依使用者希望從課程內查看完成模型，本機已新增 `experiments/progressive_v2/completed_models/20261017_071436_recovery_tp323769ed/Agent_Success.mat`；從探索評估 Release `e177d217bc1f` 封存複製並核對來源／目的 SHA256 相同，旁附 `provenance.json`，入口有 README。此處僅供完成模型查找與評估，不是完整可續訓 run；原封存與既有 run 未移動。未啟動 MATLAB／訓練，未推定另一台已同步。
+
 - progressive_v2 run `20261017_071436_recovery_tp323769ed`：39300回合、attempt224、conditions_met，使用者確認沒有啟動新run。
 - 無探索Stage1–8共80次、探索Stage4–8共50次都跑滿3000步。不是130個獨立情境；[完整驗收與限制](success-evaluation-2026-10-19.md)。
 - Agent_Success與Agent39300的actor／critic可學權重及公開AgentOptions一致；optimizer私有狀態未驗證。

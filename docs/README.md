@@ -4,6 +4,8 @@
 
 平常從這三個入口開始即可：
 
+查看訓練成果可直接進入 [課程成果索引](../experiments/README.md)，或 [progressive_v2 完成模型](../experiments/progressive_v2/completed_models/README.md)。
+
 - [文件首頁](index.html)：可搜尋全部文件，依操作、研究與紀錄分類。
 - [流程與程式原文](diagrams/training-explorer.html)：方塊流程、原文、課程 JSON 範例。
 - [程式關係架構圖](architecture.html)：各元件之間的關係；[閱讀說明](reference/architecture-notes.md)。

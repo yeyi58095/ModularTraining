@@ -2,6 +2,10 @@
 
 先看 [目前狀態與接續入口](docs/records/current-status.md)、[配方分類](configs/README.md)及[兩端資料夾整理](docs/guides/workspace-layout.md)。
 
+## 課程與成果入口
+
+[全部課程成果](experiments/README.md) → [progressive_v2](experiments/progressive_v2/README.md) → [已完成模型](experiments/progressive_v2/completed_models/README.md)。成果介紹與來源隨 Git 同步；大型模型透過 Release 下載。完整目錄分工與遠端更新步驟見 [工作區整理](docs/guides/workspace-layout.md)。
+
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
 雙機同步：程式碼用 Git push/pull，成功模型與完整評估用同一 repository 的 Draft Release。`training_artifacts.py publish` 封裝／上傳／下載驗證，另一端 `sync --tag ...` 下載並核對 SHA256；結果放在獨立 `artifacts/results/`。首次設定與實驗室指令見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。

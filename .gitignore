@@ -6,6 +6,15 @@ sessions/
 !/experiments/*/
 /experiments/*/*
 !/experiments/*/curriculum.json
+!/experiments/README.md
+!/experiments/*/README.md
+!/experiments/*/completed_models/
+/experiments/*/completed_models/*
+!/experiments/*/completed_models/README.md
+!/experiments/*/completed_models/*/
+/experiments/*/completed_models/*/*
+!/experiments/*/completed_models/*/README.md
+!/experiments/*/completed_models/*/provenance.json
 !/experiments/*/runs/
 /experiments/*/runs/*
 !/experiments/*/runs/*/
