@@ -10,6 +10,7 @@
 - 2026-10-19 使用者補充：後續本專案已授權範圍內的修改，代理完成檢查後可自行 commit/push，不必再交由使用者手動 push。仍排除模型、ZIP、完整日誌及無關簡報修改；不包含自行連線遠端或啟動訓練。
 
 - 不擅自啟動／終止訓練；修改runtime、+trainingcurriculum等執行程式前，須確認該副本沒有活動訓練。遠端由代理提供指令、使用者執行，不自行連線更新或啟動。
+- 待本次遠端模型訓練結束後，修正 `runtime/training_engine.m` 設定課程自訂停止條件的順序：先設定 `StopTrainingValue` 回呼，再設定 `StopTrainingCriteria="Custom"`，避免 MATLAB 在中間狀態輸出「Custom stop training criteria require setting a function handle or function name in StopTrainingValue」警告。訓練期間不得修改 runtime；完成後先核實遠端訓練已結束再修改。
 - 使用者已授權本次程式、文件、連續模式及兩端整理工具commit/push；不包含把模型、ZIP、完整日誌或無關簡報修改加入Git。後續工作依當次使用者授權範圍執行。
 - 不重寫已有run的環境、課程、階段、checkpoint或guard快照，不刪狀態解鎖。恢復另建子run、保留來源SHA與lineage；既有pause鎖保持。不得在兩份副本同時續訓。
 - 本專案從Flower複製後獨立維護，不依賴來源路徑；使用者授權讀取D:\daniel\GradSchool\0-Beginner\Paper\Flower，未授權修改來源。
