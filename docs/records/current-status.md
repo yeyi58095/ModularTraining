@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 使用者確認學長的手動模擬規則：非訓練時 isdone 接 Stop Simulation。唯讀檢查本機 spatial_v2 SLX XML：isdone（SID362）輸出目前接至 RL Agent（SID445）第3輸入，未找到 BlockType=Stop／名稱含 stop 的方塊；compare_training_checkpoints 使用 rlSimulinkEnv 與 sim(env,agent,...)，prepare_model 只暫改 logging／動畫／FastRestart，沒有接停止方塊。未執行模擬驗證或改 SLX，不能推定遠端 GUI 當前接線，也不能據此宣稱既有 RL 評估失效。手動模擬接線應另用工作副本核對。
+
 - 使用者貼回第三組正式準備結果：experiments/progressive_v2/runs/20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0，遠端根目錄 D:\daniel\ModularTraining。以 start=false 新建，spatial_v2 的 run 快照 ID 與 SHA 斷言通過，診斷目錄在該 run/diagnostics。這是新 agent 從頭訓練的獨立 run，尚未收到 Supervisor PID／啟動結果；後續只對此 run 啟動，不再次執行建立新 run 的 retry(args{:})。
 
 - 使用者後續貼回：實驗室 compact Apply 完成 2 個根快取檔的搬移與雜湊驗證（receipt：artifacts/incoming/layout-20261019-164754-6f8532bb）；第三組 preflight 通過，ppo_lstm128、八階段、spatial_v2，runCreated=0、trainingStarted=0。遠端課程 SHA 7bfc6c733c369ad8f6c29111cabd0b20f6f618afbd3e4f8a2e9c2aea37edebfc 與本機同檔轉 CRLF 的 SHA 完全一致；本機 LF 為 6dc1ee14695C3E210A4F1E215A56DF0890FC0F8D10BC61BDA52FC676C9ACF3E6。環境 SHA 仍為 997adbbd29b199c88e956d0778c1d8022547c60e46abd9943db1d325c295d557。尚未收到第三組正式 run-id 或啟動結果。

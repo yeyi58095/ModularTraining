@@ -23,6 +23,8 @@
 
 ## 課程、環境與評估語義
 
+- 使用者依學長指示確認：非訓練的手動 Simulink 模擬需將 isdone 接到 Stop Simulation，讓終止條件能停止模擬。這不代表訓練可斷開 RL Agent 的 isdone 輸入。compare_training_checkpoints 使用 rlSimulinkEnv/sim，不能未驗證就等同手動按 Run；新增停止接線須在獨立工作副本核對，不修改活動訓練環境或既有 run 快照。
+
 - 階段之間沿用同一agent；課程模型定義在JSON最外層。新一輪從頭驗證才初始化新agent；不混用兩者。
 - all/any、區間、最低回合與連續達標條件以run課程快照為準，在checkpoint保存邊界正式判定。即時日誌僅暫算，缺資料不猜測；不另傳targetReward覆蓋課程。
 - 原配方預算／退步暫停保持。只有明確continuous_training=true的新分支設on_limit=continue、budget_enabled=false、regression_action=monitor；不等於自動LR、回滾、選分支或收斂保證。
