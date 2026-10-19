@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 使用者貼回實驗室輸出，確認已 fast-forward 至 7ded2ea。compact_workspace 僅預覽根目錄 2 個 Python 快取檔，尚未 Apply；未收到第三組 MATLAB preflight 結果。使用者已授權後續已授權修改由代理自行 commit/push，詳見 AGENTS。
+
 - 根目錄縮編完成：19 個工具移至 tools/ 與 +trainingtools/，呼叫與根目錄定位已更新；簡報建置資料／根快取 118 檔已搬移核驗、12 份腳本保留原稿後調整路徑。43 項 Python、5 組 PowerShell、6 組 MATLAB 檢查通過；其中一組包含合成 CPU PPO 兩回合，無正式飛行訓練。詳細證據、資料保護與限制見 [重構紀錄](layout-refactor-2026-10-19.md)。本次由使用者後續 push；遠端未更新本次重構。
 - 第三組開訓前入口 trainingtools.preflight_round3 已通過本機核對，固定八階段 progressive_v2／spatial_v2，從新 agent 開始；沒有建立正式第三組 run。依 [第三組準備](../guides/round3-fresh-training.md) 先同步與核對，再建立新 run、另行啟動。
 
@@ -22,7 +24,7 @@
 ## 下一步
 
 1. 依[整理工具](../guides/workspace-layout.md)統一兩端目錄用途；遠端由使用者執行。
-2. 使用者 push 本次目錄重構，實驗室 pull 並核對；第三組入口已準備，尚未建立正式新 run 或啟動。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
+2. 實驗室已 pull 目錄重構至 7ded2ea；可完成快取整理，再於 MATLAB 執行第三組輸入準備與 preflight。尚未收到其核對結果，未建立正式新 run 或啟動。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
 3. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)仍是提案：先可重播的shadow判斷，再獨立validation、有限延長與恢復。未實作自動LR／選分支。
 4. Stage8 seed902後段47.59m偏離保留為回歸案例；根因尚未分析，不能藉放寬50m門檻宣稱修復。
 
