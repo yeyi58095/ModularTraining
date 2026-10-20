@@ -10,11 +10,11 @@ function resumeFile = checkpoint_select_agent(candidates)
             names = string({entries.name});
             name = "saved_agent";
             if ~any(names == name), name = "Agent_Stage2"; end
-            if ~any(names == name), error('Checkpoint:Format','Missing PPO agent.'); end
+            if ~any(names == name), error('Checkpoint:Format','Missing agent.'); end
             data = load(candidates(k),name);
             agent = data.(name);
-            if ~isa(agent,'rl.agent.rlPPOAgent') || ~isscalar(agent)
-                error('Checkpoint:Format','Not a single PPO agent.');
+            if ~(isa(agent,'rl.agent.rlPPOAgent') || isa(agent,'rl.agent.rlSACAgent')) || ~isscalar(agent)
+                error('Checkpoint:Format','Not a single supported PPO/SAC agent.');
             end
             obs = getObservationInfo(agent); act = getActionInfo(agent);
             if ~isequal(obs.Dimension,[10 1]) || ~isequal(act.Dimension,[1 1]) || ...

@@ -6,6 +6,10 @@ MATLAB 切到專案根目錄（或 `addpath` 專案根目錄），用套件名�
 | --- | --- |
 | 八階段輸入準備 | `trainingtools.prepare_progressive_v2_training()` |
 | 第三組從頭驗證的開訓前檢查 | `trainingtools.preflight_round3()` |
+| 暫停第三組16000／17200配對診斷 | `trainingtools.review_round3(runDir)` |
+| 保存歷史shadow重播（零自動動作） | `trainingtools.shadow_learning_review(runDir,17200)` |
+| 獨立SAC試驗準備（不啟動） | `trainingtools.prepare_sac_trial()` |
+| 連續飛行完整情境重播（非標準評估） | `trainingtools.simulate_continuous_flight(checkpoint,scenarioFile,stageId,seed)` |
 | 建立獨立連續飛行模擬 SLX（已存在則拒絕覆寫） | `trainingtools.build_continuous_flight()` |
 | 舊六階段輸入準備 | `trainingtools.prepare_progressive_training()` |
 | 恢復分支準備 | `trainingtools.prepare_recovery_training(...)` |

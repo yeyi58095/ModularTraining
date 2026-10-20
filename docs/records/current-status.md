@@ -1,8 +1,16 @@
 # 目前狀態與接續入口
 
-更新：2026-10-19。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-10-20。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
 
 ## 已完成
+
+- 2026-10-20 後續：新增獨立 recurrent SAC 候選（新agent，保留原PPO）、1000回合attempt配方及500／1000回合恢復分支支援。課程／guard在checkpoint頻率邊界請求正常保存並結束段落，不必每100回合重建pool。Custom停止條件改為建構options時一起提供criteria與回呼，修正R2024b中間狀態問題。SAC短訓練、兩回合CPU實際飛行／跨階段接續與凍結評估已通過，不代表收斂或GPU／6workers性能。
+- 連續模擬已新增完整入口並完成一次3000步CPU模擬；本例原done=0，沒有證明超標後恢復。shadow歷史重播已完成393個百回合邊界，零動作執行；自動LR／回滾／啟動仍未實作。舊Stage8 seed902已補觀測／原始action證據，物理根因未定。詳見[本次交付與限制](sac-long-attempt-validation-2026-10-20.md)。
+- 使用者最新更正：**遠端尚未同步完整檔案編排**。本機整理預覽無可搬項目；groups捷徑在本機因來源run不存在而不建立。新增finish_workspace_layout.ps1，取得paused run排他鎖後執行既有整理工具；遠端按[下一步指令](../guides/round3-next-steps-2026-10-20.md)同步與Apply。舊部分快取整理回報不視為全部同步完成。
+
+- 2026-10-20 15:06（使用者貼回遠端狀態）：第三組 attempt188 正常退出（exit=0），經 control.maxAttempts=1 在下一段啟動前進入 paused，message 為 Configured maximum attempts reached; checkpoints retained。training_status 顯示保存決策至 17,200、Stage3 共 9,300 回合、conditions_not_met，日誌明示 Training stopped normally / Saved in。最新 stdout 100 回合估計 reward=1267.42、steps=1603.81、跑滿率0%；末行 trailing mean=1122.7171 的統計口徑尚未核實，不混用。保留 maxAttempts=1 與原 run，未指示重新啟動；尚未獨立檢查遠端程序退出或 MAT 可讀性。
+
+- 2026-10-20 使用者提供第三組 reward_history.csv：已記錄至 17,030 回合，證明該 run 已有正式訓練資料；目前是否仍在執行未核實。依截圖第三階段起點 7,901，後續 9,130 回合沒有一次達到 3,000 步，最高 1,880 步；最新 100 回合平均 reward=838.2661、steps=1162.65。回落伴隨步數縮短，根因未定。見[CSV 診斷與限制](round3-reward-history-2026-10-20.md)。下方「尚未收到啟動結果」為先前紀錄，已由本次資料更新。
 
 - 使用者已更正 isDone 規則，並確認需求是 Simulink 連續模擬、不是實機。新增 simulations/continuous_flight/FAFA_ContinuousFlight.slx：RL Agent done 固定 false，原 done 保留紀錄，StopTime=300；原 spatial_v2 SHA 不變，21 個嵌入程式相同，結構測試通過但未做完整飛行 sim。新增英文 groups/group_02_recovery 與 group_03_fresh 查找層級；捷徑工具不搬動任何原始 run。詳見 [本次驗證與限制](continuous-flight-and-groups-2026-10-19.md)。
 
@@ -31,10 +39,11 @@
 
 ## 下一步
 
-1. 依[整理工具](../guides/workspace-layout.md)統一兩端目錄用途；遠端由使用者執行。
-2. 第三組 run 20261019_164959_tpc77cb232_0370_4212_a632_e1644201eec0 已於實驗室準備並驗證環境；下一步由使用者對此 run 執行 retry(resume=...,start=true)，再確認 Supervisor PID 與 training_status。尚未收到啟動結果。舊根目錄工具指令須換為 tools/ 或 trainingtools 套件。
-3. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)仍是提案：先可重播的shadow判斷，再獨立validation、有限延長與恢復。未實作自動LR／選分支。
-4. Stage8 seed902後段47.59m偏離保留為回歸案例；根因尚未分析，不能藉放寬50m門檻宣稱修復。
+1. 遠端保持第三組paused，依[下一步指令](../guides/round3-next-steps-2026-10-20.md)pull與整理／建立groups捷徑，保留本機未提交檔。若需另一台完整成果模型，再依workspace-layout下載與核對SHA。
+2. 執行trainingtools.review_round3：16000／17200、Stage3、同seed，有／無探索共4次CPU純sim；遠端模型尚未傳到本機，這項診斷尚待使用者執行。不要把17030 CSV的全區間統計延伸到17200。
+3. 依診斷選擇保留LR的PPO長attempt子分支，或獨立SAC新agent試驗；準備工具均不啟動。SAC首次啟動限1 attempt、最多1000回合；不得同時續訓原PPO副本。
+4. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)第一階段shadow已實作；獨立validation／有限自動介入與冪等啟動尚未完成，不能宣稱無人值守調參。
+5. Stage8 seed902後段47.59m偏離保留為回歸案例；已補trace證據，仍缺控制／路段因果驗證，不能藉放寬50m門檻宣稱修復。
 
 ## 查找紀錄
 

@@ -2,6 +2,7 @@ function validate_agent(agent,spec)
 % 模型相容性檢查：確認 PPO 類型、LSTM／隱藏層大小與主要學習設定符合 spec。
 % 不修改權重；檢查失敗拋出對應錯誤，避免用錯模型或學習參數續訓。
 % Prevent a checkpoint with a different architecture from silently resuming.
+if strcmp(spec.algorithm,'SAC'), trainingmodels.validate_sac(agent,spec); return; end
 assert(isa(agent,'rl.agent.rlPPOAgent'),'Modular:AgentType','Expected a PPO checkpoint.');
 a = getModel(getActor(agent)); c = getModel(getCritic(agent));
 if isfield(spec,'explorationStdScale')

@@ -9,6 +9,7 @@
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |
 | 根目錄建置資料／快取整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/compact_workspace.ps1` |
+| 暫停後編排收尾（含排他鎖） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/finish_workspace_layout.ps1 -SessionPath <run>`；套用加 `-Apply` |
 | 按組別查找原始 run（本機資料夾捷徑） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/link_experiment_groups.ps1`；預覽後加 `-Apply` |
 | 其餘 PowerShell 工具 | `migrate_training_session.ps1`、`organize_training_reports.ps1`、`pack_training_diagnostics.ps1`、`preserve_training_environment.ps1` 均在本目錄 |
 

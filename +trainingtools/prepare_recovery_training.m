@@ -38,8 +38,8 @@ end
 trainingguard.assess([],[],0,settings.guard);
 assert(mod(settings.max_additional_episodes,settings.episodes_per_process)==0, ...
     'Recovery:Budget','Budget must contain whole segments.');
-assert(settings.episodes_per_process==settings.guard.window, ...
-    'Recovery:Window','Use one guard window per process for this recovery recipe.');
+assert(mod(settings.episodes_per_process,settings.guard.window)==0, ...
+    'Recovery:Window','Process length must contain whole guard windows.');
 % 父 run 必須停止且取得鎖，避免複製正在保存或被另一程序更新的模型。
 lock=System.IO.File.Open(char(fullfile(sourceSession,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
@@ -53,6 +53,8 @@ checkpoint_select_agent(checkpoint);
 assert(episode==settings.checkpoint_episode,'Recovery:Episode','History/episode mismatch.');
 parentHash=checkpointreview.sha256(checkpoint);
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
+assert(strcmp(spec.algorithm,'PPO'),'Recovery:Algorithm', ...
+    'This recovery recipe currently supports PPO only; prepare SAC as an independent fresh run.');
 cfg=jsondecode(fileread(fullfile(sourceSession,'control.json')));
 plan=trainingcurriculum.load_plan(fullfile(sourceSession,'curriculum.json'),true);
 assert(strcmp(plan.model,spec.name),'Recovery:Model','Parent model and curriculum differ.');
@@ -142,6 +144,8 @@ cfg.diagnosticDir=fullfile(folder,'diagnostics'); cfg.matlabExe=fullfile(matlabr
 cfg.resumeAgentFile=''; cfg.curriculumEnabled=true; cfg.curriculumName=group;
 cfg.episodesPerProcess=settings.episodes_per_process;
 cfg.checkpointEvery=min(cfg.checkpointEvery,cfg.episodesPerProcess);
+assert(mod(settings.guard.window,cfg.checkpointEvery)==0, ...
+    'Recovery:Window','Guard windows must align with checkpoint boundaries.');
 cfg.averageWindow=min(cfg.averageWindow,cfg.episodesPerProcess);
 cfg.maxAttempts=0;
 trainingcurriculum.write_json(fullfile(staging,'control.json'),cfg);

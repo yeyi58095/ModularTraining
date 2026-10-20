@@ -2,7 +2,10 @@ function agent = build_agent(spec,obsInfo,actInfo,device)
 % PPO 建構器：將 spec 轉成 Gaussian actor、value critic 與 optimizer 設定。
 % 輸入 spec、觀測／動作規格及裝置，回傳新 agent；此函式不載入 checkpoint 或開始 train。
 % Shared PPO builder. Profiles contain architecture and optimizer settings.
-assert(strcmp(spec.algorithm,'PPO'),'Modular:Algorithm','This builder currently supports PPO only.');
+if strcmp(spec.algorithm,'SAC')
+    agent=trainingmodels.build_sac(spec,obsInfo,actInfo,device); return
+end
+assert(strcmp(spec.algorithm,'PPO'),'Modular:Algorithm','Unsupported algorithm.');
 assert(spec.sampleTime==0.1,'Modular:SampleTime','The current FAFA environment requires sampleTime=0.1.');
 validateattributes(spec.lstmUnits,{'numeric'},{'scalar','integer','nonnegative'});
 assert(isequal(obsInfo.Dimension,[10 1]) && isequal(actInfo.Dimension,[1 1]), ...

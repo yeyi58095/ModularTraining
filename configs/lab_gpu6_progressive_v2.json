@@ -6,7 +6,7 @@
   "fallbackWorkers": [4, 2, 1],
   "device": "gpu",
   "checkpointEvery": 100,
-  "episodesPerProcess": 100,
+  "episodesPerProcess": 1000,
   "averageWindow": 100,
   "maxAttempts": 0,
   "maxNoProgressFailures": 3,

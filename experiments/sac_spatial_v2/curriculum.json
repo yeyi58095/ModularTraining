@@ -1,0 +1,410 @@
+{
+  "schema_version": 2,
+  "environment": "spatial_v2",
+  "model": "sac_lstm128",
+  "stages": [
+    {
+      "id": "straight_calm",
+      "trajectory": {
+        "type": "mat",
+        "file": "../progressive_v2/assets/straight.mat",
+        "waypoints_variable": "waypoints",
+        "velocity_variable": "velocity"
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 2000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 1200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2700
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.8
+          }
+        ]
+      },
+      "max_episodes": 25000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "gentle_s_calm",
+      "trajectory": {
+        "type": "mat",
+        "file": "../progressive_v2/assets/gentle_s.mat",
+        "waypoints_variable": "waypoints",
+        "velocity_variable": "velocity"
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 3000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 1800
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2750
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.85
+          }
+        ]
+      },
+      "max_episodes": 20000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "fixed_turns_calm",
+      "trajectory": {
+        "type": "fixed_builtin"
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 3000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2000
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 20000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_calm",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 5000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 30000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_mild_steady_wind",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          -1,
+          1
+        ],
+        "north_mps": [
+          -1,
+          1
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 2000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 15000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_mild_wind_turbulence",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          -1,
+          1
+        ],
+        "north_mps": [
+          -1,
+          1
+        ],
+        "turbulence": [
+          0,
+          1
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 3000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 20000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_strong_wind_mild_turbulence",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          -3,
+          3
+        ],
+        "north_mps": [
+          -3,
+          3
+        ],
+        "turbulence": [
+          0,
+          1
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 5000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 25000,
+      "on_limit": "pause"
+    },
+    {
+      "id": "random_full_wind",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 10
+      },
+      "wind": {
+        "east_mps": [
+          -3,
+          3
+        ],
+        "north_mps": [
+          -3,
+          3
+        ],
+        "turbulence": [
+          0,
+          2
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 10000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2900
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.95
+          }
+        ]
+      },
+      "max_episodes": 40000,
+      "on_limit": "pause"
+    }
+  ]
+}

@@ -5,6 +5,7 @@
 | 課程 | 已登錄成果 |
 | --- | --- |
 | [progressive_v2](progressive_v2/README.md) | 39300 回合完成模型、無探索與探索評估 |
+| [sac_spatial_v2](sac_spatial_v2/README.md) | 獨立SAC候選；短測通過，尚無正式收斂成果 |
 
 成果代表該次 run 的實際經驗；以封存的課程、環境與恢復 lineage 為準，不保證目前配方重新訓練必然得到同樣結果。
 

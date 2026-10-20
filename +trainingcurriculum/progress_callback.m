@@ -1,6 +1,8 @@
-function stop = progress_callback(stats,stage,stageIndex,stageCount,stageStartEpisode,stopEpisode)
+function stop = progress_callback(stats,stage,stageIndex,stageCount,stageStartEpisode,stopEpisode,checkpointEvery,guardRules)
 % Stream a parser-compatible episode row with provisional stage progress.
-% The custom stop returns true only at the existing MaxEpisodes boundary.
+% Request normal return at the process cap or an actionable checkpoint boundary.
+if nargin<7,checkpointEvery=Inf;end
+if nargin<8,guardRules=[];end
 stop=false;
 try
     episodeIndex=column(stats,'EpisodeIndex');
@@ -37,8 +39,28 @@ end
 try
     indices=column(stats,'EpisodeIndex');
     if ~isempty(indices), stop=indices(end)>=stopEpisode; end
-catch
-    % MaxEpisodes remains a second, native cap if statistics are unavailable.
+    if ~stop && ~isempty(indices) && mod(indices(end),checkpointEvery)==0
+        % This only requests normal train return. The engine saves Agent_Final
+        % first, then makes the authoritative guard/curriculum decision.
+        rewards=column(stats,'EpisodeReward'); steps=column(stats,'EpisodeSteps');
+        assert(isequal(indices(:),(1:indices(end))') && ...
+            numel(rewards)==numel(indices) && numel(steps)==numel(indices), ...
+            'Curriculum:CallbackHistory','Boundary decision requires contiguous full history.');
+        decision=trainingcurriculum.decide(stage,rewards(stageStartEpisode+1:end),steps(stageStartEpisode+1:end));
+        stop=~strcmp(decision.action,'continue');
+        if ~isempty(guardRules)
+            assessment=trainingguard.assess(rewards,steps,stageStartEpisode,guardRules);
+            regressionPause=~isfield(guardRules,'regression_action') || strcmp(guardRules.regression_action,'pause');
+            budgetEnabled=~isfield(guardRules,'budget_enabled') || guardRules.budget_enabled;
+            stop=stop || (regressionPause && assessment.suspected_regression) || ...
+                (budgetEnabled && indices(end)>=guardRules.origin_episode+guardRules.max_additional_episodes);
+        end
+        if stop, fprintf('Boundary stop requested at episode %d; save and formal decision follow.\n',indices(end)); end
+    end
+catch err
+    % Stop normally and save for diagnosis rather than silently ignoring a guard.
+    stop=true;
+    warning('Curriculum:BoundaryCheck','Boundary check failed; saving and stopping: %s',err.message);
 end
 end
 

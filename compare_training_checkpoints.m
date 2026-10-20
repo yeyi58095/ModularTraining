@@ -231,12 +231,14 @@ try
                 actor=getActor(agent); actor.UseDevice='cpu';
                 actor=checkpointreview.scale_exploration_actor(actor,opt.explorationStdScale);
                 agent=setActor(agent,actor);
-                critic=getCritic(agent); critic.UseDevice='cpu'; agent=setCritic(agent,critic);
+                critic=getCritic(agent);
+                for criticIndex=1:numel(critic),critic(criticIndex).UseDevice='cpu';end
+                agent=setCritic(agent,critic);
                 % Evaluation only: sample the frozen policy when requested.
                 % This never enables learning or changes the saved checkpoint.
                 agent.UseExplorationPolicy=opt.useExploration;
                 beforeActor=getLearnableParameters(getActor(agent));
-                beforeCritic=getLearnableParameters(getCritic(agent));
+                beforeCritic=criticParameters(agent);
                 assignin('base','Agent_Stage2',agent);
                 env=rlSimulinkEnv('FAFA_Simulation','FAFA_Simulation/RL Agent', ...
                     getObservationInfo(agent),getActionInfo(agent),'UseFastRestart','off');
@@ -247,7 +249,7 @@ try
                 experience=sim(env,agent,rlSimulationOptions('MaxSteps',opt.maxSteps, ...
                     'NumSimulations',1,'UseParallel',false,'StopOnError','on'));
                 assert(isequaln(beforeActor,getLearnableParameters(getActor(agent))) && ...
-                    isequaln(beforeCritic,getLearnableParameters(getCritic(agent))), ...
+                    isequaln(beforeCritic,criticParameters(agent)), ...
                     'Evaluation:Weights','Unexpected weight mutation during evaluation.');
                 row=checkpointreview.summarize(experience,opt.maxSteps);
                 row.wind_east_mps=scenario.wind(1); row.wind_north_mps=scenario.wind(2);
@@ -311,6 +313,12 @@ report.phase='complete';
 writeReport(fullfile(out,'evaluation.json'),report);
 disp(struct2table([report.results{:}]));
 fprintf('Complete. No training or rollback. Share: %s\n',fullfile(out,'evaluation.json'));
+end
+
+function parameters=criticParameters(agent)
+% PPO has one value critic; SAC has two independent Q critics.
+critics=getCritic(agent);parameters=cell(1,numel(critics));
+for k=1:numel(critics),parameters{k}=getLearnableParameters(critics(k));end
 end
 
 function in=resetScenario(in,data)

@@ -81,8 +81,8 @@ else
     assert(isscalar(name) && ~isempty(regexp(name,'^[a-z][a-z0-9_]*$','once')), ...
         'Modular:ModelName','Use a model profile name, not a file path.');
     spec = trainingmodels.load_profile(name);
-    assert(strcmp(spec.name,name) && strcmp(spec.algorithm,'PPO'), ...
-        'Modular:Profile','Profile name must match its filename; this runtime currently supports PPO.');
+    assert(strcmp(spec.name,name) && any(strcmp(spec.algorithm,{'PPO','SAC'})), ...
+        'Modular:Profile','Profile name must match its filename; supported algorithms: PPO/SAC.');
     cfg = struct('curriculumEnabled',~isempty(plan));
     if ~isempty(plan)
         [~,planName]=fileparts(planFile);

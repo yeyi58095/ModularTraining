@@ -263,8 +263,8 @@ else
     loadedAgent = load(char(resumeAgentFile), char(agentVariable));
     Agent_Stage2 = loadedAgent.(char(agentVariable));
     clear loadedAgent;
-    if ~isa(Agent_Stage2, 'rl.agent.rlPPOAgent') || ~isscalar(Agent_Stage2)
-        error('Training:AgentType', 'Checkpoint must contain one PPO agent.');
+    if ~(isa(Agent_Stage2,'rl.agent.rlPPOAgent') || isa(Agent_Stage2,'rl.agent.rlSACAgent')) || ~isscalar(Agent_Stage2)
+        error('Training:AgentType', 'Checkpoint must contain one supported PPO/SAC agent.');
     end
     savedObs = getObservationInfo(Agent_Stage2);
     savedAct = getActionInfo(Agent_Stage2);
@@ -287,7 +287,9 @@ actorNet = getModel(getActor(Agent_Stage2));
 fprintf('Actor network layers: %d\n', numel(actorNet.Layers));
 fprintf('Actor total parameters: %d\n', countParams(actorNet));
 
-criticNet = getModel(getCritic(Agent_Stage2));
+displayCritics = getCritic(Agent_Stage2);
+criticNet = getModel(displayCritics(1));
+fprintf('Number of critics: %d (architecture below is critic 1)\n',numel(displayCritics));
 fprintf('Critic network layers: %d\n', numel(criticNet.Layers));
 fprintf('Critic total parameters: %d\n', countParams(criticNet));
 
@@ -368,13 +370,25 @@ workerConfig = struct('scriptDir', scriptDir, 'modelName', modelName, ...
 %% Training
 % 建立訓練 options 與每個實際 worker 的 seed，課程採段落回合數停止。
 maxstep = ceil(300/DT);
+stopCriteria="AverageReward";stopValue=targetReward;
+if ~isempty(curriculumContext)
+    stopEpisode=resumeEpisode+maxEpisodes;
+    guardRules=[];
+    guardFile=fullfile(saveDir,'training_guard.json');
+    if isfile(guardFile),guardRules=jsondecode(fileread(guardFile));end
+    stopCriteria="Custom";
+    stopValue=@(stats) trainingcurriculum.progress_callback( ...
+        stats,curriculumContext.stage,curriculumContext.state.stage_index, ...
+        curriculumContext.stageCount,curriculumContext.state.start_episode,stopEpisode, ...
+        checkpointEvery,guardRules);
+end
 % MaxEpisodes 以 resumeEpisode+新增回合設定；MaxStepsPerEpisode=300/DT，所以目前每回合上限 3000 步。
 % EpisodeFrequency 表示按回合頻率保存；保存條件不等於成功條件，也不保證意外退出前未滿頻率的回合仍存在。
 trainingOpts = rlTrainingOptions( ...
     "MaxEpisodes", resumeEpisode + maxEpisodes, ...
     "MaxStepsPerEpisode", maxstep, ...
-    "StopTrainingCriteria", "AverageReward", ...
-    "StopTrainingValue", targetReward, ...
+    "StopTrainingCriteria", stopCriteria, ...
+    "StopTrainingValue", stopValue, ...
     "ScoreAveragingWindowLength", averageWindow, ...
     "SaveAgentCriteria", "EpisodeFrequency", ...
     "SaveAgentValue", checkpointEvery, ...
@@ -389,15 +403,9 @@ trainingOpts = rlTrainingOptions( ...
 trainingOpts.ParallelizationOptions.Mode = "sync";
 % 課程以本段 EpisodeCount 結束，不用跨階段平均 reward 提前通關。
 if ~isempty(curriculumContext)
-    % The callback mirrors the existing MaxEpisodes boundary and adds the
-    % stage summary to MATLAB's parser-compatible episode row. Formal course
-    % decisions still happen only after the completed segment is saved.
-    stopEpisode=resumeEpisode+maxEpisodes;
+    % Callback may request normal return at a checkpoint boundary. Save first;
+    % authoritative course/guard decisions remain below checkpoint_save_final.
     trainingOpts.Verbose=false;
-    trainingOpts.StopTrainingCriteria="Custom";
-    trainingOpts.StopTrainingValue=@(stats) trainingcurriculum.progress_callback( ...
-        stats,curriculumContext.stage,curriculumContext.state.stage_index, ...
-        curriculumContext.stageCount,curriculumContext.state.start_episode,stopEpisode);
 end
 % 1:numWorkers 產生 n 個連續偏移，與實際 pool 對齊；不同 attempt 的 baseSeed 會改變。
 trainingOpts.ParallelizationOptions.WorkerRandomSeeds = baseSeed + (1:numWorkers);

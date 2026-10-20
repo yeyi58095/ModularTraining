@@ -10,7 +10,8 @@
 - 2026-10-19 使用者補充：後續本專案已授權範圍內的修改，代理完成檢查後可自行 commit/push，不必再交由使用者手動 push。仍排除模型、ZIP、完整日誌及無關簡報修改；不包含自行連線遠端或啟動訓練。
 
 - 不擅自啟動／終止訓練；修改runtime、+trainingcurriculum等執行程式前，須確認該副本沒有活動訓練。遠端由代理提供指令、使用者執行，不自行連線更新或啟動。
-- 待本次遠端模型訓練結束後，修正 `runtime/training_engine.m` 設定課程自訂停止條件的順序：先設定 `StopTrainingValue` 回呼，再設定 `StopTrainingCriteria="Custom"`，避免 MATLAB 在中間狀態輸出「Custom stop training criteria require setting a function handle or function name in StopTrainingValue」警告。訓練期間不得修改 runtime；完成後先核實遠端訓練已結束再修改。
+- 2026-10-20 第三組已正常保存至17200並paused。Custom停止條件已改為建構rlTrainingOptions時同時傳入criteria與回呼；R2024b實測「先向AverageReward options寫回呼」會報型別錯誤，原待辦順序撤回。修改runtime前仍須確認該副本沒有活動訓練。
+- 使用者2026-10-20授權本機有上限的候選演算法／飛行測試及整理；不是無限訓練授權。新增SAC是獨立新agent，不能把PPO checkpoint轉成SAC接續。遠端仍由使用者執行。
 - 使用者已授權本次程式、文件、連續模式及兩端整理工具commit/push；不包含把模型、ZIP、完整日誌或無關簡報修改加入Git。後續工作依當次使用者授權範圍執行。
 - 不重寫已有run的環境、課程、階段、checkpoint或guard快照，不刪狀態解鎖。恢復另建子run、保留來源SHA與lineage；既有pause鎖保持。不得在兩份副本同時續訓。
 - 本專案從Flower複製後獨立維護，不依賴來源路徑；使用者授權讀取D:\daniel\GradSchool\0-Beginner\Paper\Flower，未授權修改來源。
@@ -41,5 +42,6 @@
 ## 目前接續邊界
 
 - 目標run 20261017_071436_recovery_tp323769ed已39300回合完成；80次無探索與50次探索皆跑滿，模型權重比對及來源見current-status。Stage8 seed902仍有47.59m後段偏離，不能稱全面穩健。
-- 進度可觀察性已實作，無須重做舊待辦。第三組新agent、八階段、固定spatial_v2的 preflight 已實作於 trainingtools.preflight_round3；先完成使用者 push／遠端 pull，再建立並核對新 run，尚未啟動正式run。JSON自動決策仍是提案；不要把18500歷史恢復配方當成下一輪指令。
+- 第三組PPO已在17200正常paused，優先用trainingtools.review_round3做16000／17200配對診斷。使用者更正遠端尚未同步完整編排，依docs/guides/round3-next-steps-2026-10-20.md同步；不要重建或重啟第三組。
+- 新配方每attempt最多1000、每100回合checkpoint；callback可在達標／guard邊界正常結束段落，保存後才正式判定。500／1000為上限，過關／預算可提早結束。既有run control不自動改寫。shadow_learning_review只出建議，未實作自動LR／選分支；18500是歷史配方。
 - 測試依改動範圍執行；合成／假引擎通過不冒稱GPU、多workers或長期收斂已驗證。不得因測試需求擅自啟動正式訓練。
