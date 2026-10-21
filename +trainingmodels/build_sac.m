@@ -24,6 +24,7 @@ opts.ResetExperienceBufferBeforeTraining=false;
 opts.InfoToSave.ExperienceBuffer=true;
 opts.InfoToSave.Optimizer=true;
 opts.InfoToSave.Target=true;
+opts.InfoToSave.PolicyState=true; % Preserve learned SAC entropy weight on resume.
 agent=rlSACAgent(obs,act,rlAgentInitializationOptions( ...
     'NumHiddenUnit',spec.lstmUnits,'UseRNN',true),opts);
 actor=getActor(agent); actor.UseDevice=device; agent=setActor(agent,actor);

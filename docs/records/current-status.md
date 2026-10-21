@@ -1,8 +1,24 @@
 # 目前狀態與接續入口
 
-更新：2026-10-20。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-10-21。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
 
 ## 已完成
+
+- 2026-10-21 新組方案：使用者已選單程序CPU SAC、每attempt最多500、每100checkpoint、先1attempt。已加入顯式serial執行與R2024b裝置恢復、新agent保存PolicyState；本機CPU/GPU合成恢復與兩回合真實serial飛行（108／124步）、跨段保存及5步凍結評估通過。這不是長期收斂／速度保證。遠端舊組尚未paused時不要pull或啟動新組。[交付驗證](sac-serial-delivery-2026-10-21.md)、[完整遠端指令](../guides/sac-fresh-serial-2026-10-21.md)。
+
+- 2026-10-21 重要更正：後續真實飛行堆疊確認R2024b預設走新版OffPolicyTrainer，包含parallel路徑亦依LearningFrequency計算epoch。先前舊ExpSyncParallelTrainer／直接replay測試不能證明遠端實際頻率失效，該根因推論撤回。下方早期頻率結論僅描述legacy入口。GPU保存載入轉CPU已獨立重現；使用者已選單程序CPU、每attempt500回合作獨立對照，遠端舊組仍待正常暫停。
+
+- 2026-10-21 使用者授權低RAM本機測試後，單程序CPU/GPU合成probe通過：32步、頻率1/8的serial學習呼叫為25/4，平行trainer使用的直接replay入口皆32次；未開pool。另重現GPU agent保存載入後actor／雙critic皆cpu，權重與replay長度保留；專案resume未重新套用device，提供遠端低GPU使用率的具體候選機制。尚未檢查遠端記憶體agent或修正runtime，不代表GPU必更快或收斂已修好。見[本機測試](sac-local-probe-2026-10-21.md)。
+
+- 2026-10-21 SAC唯讀程式稽核：引擎CRLF SHA與遠端attempt3完全吻合。本機R2024b同步平行SAC逐experience直接呼叫replay learning，未經LearningFrequency=32的串行頻率gate；可解釋主程序長時間忙碌的候選機制，不宣稱遠端toolbox逐檔一致／32倍加速／退步根因。官方R2024b另標示recurrent parallel不支援，需保留支援性限制。GPU續載狀態、重複載入與保存成本仍需量測。見[程式稽核](sac-code-review-2026-10-21.md)。未改runtime或啟停訓練。
+
+- 2026-10-21 使用者補充GPU與CPU採樣：GTX1660約42秒GPU使用率0–3%；另一次10秒CPU採樣，對照attempt3程序樹確認主MATLAB PID22304為344.8%單核心用量、六個pool子程序各約0.2%。支持優先查主程序工作與等待時間，不證明整段瓶頸或網路在CPU運算。使用者確認仍在等待目前attempt正常結束；不能視為已paused。
+
+- 2026-10-21 後續診斷ZIP已核對：SAC control.maxAttempts=1，採集時仍為attempt3，尚未確認paused。三段均設定gpu且取得6workers；前兩段1000回合分別耗時1h10m26s／10h38m14s，包含啟停與保存的吞吐74.98／39.22步每秒，不能只歸因回合變長，也未定位GPU／模擬／保存瓶頸。最新2150回合，最近100回合reward=694.60、steps=844.73、跑滿率18%。詳見同份[SAC日誌核對](sac-log-review-2026-10-21.md)的ZIP補充；後續索取資料直接提供可貼上指令。
+
+- 2026-10-21 使用者提供 SAC 三份 stdout：run `20261020_201931_tpad1142e4_44c3_4019_a786_72e4faa3b614` 已記錄 1–2144 回合，全為 Stage1。前兩段正常保存；第三段目前程序狀態未知。1313、1787起明顯退步均在同一attempt／階段；2133–2144重新跑滿，但最新100回合均值reward=559.30、steps=702.38、跑滿率12%，未過關。每段取得6workers；無時間戳，不能判定速度瓶頸。詳見[SAC日誌核對](sac-log-review-2026-10-21.md)。下方「尚未收到SAC正式啟動回報」已由本次資料取代；不據此授權額外啟動。
+
+- 2026-10-20使用者貼回第三組四次配對評估：16000無探索1658步／探索1649步，17200無探索1786步／探索530步；全部distance_threshold，獨立路線最大距離約50.26–50.59m。不能只歸因探索噪音，也未證明LR根因。保持paused，下一步取得已生成的兩個report資料夾之traces，不重跑、不直接啟動17200子分支。見[結果與限制](round3-paired-review-2026-10-20.md)。
 
 - 2026-10-20 後續：新增獨立 recurrent SAC 候選（新agent，保留原PPO）、1000回合attempt配方及500／1000回合恢復分支支援。課程／guard在checkpoint頻率邊界請求正常保存並結束段落，不必每100回合重建pool。Custom停止條件改為建構options時一起提供criteria與回呼，修正R2024b中間狀態問題。SAC短訓練、兩回合CPU實際飛行／跨階段接續與凍結評估已通過，不代表收斂或GPU／6workers性能。
 - 連續模擬已新增完整入口並完成一次3000步CPU模擬；本例原done=0，沒有證明超標後恢復。shadow歷史重播已完成393個百回合邊界，零動作執行；自動LR／回滾／啟動仍未實作。舊Stage8 seed902已補觀測／原始action證據，物理根因未定。詳見[本次交付與限制](sac-long-attempt-validation-2026-10-20.md)。
@@ -39,9 +55,13 @@
 
 ## 下一步
 
+最新優先：等遠端舊SAC正常paused，依[新組指令](../guides/sac-fresh-serial-2026-10-21.md)同步並建立獨立serial CPU／500回合試跑；不直接續訓或改寫舊SAC／PPO。下列1000回合初試建議是先前方案。
+
+2026-10-20後續：已收到根目錄paired-review ZIP，完成四份MAT軌跡唯讀抽取與路線疊圖。16000兩次於左下轉彎附近失敗，17200無探索在左側向北路段、有探索在右側向南路段失敗，並非共同單一彎點。見[軌跡初步核對](round3-paired-review-2026-10-20.md)。建議下一輪獨立SAC限1 attempt／最多1000回合，由使用者遠端執行；不必等待完整PPO因果分析。尚未收到SAC正式啟動回報。
+
 1. 遠端保持第三組paused，依[下一步指令](../guides/round3-next-steps-2026-10-20.md)pull與整理／建立groups捷徑，保留本機未提交檔。若需另一台完整成果模型，再依workspace-layout下載與核對SHA。
-2. 執行trainingtools.review_round3：16000／17200、Stage3、同seed，有／無探索共4次CPU純sim；遠端模型尚未傳到本機，這項診斷尚待使用者執行。不要把17030 CSV的全區間統計延伸到17200。
-3. 依診斷選擇保留LR的PPO長attempt子分支，或獨立SAC新agent試驗；準備工具均不啟動。SAC首次啟動限1 attempt、最多1000回合；不得同時續訓原PPO副本。
+2. trainingtools.review_round3四次評估與本機軌跡初步分析已完成；window更新／控制因果仍待驗證。不要把17030 CSV的全區間統計延伸到17200。
+3. 下一輪建議獨立SAC新agent試驗；準備工具不啟動。SAC首次啟動限1 attempt、最多1000回合；原PPO保持paused，不同時啟動PPO子分支。
 4. [JSON自動決策](../research/autonomous-curriculum-proposal-2026-10-18.md)第一階段shadow已實作；獨立validation／有限自動介入與冪等啟動尚未完成，不能宣稱無人值守調參。
 5. Stage8 seed902後段47.59m偏離保留為回歸案例；已補trace證據，仍缺控制／路段因果驗證，不能藉放寬50m門檻宣稱修復。
 

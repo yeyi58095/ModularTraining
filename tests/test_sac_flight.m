@@ -1,6 +1,7 @@
-function test_sac_flight(savedSession)
+function test_sac_flight(savedSession,executionMode)
 % Two real UAV episodes, CPU/one worker, two stages. NOT a learning benchmark.
 if nargin<1,savedSession="";end
+if nargin<2,executionMode="parallel";end
 root=fileparts(fileparts(mfilename('fullpath')));addpath(root,fullfile(root,'runtime'));
 out=fullfile(root,'tests','output');
 receiptFile=fullfile(out,'sac-flight-latest.json');
@@ -12,6 +13,7 @@ stage.max_episodes=500;stage.on_limit='pause';plan.stages={stage,stage};
 plan.stages{1}.id='smoke_a';plan.stages{2}.id='smoke_b';
 file=fullfile(fixture,'curriculum.json');trainingcurriculum.write_json(file,plan);
 info=retry(curriculum=file,environment="spatial_v2",workers=1,minWorkers=1,fallbackWorkers=[], ...
+    executionMode=executionMode, ...
     device="cpu",checkpointEvery=1,episodesPerProcess=500,averageWindow=1, ...
     maxAttempts=2,maxNoProgressFailures=1,retryDelaySeconds=1,startupTimeoutSeconds=300, ...
     stallTimeoutSeconds=600,start=false);

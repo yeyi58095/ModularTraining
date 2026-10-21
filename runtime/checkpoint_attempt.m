@@ -4,6 +4,7 @@ function checkpoint_attempt(configFile)
 % One fresh MATLAB process. Supervisor handles native process crashes.
     cfg = jsondecode(fileread(configFile));
     if ~isfield(cfg,'minWorkers'), cfg.minWorkers = 1; end
+    if ~isfield(cfg,'executionMode'),cfg.executionMode='parallel';end
     addpath(cfg.scriptDir);
     % 先選可讀且相容 checkpoint，並將實際來源傳給 engine。
     resumeFile = checkpoint_select_agent(cfg.resumeCandidates);
@@ -16,6 +17,7 @@ function checkpoint_attempt(configFile)
         'trainingPlots',"none",'closePoolOnExit',true, ...
         'poolDiagnosticDir',cfg.attemptDir);
     outcome=[];
+    checkpointOverrides.executionMode=string(cfg.executionMode);
     if isfield(cfg,'modularRoot')
         addpath(cfg.modularRoot);
         [environmentModel,environmentManifest]=trainingenv.resolve(cfg.sessionDir);

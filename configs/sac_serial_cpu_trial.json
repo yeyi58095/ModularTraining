@@ -1,0 +1,19 @@
+{
+  "curriculum": "experiments/sac_spatial_v2/curriculum.json",
+  "environment": "spatial_v2",
+  "executionMode": "serial",
+  "workers": 1,
+  "minWorkers": 1,
+  "fallbackWorkers": [],
+  "device": "cpu",
+  "checkpointEvery": 100,
+  "episodesPerProcess": 500,
+  "averageWindow": 100,
+  "maxAttempts": 1,
+  "maxNoProgressFailures": 1,
+  "retryDelaySeconds": 30,
+  "startupTimeoutSeconds": 600,
+  "stallTimeoutSeconds": 1800,
+  "licenseRetryDelaySeconds": 60,
+  "start": false
+}

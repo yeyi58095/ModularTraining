@@ -11,6 +11,7 @@ p.addParameter('curriculum',"");
 p.addParameter('environment',"");
 p.addParameter('workers',6); p.addParameter('fallbackWorkers',[4 2]);
 p.addParameter('minWorkers',1);
+p.addParameter('executionMode','parallel');
 % episodesPerProcess 是每個 MATLAB 程序新增的段落回合數；課程還會受階段／guard 剩餘預算限制。
 p.addParameter('checkpointEvery',100); p.addParameter('episodesPerProcess',1000);
 % targetReward／averageWindow 用於非課程成功規則；課程以 JSON advance_when 為準。
@@ -101,7 +102,7 @@ else
     folder=fullfile(sessions,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' tag]);
 end
 % 只覆蓋本次明確傳入的 resume 參數，未指定者沿用既有 control。
-keys = {'workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
+keys = {'executionMode','workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
     'averageWindow','device','maxAttempts','maxNoProgressFailures','retryDelaySeconds', ...
     'startupTimeoutSeconds','stallTimeoutSeconds','licenseRetryDelaySeconds'};
 for k=1:numel(keys)
@@ -111,6 +112,17 @@ for k=1:numel(keys)
     if ~isResume || ~ismember(key,p.UsingDefaults), cfg.(dest)=opt.(key); end
 end
 if ~isfield(cfg,'minWorkers'), cfg.minWorkers=1; end % Legacy control.json.
+if ~isfield(cfg,'executionMode'),cfg.executionMode='parallel';end
+assert(any(strcmp(cfg.executionMode,{'serial','parallel'})),'Modular:ExecutionMode','Invalid executionMode.');
+if isResume && ~ismember('executionMode',p.UsingDefaults)
+    previous=jsondecode(fileread(fullfile(folder,'control.json')));
+    if ~isfield(previous,'executionMode'),previous.executionMode='parallel';end
+    assert(strcmp(previous.executionMode,cfg.executionMode),'Modular:Immutable','Create a new run to change executionMode.');
+end
+if strcmp(cfg.executionMode,'serial')
+    assert(strcmp(spec.algorithm,'SAC') && cfg.numWorkers==1 && cfg.minWorkers==1 && isempty(cfg.fallbackWorkers), ...
+        'Modular:Serial','Serial SAC requires workers=1,minWorkers=1,fallbackWorkers=[]. No pool is created.');
+end
 for key={'numWorkers','minWorkers','checkpointEvery','episodesPerProcess','averageWindow'}
     validateattributes(cfg.(key{1}),{'numeric'},{'scalar','integer','positive','finite'});
 end

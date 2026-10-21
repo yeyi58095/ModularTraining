@@ -12,6 +12,7 @@ warning('on', 'all');
 resumeAgentFile = ""; % Full path to Agent100.mat or Agent_Final.mat; "" = new
 numWorkers = 6; % Original script's intended local pool size
 minWorkers = 1;
+executionMode = "parallel"; % Legacy runs retain their original dispatch.
 checkpointEvery = 100;
 maxEpisodes = 50000; % Additional episodes in this invocation when resuming
 trainingDevice = "gpu"; % For a NEW agent; use "cpu" if no supported GPU is available
@@ -36,7 +37,7 @@ if exist('checkpointOverrides', 'var') && isstruct(checkpointOverrides)
     allowed = {'resumeAgentFile','numWorkers','minWorkers','checkpointEvery','maxEpisodes', ...
         'trainingDevice','fastRestart','targetReward','averageWindow', ...
         'trainingPlots','baseSeed','closePoolOnExit','outputRoot','poolDiagnosticDir', ...
-        'agentFactory','agentValidator','curriculumContext','environmentModelFile'};
+        'agentFactory','agentValidator','curriculumContext','environmentModelFile','executionMode'};
     for settingIndex = 1:numel(allowed)
         settingName = allowed{settingIndex};
         if isfield(checkpointOverrides, settingName)
@@ -279,6 +280,12 @@ else
 end
 
 %% Network Architecture Display
+% Explicit new serial runs restore device through the serialized SAC state.
+assert(any(executionMode==["serial","parallel"]),'Training:Mode','Invalid execution mode.');
+if executionMode=="serial"
+    assert(isa(Agent_Stage2,'rl.agent.rlSACAgent'),'Training:Mode','Serial mode currently supports SAC only.');
+    Agent_Stage2=checkpoint_restore_sac_device(Agent_Stage2,trainingDevice);
+end
 % 只列印網路大小與 LSTM 單元，不做更新或評估。
 if ~isempty(agentValidator), agentValidator(Agent_Stage2); end
 fprintf('\n========== Network Architecture ==========\n');
@@ -342,6 +349,7 @@ env.ResetFcn = @(in) randomstart_stage2(in, dq, false, environmentConfig);
 % 先排除不相容且閒置的 pool；有其他工作時拒絕覆用或刪除。
 pool = gcp('nocreate');
 requestedWorkers = numWorkers;
+if executionMode=="parallel"
 if ~isempty(pool) && (~isa(pool, 'parallel.ProcessPool') || ...
         pool.NumWorkers < minWorkers || pool.NumWorkers > numWorkers || ...
         ~isa(pool.Cluster, 'parallel.cluster.Local'))
@@ -361,6 +369,11 @@ numWorkers = pool.NumWorkers;
 % Workers share the local filesystem. Attach script for local helper callbacks.
 addAttachedFiles(pool, {[mfilename('fullpath') '.m']});
 updateAttachedFiles(pool);
+else
+    assert(isempty(pool),'Training:PoolBusy','Serial run requires a fresh process without a pool.');
+    numWorkers=0;
+    serialModelGuard=prepareTrainingModel(modelName,disableTrainingLogging,disableUAVAnimation);
+end
 workerConfig = struct('scriptDir', scriptDir, 'modelName', modelName, ...
     'environmentModelFile',environmentModelFile, ...
     'targetSpeed', TARGET_SPEED, 'dt', DT, 'spacing', WAYPOINT_SPACING, ...
@@ -395,7 +408,7 @@ trainingOpts = rlTrainingOptions( ...
     "SaveFileVersion", "-v7.3", ...
     "SaveAgentDirectory", checkpointDir, ...
     "SimulationStorageType", "none", ...
-    "UseParallel", true, ...
+    "UseParallel", executionMode=="parallel", ...
     "Verbose", true, ...
     "Plots", trainingPlots ...
 );
@@ -408,18 +421,23 @@ if ~isempty(curriculumContext)
     trainingOpts.Verbose=false;
 end
 % 1:numWorkers 產生 n 個連續偏移，與實際 pool 對齊；不同 attempt 的 baseSeed 會改變。
+if executionMode=="parallel"
 trainingOpts.ParallelizationOptions.WorkerRandomSeeds = baseSeed + (1:numWorkers);
+end
 trainingOpts.ParallelizationOptions.TransferBaseWorkspaceVariables = "on";
 % Runtime queue callbacks are rebuilt each run, not stored in MAT checkpoints.
 optionsForDisk = trainingOpts;
 save(fullfile(runLogDir, 'TrainingOptions.mat'), 'optionsForDisk', 'numWorkers', 'requestedWorkers', 'minWorkers', ...
     'resumeAgentFile', 'fastRestart', '-v7.3');
-trainingOpts.ParallelizationOptions.SetupFcn = @() parallelWorkerState("setup", workerConfig, []);
-trainingOpts.ParallelizationOptions.CleanupFcn = @() parallelWorkerState("cleanup", workerConfig, []);
+if executionMode=="parallel"
+    trainingOpts.ParallelizationOptions.SetupFcn = @() parallelWorkerState("setup", workerConfig, []);
+    trainingOpts.ParallelizationOptions.CleanupFcn = @() parallelWorkerState("cleanup", workerConfig, []);
+end
 % Agent_Initial 是本段開始前的 agent，供檢查 resume 是否保留權重；不是這段訓練後成果。
 save(fullfile(runLogDir, 'Agent_Initial.mat'), 'Agent_Stage2', '-v7.3');
 copyfile([mfilename('fullpath') '.m'], fullfile(runLogDir, 'training_script_snapshot.m'));
 clear training_stage2;
+if executionMode=="serial",fprintf('Serial training ready: no worker pool; device=%s\n',trainingDevice);end
 % Configure logging/animation on workers through SetupFcn/CleanupFcn.
 % Keep the client model unchanged so parallel model transfer sees a saved model.
 try

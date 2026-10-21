@@ -287,6 +287,7 @@ try {
         }
         if ($null -ne $cfg.curriculumEnabled) { $payload.curriculumEnabled = [bool]$cfg.curriculumEnabled }
         $attemptConfig = Join-Path $attemptDir 'attempt.json'
+        if ($cfg.executionMode) { $payload.executionMode = [string]$cfg.executionMode }
         # WriteAllText／Write-Json 寫完整文字；ConvertTo-Json 的 -Depth 限制巢狀序列化深度，不是檔案大小上限。
         [IO.File]::WriteAllText($attemptConfig, ($payload | ConvertTo-Json -Depth 5), $utf8)
         # 雙引號字串會展開 $變數；$() 先計算其中運算。Replace 將路徑單引號加倍，供 MATLAB 字串安全引用。
@@ -337,7 +338,7 @@ try {
             if ($signature -ne $logSignature) { $lastActivityUtc = [DateTime]::UtcNow; $logSignature = $signature }
             # -join 把陣列串成一段字串；日誌尾端供 watchdog 判斷，檔案長度／修改時間簽章用於活動檢查。
             $logTail = $tails -join "`n"
-            if ($logTail -match '(?im)(Connected to parallel pool with\s+\d+\s+workers|^\s*Episode:\s*\d+\s*/)') {
+            if ($logTail -match '(?im)(Connected to parallel pool with\s+\d+\s+workers|Serial training ready|^\s*Episode:\s*\d+\s*/)') {
                 $startupComplete = $true
             }
             $nowUtc = [DateTime]::UtcNow
