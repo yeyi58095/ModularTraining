@@ -41,6 +41,10 @@
 
 ## 目前接續邊界
 
+- 2026-10-21 夜間授權：SAC run `20261021_200746_tpecf075ee_586a_4d3b_b636_4c63d8cea43b` 已正常保存至1000且paused。使用者授權遠端夜間連續接續；仍由使用者執行，不由代理連線啟動。採同run、serial CPU、每attempt500、checkpoint100、maxAttempts=0，保留原課程／預算／錯誤停止條件；不等同continuous_training分支，不關閉guard或改寫快照。
+- 使用者偏好在 MATLAB 查看 `training_status(sacDir,50)`；先以 `artifacts/sac-serial-500-run.txt` 收據取得當前SAC路徑，不只依工作區殘留變數猜測。
+- 使用者偏好 PowerShell 即時圖：`python .\tools\plot_training_rewards.py "$session" --watch 6 --view`。優先由同一SAC收據取得session並核對model／environment，勿套用progressive_v2最新run的舊搜尋範例而畫到PPO。腳本已移至tools，不使用根目錄plot_training_rewards.py。提供可直接貼上的遠端指令，含正常暫停方式。
+
 - 目標run 20261017_071436_recovery_tp323769ed已39300回合完成；80次無探索與50次探索皆跑滿，模型權重比對及來源見current-status。Stage8 seed902仍有47.59m後段偏離，不能稱全面穩健。
 - 第三組PPO已在17200正常paused，優先用trainingtools.review_round3做16000／17200配對診斷。使用者更正遠端尚未同步完整編排，依docs/guides/round3-next-steps-2026-10-20.md同步；不要重建或重啟第三組。
 - 新配方每attempt最多1000、每100回合checkpoint；callback可在達標／guard邊界正常結束段落，保存後才正式判定。500／1000為上限，過關／預算可提早結束。既有run control不自動改寫。shadow_learning_review只出建議，未實作自動LR／選分支；18500是歷史配方。

@@ -288,6 +288,7 @@ try {
         if ($null -ne $cfg.curriculumEnabled) { $payload.curriculumEnabled = [bool]$cfg.curriculumEnabled }
         $attemptConfig = Join-Path $attemptDir 'attempt.json'
         if ($cfg.executionMode) { $payload.executionMode = [string]$cfg.executionMode }
+        if ($cfg.fastRestart) { $payload.fastRestart = [string]$cfg.fastRestart }
         # WriteAllText／Write-Json 寫完整文字；ConvertTo-Json 的 -Depth 限制巢狀序列化深度，不是檔案大小上限。
         [IO.File]::WriteAllText($attemptConfig, ($payload | ConvertTo-Json -Depth 5), $utf8)
         # 雙引號字串會展開 $變數；$() 先計算其中運算。Replace 將路徑單引號加倍，供 MATLAB 字串安全引用。

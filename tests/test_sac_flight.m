@@ -1,7 +1,8 @@
-function test_sac_flight(savedSession,executionMode)
+function test_sac_flight(savedSession,executionMode,fastRestart)
 % Two real UAV episodes, CPU/one worker, two stages. NOT a learning benchmark.
 if nargin<1,savedSession="";end
 if nargin<2,executionMode="parallel";end
+if nargin<3,fastRestart="on";end
 root=fileparts(fileparts(mfilename('fullpath')));addpath(root,fullfile(root,'runtime'));
 out=fullfile(root,'tests','output');
 receiptFile=fullfile(out,'sac-flight-latest.json');
@@ -13,7 +14,7 @@ stage.max_episodes=500;stage.on_limit='pause';plan.stages={stage,stage};
 plan.stages{1}.id='smoke_a';plan.stages{2}.id='smoke_b';
 file=fullfile(fixture,'curriculum.json');trainingcurriculum.write_json(file,plan);
 info=retry(curriculum=file,environment="spatial_v2",workers=1,minWorkers=1,fallbackWorkers=[], ...
-    executionMode=executionMode, ...
+    executionMode=executionMode,fastRestart=fastRestart, ...
     device="cpu",checkpointEvery=1,episodesPerProcess=500,averageWindow=1, ...
     maxAttempts=2,maxNoProgressFailures=1,retryDelaySeconds=1,startupTimeoutSeconds=300, ...
     stallTimeoutSeconds=600,start=false);
@@ -30,6 +31,14 @@ state=jsondecode(fileread(fullfile(info.sessionDir,'status.json')));
 assert(code==0 && strcmp(state.state,'success'),'Test:SACFlight','Flight test failed: %s',state.message);
 [history,ep]=checkpoint_resume_state(fullfile(info.sessionDir,'Agent_Success.mat'));
 assert(ep==2 && all(isfinite(history.EpisodeReward)));
+if strlength(savedSession)==0 && fastRestart=="off"
+    for n=1:2
+        log=fileread(fullfile(info.sessionDir,sprintf('attempt_%05d',n),'stdout.log'));
+        assert(~contains(log,'Fast Restart mode cannot be enabled'),'Test:FastRestart','Disable option did not reach engine.');
+        cfg=jsondecode(fileread(fullfile(info.sessionDir,sprintf('attempt_%05d',n),'attempt.json')));
+        assert(strcmp(cfg.fastRestart,'off'));
+    end
+end
 a=load(fullfile(info.sessionDir,'runs','r000001','Agent_Final.mat'),'Agent_Stage2');
 b=load(fullfile(info.sessionDir,'runs','r000002','Agent_Initial.mat'),'Agent_Stage2');
 assert(isequaln(getLearnableParameters(getActor(a.Agent_Stage2)),getLearnableParameters(getActor(b.Agent_Stage2))));

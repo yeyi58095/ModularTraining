@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-21 夜間接續：使用者提供新組stdout_new.log，完整501–1000回合，最後956–1000連續45次跑滿；最新100回合reward1544.85／steps1878.95／跑滿51%。trailing2558.0822已核實為最後50回合，非100回合口徑。500回合皆有Fast Restart不支援無上限變長訊號的警告；新增可選fastRestart=off，未改SLX／LR／門檻。使用者授權同run夜間自動接段，maxAttempts=0、每段500、checkpoint100，保留原課程與錯誤停止條件；偏好training_status(sacDir,50)與tools即時曲線已寫AGENTS。[分析](sac-overnight-review-2026-10-21.md)、[夜間指令](../guides/sac-overnight-2026-10-21.md)。
+
 - 2026-10-21 新組方案：使用者已選單程序CPU SAC、每attempt最多500、每100checkpoint、先1attempt。已加入顯式serial執行與R2024b裝置恢復、新agent保存PolicyState；本機CPU/GPU合成恢復與兩回合真實serial飛行（108／124步）、跨段保存及5步凍結評估通過。這不是長期收斂／速度保證。遠端舊組尚未paused時不要pull或啟動新組。[交付驗證](sac-serial-delivery-2026-10-21.md)、[完整遠端指令](../guides/sac-fresh-serial-2026-10-21.md)。
 
 - 2026-10-21 重要更正：後續真實飛行堆疊確認R2024b預設走新版OffPolicyTrainer，包含parallel路徑亦依LearningFrequency計算epoch。先前舊ExpSyncParallelTrainer／直接replay測試不能證明遠端實際頻率失效，該根因推論撤回。下方早期頻率結論僅描述legacy入口。GPU保存載入轉CPU已獨立重現；使用者已選單程序CPU、每attempt500回合作獨立對照，遠端舊組仍待正常暫停。

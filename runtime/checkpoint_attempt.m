@@ -18,6 +18,7 @@ function checkpoint_attempt(configFile)
         'poolDiagnosticDir',cfg.attemptDir);
     outcome=[];
     checkpointOverrides.executionMode=string(cfg.executionMode);
+    if isfield(cfg,'fastRestart'),checkpointOverrides.fastRestart=string(cfg.fastRestart);end
     if isfield(cfg,'modularRoot')
         addpath(cfg.modularRoot);
         [environmentModel,environmentManifest]=trainingenv.resolve(cfg.sessionDir);

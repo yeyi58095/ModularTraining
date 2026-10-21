@@ -2,6 +2,7 @@
   "curriculum": "experiments/sac_spatial_v2/curriculum.json",
   "environment": "spatial_v2",
   "executionMode": "serial",
+  "fastRestart": "off",
   "workers": 1,
   "minWorkers": 1,
   "fallbackWorkers": [],

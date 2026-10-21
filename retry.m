@@ -12,6 +12,7 @@ p.addParameter('environment',"");
 p.addParameter('workers',6); p.addParameter('fallbackWorkers',[4 2]);
 p.addParameter('minWorkers',1);
 p.addParameter('executionMode','parallel');
+p.addParameter('fastRestart','on');
 % episodesPerProcess 是每個 MATLAB 程序新增的段落回合數；課程還會受階段／guard 剩餘預算限制。
 p.addParameter('checkpointEvery',100); p.addParameter('episodesPerProcess',1000);
 % targetReward／averageWindow 用於非課程成功規則；課程以 JSON advance_when 為準。
@@ -102,7 +103,7 @@ else
     folder=fullfile(sessions,[char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' tag]);
 end
 % 只覆蓋本次明確傳入的 resume 參數，未指定者沿用既有 control。
-keys = {'executionMode','workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
+keys = {'fastRestart','executionMode','workers','minWorkers','fallbackWorkers','checkpointEvery','episodesPerProcess','targetReward', ...
     'averageWindow','device','maxAttempts','maxNoProgressFailures','retryDelaySeconds', ...
     'startupTimeoutSeconds','stallTimeoutSeconds','licenseRetryDelaySeconds'};
 for k=1:numel(keys)
@@ -113,6 +114,8 @@ for k=1:numel(keys)
 end
 if ~isfield(cfg,'minWorkers'), cfg.minWorkers=1; end % Legacy control.json.
 if ~isfield(cfg,'executionMode'),cfg.executionMode='parallel';end
+if ~isfield(cfg,'fastRestart'),cfg.fastRestart='on';end
+assert(any(strcmp(cfg.fastRestart,{'on','off'})),'Modular:FastRestart','fastRestart must be on or off.');
 assert(any(strcmp(cfg.executionMode,{'serial','parallel'})),'Modular:ExecutionMode','Invalid executionMode.');
 if isResume && ~ismember('executionMode',p.UsingDefaults)
     previous=jsondecode(fileread(fullfile(folder,'control.json')));
