@@ -61,7 +61,10 @@ Copy-Item -LiteralPath $file -Destination "$file.backup-$(Get-Date -Format 'yyyy
 $cfg.maxAttempts = 1
 $tmp = "$file.pending-$([guid]::NewGuid().ToString('N'))"
 [IO.File]::WriteAllText($tmp, ($cfg | ConvertTo-Json -Depth 100), [Text.UTF8Encoding]::new($false))
-[IO.File]::Replace($tmp, $file, $null)
+$replaceBackup = "$file.replace-backup-$([guid]::NewGuid().ToString('N'))"
+[IO.File]::Replace($tmp, $file, $replaceBackup)
+$saved = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+if ($saved.maxAttempts -ne 1) { throw '段末暫停設定未寫入。' }
 Get-Content (Join-Path $session 'status.json')
 ```
 

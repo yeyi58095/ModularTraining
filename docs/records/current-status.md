@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-22 段末暫停指令修正：使用者遠端 File.Replace 的第三參數傳 $null 報不合法路徑，不能視為暫停設定成功。指南改用明確唯一備份路徑並讀回 maxAttempts 核對；本機獨立暫存檔替換驗證通過（新值1、備份舊值0），未操作訓練檔案。遠端仍須使用者重試並回報。
+
 - 2026-10-22 SAC參數對照：根目錄reward_history.csv共1905個連續回合；1001–1100全跑滿，1321起於attempt3內明顯退步，1401–1600無跑滿，最新100回合reward1707.45／跑滿56%。已查SB3、Spinning Up與RL Zoo原始設定，對照本機R2024b與目前配方；buffer容量與更新比例列為待驗證假說，非已確診根因。先建議高低checkpoint凍結配對與entropy／loss診斷，再做單因素子run。未改執行程式或啟停訓練。[證據與參數對照](sac-parameter-review-2026-10-22.md)。
 
 - 2026-10-21 夜間接續：使用者提供新組stdout_new.log，完整501–1000回合，最後956–1000連續45次跑滿；最新100回合reward1544.85／steps1878.95／跑滿51%。trailing2558.0822已核實為最後50回合，非100回合口徑。500回合皆有Fast Restart不支援無上限變長訊號的警告；新增可選fastRestart=off，未改SLX／LR／門檻。使用者授權同run夜間自動接段，maxAttempts=0、每段500、checkpoint100，保留原課程與錯誤停止條件；偏好training_status(sacDir,50)與tools即時曲線已寫AGENTS。[分析](sac-overnight-review-2026-10-21.md)、[夜間指令](../guides/sac-overnight-2026-10-21.md)。
