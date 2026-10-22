@@ -19,6 +19,8 @@
 
 ## 結構與同步
 
+- 2026-10-22 使用者交件慣例：通常將待分析檔案放在本機專案根目錄；告知放好後，代理直接查找與讀取，無須再要求上傳。分析後一併歸檔，由代理依用途選擇位置；外來日誌、CSV、評估JSON、ZIP與截圖優先放 artifacts/incoming/<英文任務名或日期>/，摘要寫 docs/records。搬移前確認檔案身分、來源與目的地，保留來源路徑及SHA256紀錄，搬後核驗；不覆寫同名檔，不搬活動run、專案入口或無關檔案，不改寫報告內遠端來源路徑。告知歸檔位置；歸檔不代表已Git同步或可直接續訓。
+
 - 根目錄retry.m為入口；+trainingmodels/為模型，runtime/為引擎，environments/為版本環境，experiments/<課程>/runs/<實驗>/為課程實驗。舊sessions及模型runs保留相容性；不為整理搬移run。
 - Git同步程式、JSON、文件與指定精簡report.json；MAT、完整日誌、快取遵守.gitignore。成果透過training_artifacts.py及GitHub Draft Release同步至artifacts/results，驗證SHA；這是評估封存，不是可直接retry的完整run。
 - 日常 MATLAB 入口留根目錄；Python／PowerShell 工具在 tools/，MATLAB 準備與稽核在 +trainingtools/，均依自身位置推導專案 root。歷史根目錄指令依 tools/README.md 對照新入口。整理規則見docs/guides/workspace-layout.md；diagnostic_packages含分析腳本，不當成可刪快取。保留使用者未提交檔案。
