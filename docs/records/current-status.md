@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-22 最後段log已核對歸檔：attempt4完整1501–2000，628069步／19237.1秒=32.65步每秒（含啟停保存）。1994雖跑滿但reward已降1185.73，1995–2000僅667/228/226/259/241/292步，最後6回合平均166.21；最後100均值2622.19掩蓋近期崩落。可解釋Agent2000凍結失敗，並非僅評估／重啟才出問題。來源與SHA見[SAC配對分析](sac-paired-review-2026-10-22.md)；檔案已移artifacts/incoming/sac-review-2000-20261022，原run維持paused，未改參數。
+
 - 2026-10-22 SAC配對評估已收到：兩份12:44交件JSON皆complete、各12次、weights_unchanged=true，環境／課程／四個checkpoint SHA一致。1100與1300有無探索均跑滿；1500無探索95步、有探索95–96步；2000無探索142步、有探索144–145步，皆有distance_threshold證據。不是單純探索造成退步；1100後段原路線最大偏離2.63m，1300已26.08m（無探索）。兩份報告已核驗SHA並移至artifacts/incoming/sac-review-2000-20261022；根目錄交件後代歸檔偏好已寫AGENTS。原run維持paused，未續訓。[完整分析](sac-paired-review-2026-10-22.md)。
 
 - 2026-10-22 遠端使用者回報：新SAC run於11:23:53+08:00以maximum attempts正常paused，attempt4，checkpoint已列至Agent2000；四段ExitCode皆0、ActualWorkers皆0（serial）。耗時1602.1／6884.6／24118.4／19237.1秒；前3段依CSV步數算整段吞吐46.29／37.80／35.69步每秒，含啟停保存，不能當純sim速度。第4段完整步數尚缺。下一步以1100／1300／1500／2000、Stage1、seed101/102/103做有／無探索凍結配對，最多24次3000步；尚未執行。已核對本機R2024b SAC UseExplorationPolicy開關會同步反向UseDeterministicExploitation，不調低探索倍率。
