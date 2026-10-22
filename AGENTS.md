@@ -2,6 +2,8 @@
 
 ## 先讀與紀錄
 
+- 2026-10-22 使用者偏好：說「繼續」時，自主完成已授權的分析、實作與必要驗證，推進到可直接執行的下一個指令；不要只停在建議或反覆要求確認。遠端仍由使用者執行；訓練、來源保存與活動run保護邊界不變，未驗證的步驟須明示限制。
+
 - 最新狀態、待辦與成果入口：[docs/records/current-status.md](docs/records/current-status.md)。歷史交接原文完整保存在 [project-history-through-2026-10-19.md](docs/records/project-history-through-2026-10-19.md)；處理相關舊實驗前須讀相應段落及操作文件，不把歷史「未實作」當成現況。
 - 重要決策更新current-status；驗證、證據與限制寫入docs/records或research。聊天室不會自動完整彙入日誌；不能宣稱已核對未讀的其他聊天室。
 

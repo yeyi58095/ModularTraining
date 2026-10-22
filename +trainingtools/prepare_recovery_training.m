@@ -53,8 +53,12 @@ checkpoint_select_agent(checkpoint);
 assert(episode==settings.checkpoint_episode,'Recovery:Episode','History/episode mismatch.');
 parentHash=checkpointreview.sha256(checkpoint);
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
-assert(strcmp(spec.algorithm,'PPO'),'Recovery:Algorithm', ...
-    'This recovery recipe currently supports PPO only; prepare SAC as an independent fresh run.');
+isSAC=strcmp(spec.algorithm,'SAC');
+assert(isSAC || strcmp(spec.algorithm,'PPO'),'Recovery:Algorithm','Unsupported algorithm.');
+if isSAC
+    assert(settings.actor_learning_rate_scale==1 && ~isfield(settings,'exploration_std_scale') && ~continuous, ...
+        'Recovery:SACScope','SAC recovery only supports replay-capacity ablation, unchanged rates and bounded budget.');
+end
 cfg=jsondecode(fileread(fullfile(sourceSession,'control.json')));
 plan=trainingcurriculum.load_plan(fullfile(sourceSession,'curriculum.json'),true);
 assert(strcmp(plan.model,spec.name),'Recovery:Model','Parent model and curriculum differ.');
@@ -86,10 +90,16 @@ if isfield(settings,'expected_actor_learning_rate')
     assert(spec.actorLearnRate==settings.expected_actor_learning_rate, ...
         'Recovery:SourceRate','Unexpected source learning rate. Select the intended recovery parent.');
 end
-actorBefore=getLearnableParameters(getActor(agent)); criticBefore=getLearnableParameters(getCritic(agent));
+actorBefore=getLearnableParameters(getActor(agent)); criticBefore=criticParameters(agent);
 % 同步調整 model spec 與 agent optimizer；前後核對 actor／critic 權重不變。
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
-agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
+if isSAC
+    assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
+    agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
+    spec.experienceBufferLength=settings.experience_buffer_length;
+else
+    agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
+end
 if isfield(settings,'exploration_std_scale')
     assert(~isfield(spec,'explorationStdScale'),'Recovery:StdLayout','Already scaled parent; do not scale again.');
     agent=setActor(agent,scaleActor(getActor(agent),settings.exploration_std_scale));
@@ -97,7 +107,7 @@ if isfield(settings,'exploration_std_scale')
 end
 trainingmodels.validate_agent(agent,spec);
 assert(isequaln(actorBefore,getLearnableParameters(getActor(agent))) && ...
-    isequaln(criticBefore,getLearnableParameters(getCritic(agent))), ...
+    isequaln(criticBefore,criticParameters(agent)), ...
     'Recovery:Weights','Optimizer change altered weights.');
 group=plan.model; if isfield(cfg,'curriculumName'), group=cfg.curriculumName; end
 assert(~isempty(regexp(group,'^[A-Za-z0-9_-]+$','once')),'Recovery:Group','Invalid group name.');
@@ -180,6 +190,10 @@ info=struct('sessionDir',folder,'parentEpisode',episode,'stageIndex',stage, ...
     'actorLearnRate',spec.actorLearnRate,'maxAdditionalEpisodes',settings.max_additional_episodes, ...
     'continuousTraining',continuous);
 disp(info); fprintf('Prepared only. Start explicitly with retry(resume=info.sessionDir).\n');
+end
+function values=criticParameters(agent)
+c=getCritic(agent);values=cell(1,numel(c));
+for k=1:numel(c),values{k}=getLearnableParameters(c(k));end
 end
 function value=absolute(root,value)
 % 將相對輸入接到 root，回傳規範化絕對路徑以供跨目錄呼叫。

@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-22 SAC對照準備工具：已支援從同一SAC checkpoint建立100k／500k replay子run，透過R2024b序列化狀態重建避免直接改AgentOptions重設optimizer；核對權重、target、optimizer、entropy policy state與replay。合成64步與真實兩回合fixture分支準備通過，無遠端訓練啟動。遠端下一步僅從1100準備兩子run並回傳receipt；非等步數比較已完成，也非收斂保證。[驗證](sac-replay-preparation-2026-10-22.md)、[遠端指令](../guides/sac-replay-pair-2026-10-22.md)。使用者「繼續直到可執行下一步」偏好已寫AGENTS。
+
 - 2026-10-22 最後段log已核對歸檔：attempt4完整1501–2000，628069步／19237.1秒=32.65步每秒（含啟停保存）。1994雖跑滿但reward已降1185.73，1995–2000僅667/228/226/259/241/292步，最後6回合平均166.21；最後100均值2622.19掩蓋近期崩落。可解釋Agent2000凍結失敗，並非僅評估／重啟才出問題。來源與SHA見[SAC配對分析](sac-paired-review-2026-10-22.md)；檔案已移artifacts/incoming/sac-review-2000-20261022，原run維持paused，未改參數。
 
 - 2026-10-22 SAC配對評估已收到：兩份12:44交件JSON皆complete、各12次、weights_unchanged=true，環境／課程／四個checkpoint SHA一致。1100與1300有無探索均跑滿；1500無探索95步、有探索95–96步；2000無探索142步、有探索144–145步，皆有distance_threshold證據。不是單純探索造成退步；1100後段原路線最大偏離2.63m，1300已26.08m（無探索）。兩份報告已核驗SHA並移至artifacts/incoming/sac-review-2000-20261022；根目錄交件後代歸檔偏好已寫AGENTS。原run維持paused，未續訓。[完整分析](sac-paired-review-2026-10-22.md)。
