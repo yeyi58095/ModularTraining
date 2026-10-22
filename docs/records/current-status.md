@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-22 遠端使用者回報：新SAC run於11:23:53+08:00以maximum attempts正常paused，attempt4，checkpoint已列至Agent2000；四段ExitCode皆0、ActualWorkers皆0（serial）。耗時1602.1／6884.6／24118.4／19237.1秒；前3段依CSV步數算整段吞吐46.29／37.80／35.69步每秒，含啟停保存，不能當純sim速度。第4段完整步數尚缺。下一步以1100／1300／1500／2000、Stage1、seed101/102/103做有／無探索凍結配對，最多24次3000步；尚未執行。已核對本機R2024b SAC UseExplorationPolicy開關會同步反向UseDeterministicExploitation，不調低探索倍率。
+
 - 2026-10-22 段末暫停指令修正：使用者遠端 File.Replace 的第三參數傳 $null 報不合法路徑，不能視為暫停設定成功。指南改用明確唯一備份路徑並讀回 maxAttempts 核對；本機獨立暫存檔替換驗證通過（新值1、備份舊值0），未操作訓練檔案。遠端仍須使用者重試並回報。
 
 - 2026-10-22 SAC參數對照：根目錄reward_history.csv共1905個連續回合；1001–1100全跑滿，1321起於attempt3內明顯退步，1401–1600無跑滿，最新100回合reward1707.45／跑滿56%。已查SB3、Spinning Up與RL Zoo原始設定，對照本機R2024b與目前配方；buffer容量與更新比例列為待驗證假說，非已確診根因。先建議高低checkpoint凍結配對與entropy／loss診斷，再做單因素子run。未改執行程式或啟停訓練。[證據與參數對照](sac-parameter-review-2026-10-22.md)。
