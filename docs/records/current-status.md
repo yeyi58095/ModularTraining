@@ -1,8 +1,10 @@
 # 目前狀態與接續入口
 
-更新：2026-10-21。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-10-23。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
 
 ## 已完成
+
+- 2026-10-23 SAC replay修正：遠端僅完成baseline子run20261022_132700_recovery_tp4c73786a，candidate因Replay data changed中止，未開訓。已用128容量／173筆循環覆寫重現舊檢查失敗：R2024b擴容將實體ring位置轉為時間順序。修正為嚴格比對時間順序與tracker IDs，不清buffer或放寬內容比較；保留既有基線，遠端更新後重新準備一對新子run。[根因與驗證](sac-replay-ring-fix-2026-10-23.md)。
 
 - 2026-10-22 SAC對照準備工具：已支援從同一SAC checkpoint建立100k／500k replay子run，透過R2024b序列化狀態重建避免直接改AgentOptions重設optimizer；核對權重、target、optimizer、entropy policy state與replay。合成64步與真實兩回合fixture分支準備通過，無遠端訓練啟動。遠端下一步僅從1100準備兩子run並回傳receipt；非等步數比較已完成，也非收斂保證。[驗證](sac-replay-preparation-2026-10-22.md)、[遠端指令](../guides/sac-replay-pair-2026-10-22.md)。使用者「繼續直到可執行下一步」偏好已寫AGENTS。
 

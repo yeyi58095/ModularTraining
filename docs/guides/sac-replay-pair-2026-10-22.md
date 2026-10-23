@@ -1,5 +1,7 @@
 # Prepare SAC replay-capacity comparison
 
+2026-10-23 correction: the previous replay comparison falsely rejected wrapped full buffers because physical ring-slot order changes on growth. The updated helper verifies chronological records and tracker IDs. The remote baseline20261022_132700_recovery_tp4c73786a from the failed preparation remains untouched; rerun once to prepare a new complete pair after pulling this fix. Do not start the old baseline or delete parent locks.
+
 This step prepares only, with no remote training launched. Parent must remain paused. Both children start at saved Agent1100, inherit course/environment/model source, and record parent SHA/episode. Baseline retains100000 replay capacity; candidate uses500000. Existing replay data are retained; older overwritten data cannot be recovered.
 
 R2024b's ordinary SAC AgentOptions setter can reset learning state. The helper reconstructs the serialized agent, cloning and growing replay while checking actor/twin critic/target weights, optimizer states, entropy policy state and replay contents. Support is deliberately restricted to R2024b and unchanged learning rates/exploration. No PPO-to-SAC conversion.

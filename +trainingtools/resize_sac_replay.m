@@ -6,7 +6,10 @@ before=saveobj(agent);
 required={'ActorOptimizer','CriticOptimizer','EntropyOptimizer','TargetCritic','ExperienceBuffer','PolicyState'};
 assert(all(isfield(before,required)),'SAC:State','Checkpoint lacks required learning state.');
 assert(capacity>=before.ExperienceBuffer.MaxLength,'SAC:Capacity','Only retaining or growing replay is supported.');
-data=allExperiences(before.ExperienceBuffer);
+% allExperiences returns physical ring slots when full. resize linearizes
+% those slots oldest-to-newest, so raw slot equality is invalid after wrap.
+% R2024b hidden accessor retains chronology AND recurrent data-source IDs.
+[data,trackerIDs]=getLastNData(before.ExperienceBuffer,before.ExperienceBuffer.Length);
 s=before;
 s.ExperienceBuffer=copy(before.ExperienceBuffer);
 resize(s.ExperienceBuffer,capacity);
@@ -22,6 +25,8 @@ for field={'Actor','Critic','TargetCritic'}
         assert(isequaln(getLearnableParameters(x(k)),getLearnableParameters(y(k))),'SAC:Weights','Changed %s weights.',field{1});
     end
 end
-assert(isequaln(data,allExperiences(after.ExperienceBuffer)),'SAC:Replay','Replay data changed.');
+[afterData,afterIDs]=getLastNData(after.ExperienceBuffer,after.ExperienceBuffer.Length);
+assert(isequaln(data,afterData) && isequaln(trackerIDs,afterIDs), ...
+    'SAC:Replay','Chronological replay data or sequence source IDs changed.');
 assert(after.ExperienceBuffer.MaxLength==capacity && agent.AgentOptions.ExperienceBufferLength==capacity);
 end
