@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-24 SAC100k對照組已依使用者狀態正常保存至1600並paused，新增500回合／750422步，最新100 reward927.11、跑滿32%，最後9回合跑滿但仍反覆退步。1024_stdout.log已核對歸檔artifacts/incoming/sac-baseline-1600-20261024。下一步僅由使用者啟動既有500k候選20261023_204044_recovery_tp6038f3af一段最多500回合，其餘run保持paused；不宣稱等步數公平比較已完成。[分析](sac-baseline-1600-2026-10-24.md)。
+
 - 2026-10-23 遠端修正後配對準備成功：pair.json已核對並歸檔artifacts/incoming/sac-replay-pair-20261023；來源1100 SHA bc7ae929a634044b0c0b5002ece80376ffe00f1a0a411d0d0f22cc0972fc74dd與既有評估一致。新baseline為20261023_203402_recovery_tp85477afc，500k候選為20261023_204044_recovery_tp6038f3af，均prepared_only（依收據及使用者終端回報，未獨立讀遠端）。下一步使用者只啟動baseline一個attempt、最多新增500回合至1600；保留guard與原run暫停，候選不並跑。這是首段試跑，不冒稱兩組已具有相同環境步數預算。
 
 - 2026-10-23 SAC replay修正：遠端僅完成baseline子run20261022_132700_recovery_tp4c73786a，candidate因Replay data changed中止，未開訓。已用128容量／173筆循環覆寫重現舊檢查失敗：R2024b擴容將實體ring位置轉為時間順序。修正為嚴格比對時間順序與tracker IDs，不清buffer或放寬內容比較；保留既有基線，遠端更新後重新準備一對新子run。[根因與驗證](sac-replay-ring-fix-2026-10-23.md)。
