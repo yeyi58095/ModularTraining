@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-25 共用序列結果已收：兩段各256步、五checkpoint SHA一致，100k1400 actor分布明顯偏離；500k1600失敗但良好輸入雙Q仍接近，非critic健康證明。準備下一個有界actor LR試驗：從100k1600良好checkpoint建立原LR5e-5對照／LR1e-5候選，僅候選由使用者啟動，serial CPU、每段500、maxAttempts1、總新增500，課程及guard保持。新增R2024b序列化LR修改以保留optimizer歷史；未啟動遠端。[證據與設計](sac-actor-pilot-2026-10-25.md)。
+
 - 2026-10-25 使用者授權繼續診斷及必要課程修改；本次先新增probe_sac_replay_pair，兩組1600各取一段terminal分界後的episode前綴（最多256步），五checkpoint共用相同資料、逐步更新LSTM，輸出Gaussian mean/std與歷史action的雙Q。零初始state、前64步warm-up，非TD誤差或新飛行測試；保留課程及run快照。遠端下一步唯讀推論後回傳ZIP。[範圍與指令](sac-shared-sequence-probe-2026-10-25.md)。
 
 - 2026-10-25 SAC內部診斷ZIP已核對：五checkpoint SHA與既有證據一致、policy state／optimizer欄位齊全，網路與近期reward無NaN/Inf。alpha依序0.01679／0.00531／0.00967／0.00376／0.00422，500k1400更低alpha仍成功，不能判定entropy係數偏低為根因；近期10000筆terminal markers為4／46／4／4／90，不等於失敗率或完整buffer分布。critic-target參數差非Q誤差。已歸檔artifacts/incoming/sac-state-review-20261025；保留兩組良好checkpoint及paused，未改參數。後續機制診斷須同序列actor分布／Q與TD行為。[分析](sac-state-review-2026-10-25.md)。

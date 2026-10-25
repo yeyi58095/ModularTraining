@@ -56,8 +56,12 @@ spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
 isSAC=strcmp(spec.algorithm,'SAC');
 assert(isSAC || strcmp(spec.algorithm,'PPO'),'Recovery:Algorithm','Unsupported algorithm.');
 if isSAC
-    assert(settings.actor_learning_rate_scale==1 && ~isfield(settings,'exploration_std_scale') && ~continuous, ...
-        'Recovery:SACScope','SAC recovery only supports replay-capacity ablation, unchanged rates and bounded budget.');
+    assert(~isfield(settings,'exploration_std_scale') && ~continuous, ...
+        'Recovery:SACScope','SAC recovery supports bounded replay/actor-rate experiments, no exploration scaling.');
+    if settings.actor_learning_rate_scale~=1
+        assert(settings.experience_buffer_length==spec.experienceBufferLength, ...
+            'Recovery:SACScope','Do not change actor rate and replay capacity together.');
+    end
 end
 cfg=jsondecode(fileread(fullfile(sourceSession,'control.json')));
 plan=trainingcurriculum.load_plan(fullfile(sourceSession,'curriculum.json'),true);
@@ -96,6 +100,9 @@ oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning
 if isSAC
     assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
     agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
+    if settings.actor_learning_rate_scale~=1
+        agent=trainingtools.set_sac_actor_rate(agent,spec.actorLearnRate);
+    end
     spec.experienceBufferLength=settings.experience_buffer_length;
 else
     agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
