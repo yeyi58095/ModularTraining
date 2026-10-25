@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-25 收到SAC replay配對凍結評估RAR：四份complete／weights_unchanged=true、共24次，環境／課程／runtime及同分支checkpoint SHA一致。100k1400僅85–88步、1600有無探索皆3000步（後10秒原路線最大偏離0.984／1.120–1.381m）；500k1400皆3000步、1600僅195–219步，關閉探索仍失敗。擴buffer未消除策略退步，尚不能定位課程／LR／entropy根因；保留100k1600作Stage1參考，兩run保持paused。RAR已核SHA歸檔artifacts/incoming/sac-frozen-pair-20261025。下一開發重點為有限checkpoint內部診斷，非直接開新課程訓練。[完整核對](sac-frozen-pair-2026-10-25.md)。
+
 - 2026-10-25 SAC500k候選正常保存1600並paused；新增500回合／1053075步，1301–1400全跑滿，最新100 reward76.55／steps127.83／跑滿0%。比100k對照多40.33%互動步數，不能視為等步數因果比較；擴buffer未消除退步。根目錄7份交件檔已按來源移至artifacts/incoming/root-intake-20261025並核SHA，無根目錄PNG，附件截圖另複製歸檔。SAC現有課程確實沿用PPO階段／門檻；建議另版SAC步數預算、凍結評估與replay-aware升階流程，但第一階段內崩落未證明是課程所致，未改快照或門檻。下一步兩分支1400/1600配對凍結評估。[詳細分析與提案](sac-buffer-comparison-2026-10-25.md)。
 
 - 2026-10-24 SAC100k對照組已依使用者狀態正常保存至1600並paused，新增500回合／750422步，最新100 reward927.11、跑滿32%，最後9回合跑滿但仍反覆退步。1024_stdout.log已核對歸檔artifacts/incoming/sac-baseline-1600-20261024。下一步僅由使用者啟動既有500k候選20261023_204044_recovery_tp6038f3af一段最多500回合，其餘run保持paused；不宣稱等步數公平比較已完成。[分析](sac-baseline-1600-2026-10-24.md)。
