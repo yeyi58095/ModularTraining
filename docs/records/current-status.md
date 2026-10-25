@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-25 SAC內部診斷ZIP已核對：五checkpoint SHA與既有證據一致、policy state／optimizer欄位齊全，網路與近期reward無NaN/Inf。alpha依序0.01679／0.00531／0.00967／0.00376／0.00422，500k1400更低alpha仍成功，不能判定entropy係數偏低為根因；近期10000筆terminal markers為4／46／4／4／90，不等於失敗率或完整buffer分布。critic-target參數差非Q誤差。已歸檔artifacts/incoming/sac-state-review-20261025；保留兩組良好checkpoint及paused，未改參數。後續機制診斷須同序列actor分布／Q與TD行為。[分析](sac-state-review-2026-10-25.md)。
+
 - 2026-10-25 新增R2024b SAC唯讀checkpoint診斷入口inspect_sac_replay_pair：來源1100及兩子run1400/1600依序讀取，檢查paused與排他鎖、前後MAT SHA；輸出entropy係數、網路／target參數摘要、optimizer保存旗標及最近最多10000筆replay統計。無訓練／sim／參數改寫，不冒稱可恢復歷史loss或已定位根因。下一步使用者遠端執行並回傳五份JSON的ZIP。[指令與驗證範圍](sac-snapshot-diagnostics-2026-10-25.md)。
 
 - 2026-10-25 收到SAC replay配對凍結評估RAR：四份complete／weights_unchanged=true、共24次，環境／課程／runtime及同分支checkpoint SHA一致。100k1400僅85–88步、1600有無探索皆3000步（後10秒原路線最大偏離0.984／1.120–1.381m）；500k1400皆3000步、1600僅195–219步，關閉探索仍失敗。擴buffer未消除策略退步，尚不能定位課程／LR／entropy根因；保留100k1600作Stage1參考，兩run保持paused。RAR已核SHA歸檔artifacts/incoming/sac-frozen-pair-20261025。下一開發重點為有限checkpoint內部診斷，非直接開新課程訓練。[完整核對](sac-frozen-pair-2026-10-25.md)。
