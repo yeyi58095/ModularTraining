@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-25 SAC500k候選正常保存1600並paused；新增500回合／1053075步，1301–1400全跑滿，最新100 reward76.55／steps127.83／跑滿0%。比100k對照多40.33%互動步數，不能視為等步數因果比較；擴buffer未消除退步。根目錄7份交件檔已按來源移至artifacts/incoming/root-intake-20261025並核SHA，無根目錄PNG，附件截圖另複製歸檔。SAC現有課程確實沿用PPO階段／門檻；建議另版SAC步數預算、凍結評估與replay-aware升階流程，但第一階段內崩落未證明是課程所致，未改快照或門檻。下一步兩分支1400/1600配對凍結評估。[詳細分析與提案](sac-buffer-comparison-2026-10-25.md)。
+
 - 2026-10-24 SAC100k對照組已依使用者狀態正常保存至1600並paused，新增500回合／750422步，最新100 reward927.11、跑滿32%，最後9回合跑滿但仍反覆退步。1024_stdout.log已核對歸檔artifacts/incoming/sac-baseline-1600-20261024。下一步僅由使用者啟動既有500k候選20261023_204044_recovery_tp6038f3af一段最多500回合，其餘run保持paused；不宣稱等步數公平比較已完成。[分析](sac-baseline-1600-2026-10-24.md)。
 
 - 2026-10-23 遠端修正後配對準備成功：pair.json已核對並歸檔artifacts/incoming/sac-replay-pair-20261023；來源1100 SHA bc7ae929a634044b0c0b5002ece80376ffe00f1a0a411d0d0f22cc0972fc74dd與既有評估一致。新baseline為20261023_203402_recovery_tp85477afc，500k候選為20261023_204044_recovery_tp6038f3af，均prepared_only（依收據及使用者終端回報，未獨立讀遠端）。下一步使用者只啟動baseline一個attempt、最多新增500回合至1600；保留guard與原run暫停，候選不並跑。這是首段試跑，不冒稱兩組已具有相同環境步數預算。
