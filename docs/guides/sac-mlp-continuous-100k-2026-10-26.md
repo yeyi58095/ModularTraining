@@ -22,11 +22,23 @@ info=trainingtools.prepare_recovery_training(sacDir,"configs/sac_mlp_100k_contin
 longDir=string(info.sessionDir);
 writelines(longDir,fullfile(pwd,'artifacts','sac-mlp-continuous-100k-run.txt'));
 training_status(longDir,50);
+lineage=jsondecode(fileread(fullfile(longDir,'recovery.json')));
+childStatus=jsondecode(fileread(fullfile(longDir,'status.json')));
+assert(strcmp(childStatus.state,'paused') && lineage.parent_episode==1000);
+disp(lineage.parent_session);
+disp(lineage.parent_checkpoint);
+disp(lineage.parent_sha256);
+disp(lineage.child_checkpoint_sha256);
+```
+
+Preparation acquires the parent run's exclusive lock and validates the selected saved checkpoint. It creates a separate paused child and does not launch it. Check the displayed child path, Agent1000 source checkpoint and SHA values first. When ready to start the reviewed child, run this separate MATLAB command:
+
+```matlab
 retry(resume=longDir,maxAttempts=200,episodesPerProcess=500, ...
     checkpointEvery=100,executionMode='serial',device='cpu',fastRestart='off');
 ```
 
-Preparation acquires the parent run's exclusive lock and validates the selected saved checkpoint. It creates a separate paused child and does not launch it. Inspect the child path, source episode, lineage SHA and snapshots before the explicit `retry` start. Do not run another training copy at the same time.
+Do not run another training copy at the same time.
 
 Monitor in MATLAB with:
 
