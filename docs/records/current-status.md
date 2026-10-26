@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 遠端2100 v7獨立probe已核對passed／來源SHA一致／optimizer-replay-weights-history統計保留。新增每run明確checkpoint_storage.json，舊run缺設定仍v7.3；低LR新分支配方選v7，準備、週期、初始及段末保存一致。本機兩短回合跨程序保存續載、v7檔頭及5步凍結評估通過；不證明長期收斂或根治原生當機。下一步pull後重新建立全新2100低LR分支並retry最多500（至2600），保留原paused及失敗.preparing。[驗證與限制](sac-v7-storage-2026-10-27.md)。
+
 - 2026-10-27 遠端低LR分支準備當機、尚未retry；ZIP兩份原生dump分別為HDF5讀取存取違規與寫入abort/assert。未完成.preparing只有約67MB暫存checkpoint，保留不發布。新增獨立probe_sac_v7_save診斷替代格式，不改正式保存流程／來源；下一步先遠端2100單次保存讀回核對，暫停先前retry指令。不能由stack直接認定RAM不足或已修復。[證據與限制](sac-hdf5-crash-2026-10-27.md)。
 
 - 2026-10-27 三份MLP凍結報告已收、complete且weights_unchanged：2100／2300／2500關探索分別3000／120／3000步，後10秒原路線最大偏差3.488／50.065／17.945m。選2100作新子run來源，原run保持paused。新增actor1e-5（原5e-5）有界500回合配方，serialCPU、checkpoint100、maxAttempts1、guard退步pause／預算啟用；不改課程門檻，不保證根因修復。MLP兩回合fixture準備／保存載入驗證通過，未啟動訓練。下一步使用者核來源SHA後prepare並retry，最高2600，可提早停止。[證據、限制與執行規格](sac-mlp-frozen-next-2026-10-27.md)。

@@ -159,6 +159,12 @@ end
 trainingcurriculum.write_json(fullfile(staging,'model.json'),spec);
 trainingcurriculum.write_json(fullfile(staging,'curriculum_state.json'),forkState);
 mkdir(fullfile(staging,'checkpoints'));
+% Storage is explicit for the new branch, never patched into the parent.
+storage=checkpoint_storage_version(sourceSession);
+if isfield(settings,'checkpoint_file_version'),storage=settings.checkpoint_file_version;end
+assert(any(strcmp(storage,{'-v7','-v7.3'})),'Recovery:Storage','Unsupported MAT version.');
+trainingcurriculum.write_json(fullfile(staging,'checkpoint_storage.json'), ...
+    struct('schema_version',1,'version',storage));
 target=fullfile(staging,'checkpoints',sprintf('Agent%d.mat',episode));
 checkpoint_save_final(target,agent,history);
 checkpoint_select_agent(target);

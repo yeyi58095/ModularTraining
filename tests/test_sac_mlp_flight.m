@@ -1,8 +1,9 @@
-function test_sac_mlp_flight(savedSession,executionMode,fastRestart)
+function test_sac_mlp_flight(savedSession,executionMode,fastRestart,storageVersion)
 % Two real UAV episodes, CPU/one worker, two stages. NOT a learning benchmark.
 if nargin<1,savedSession="";end
 if nargin<2,executionMode="parallel";end
 if nargin<3,fastRestart="on";end
+if nargin<4,storageVersion="-v7.3";end
 root=fileparts(fileparts(mfilename('fullpath')));addpath(root,fullfile(root,'runtime'));
 out=fullfile(root,'tests','output');
 receiptFile=fullfile(out,'sac-mlp-flight-latest.json');
@@ -22,6 +23,8 @@ info=retry(curriculum=file,environment="spatial_v2",workers=1,minWorkers=1,fallb
     maxAttempts=2,maxNoProgressFailures=1,retryDelaySeconds=1,startupTimeoutSeconds=300, ...
     stallTimeoutSeconds=600,start=false);
 receipt=struct('sessionDir',info.sessionDir,'status','running','scope','two CPU flight episodes, not convergence');
+trainingcurriculum.write_json(fullfile(info.sessionDir,'checkpoint_storage.json'), ...
+    struct('schema_version',1,'version',char(storageVersion)));
 trainingcurriculum.write_json(receiptFile,receipt);
 cmd=sprintf('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%s" -ConfigFile "%s"', ...
     fullfile(root,'runtime','checkpoint_supervisor.ps1'),fullfile(info.sessionDir,'control.json'));
@@ -43,6 +46,16 @@ if strlength(savedSession)==0 && fastRestart=="off"
     end
 end
 a=load(fullfile(info.sessionDir,'runs','r000001','Agent_Final.mat'),'Agent_Stage2');
+if isfile(fullfile(info.sessionDir,'checkpoint_storage.json'))
+    storageVersion=string(checkpoint_storage_version(info.sessionDir));
+    for filename=[string(fullfile(info.sessionDir,'checkpoints','Agent1.mat')), ...
+            string(fullfile(info.sessionDir,'Agent_Final.mat')), ...
+            string(fullfile(info.sessionDir,'runs','r000002','Agent_Initial.mat'))]
+        fid=fopen(filename,'r');header=fread(fid,20,'*char')';fclose(fid);
+        if storageVersion=="-v7",assert(startsWith(header,'MATLAB 5.0 MAT-file'));
+        else,assert(startsWith(header,'MATLAB 7.3 MAT-file'));end
+    end
+end
 b=load(fullfile(info.sessionDir,'runs','r000002','Agent_Initial.mat'),'Agent_Stage2');
 assert(isequaln(getLearnableParameters(getActor(a.Agent_Stage2)),getLearnableParameters(getActor(b.Agent_Stage2))));
 assert(a.Agent_Stage2.ExperienceBuffer.Length==b.Agent_Stage2.ExperienceBuffer.Length);

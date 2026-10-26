@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "checkpoint_file_version": "-v7",
   "checkpoint_episode": 2100,
   "expected_actor_learning_rate": 0.00005,
   "actor_learning_rate_scale": 0.2,

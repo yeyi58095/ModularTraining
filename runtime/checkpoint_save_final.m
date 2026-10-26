@@ -4,7 +4,14 @@ function checkpoint_save_final(filename, Agent_Stage2, training_stage2)
 % Publish agent and its matching history together, after a complete write.
     temporary = [tempname(fileparts(filename)) '.mat'];
     guard = onCleanup(@() removeTemporary(temporary)); %#ok<NASGU>
-    save(temporary,'Agent_Stage2','training_stage2','-v7.3');
+    sessionDir=fileparts(filename);
+    [parent,leaf]=fileparts(sessionDir);
+    if strcmp(leaf,'checkpoints'),sessionDir=parent;end
+    format=checkpoint_storage_version(sessionDir);
+    save(temporary,'Agent_Stage2','training_stage2',format);
+    entries=whos('-file',temporary);
+    assert(all(ismember({'Agent_Stage2','training_stage2'},{entries.name})), ...
+        'Checkpoint:IncompleteSave','MAT save omitted a required variable; refusing publication.');
     [ok,message] = movefile(temporary,filename,'f');
     assert(ok,'Checkpoint:FinalPublish','%s',message);
 end

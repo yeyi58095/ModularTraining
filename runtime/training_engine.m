@@ -67,6 +67,8 @@ else
     saveDir = fullfile(runRoot, [char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' runTag]);
 end
 if ~isfolder(saveDir), mkdir(saveDir); end
+checkpointFileVersion=checkpoint_storage_version(saveDir);
+fprintf('Checkpoint MAT format: %s\n',checkpointFileVersion);
 if isfile(fullfile(saveDir,'Agent_Success.mat'))
     error('Checkpoint:AlreadySucceeded','This experiment already has Agent_Success.mat.');
 end
@@ -405,7 +407,7 @@ trainingOpts = rlTrainingOptions( ...
     "ScoreAveragingWindowLength", averageWindow, ...
     "SaveAgentCriteria", "EpisodeFrequency", ...
     "SaveAgentValue", checkpointEvery, ...
-    "SaveFileVersion", "-v7.3", ...
+    "SaveFileVersion", checkpointFileVersion, ...
     "SaveAgentDirectory", checkpointDir, ...
     "SimulationStorageType", "none", ...
     "UseParallel", executionMode=="parallel", ...
@@ -428,13 +430,13 @@ trainingOpts.ParallelizationOptions.TransferBaseWorkspaceVariables = "on";
 % Runtime queue callbacks are rebuilt each run, not stored in MAT checkpoints.
 optionsForDisk = trainingOpts;
 save(fullfile(runLogDir, 'TrainingOptions.mat'), 'optionsForDisk', 'numWorkers', 'requestedWorkers', 'minWorkers', ...
-    'resumeAgentFile', 'fastRestart', '-v7.3');
+    'resumeAgentFile', 'fastRestart', checkpointFileVersion);
 if executionMode=="parallel"
     trainingOpts.ParallelizationOptions.SetupFcn = @() parallelWorkerState("setup", workerConfig, []);
     trainingOpts.ParallelizationOptions.CleanupFcn = @() parallelWorkerState("cleanup", workerConfig, []);
 end
 % Agent_Initial 是本段開始前的 agent，供檢查 resume 是否保留權重；不是這段訓練後成果。
-save(fullfile(runLogDir, 'Agent_Initial.mat'), 'Agent_Stage2', '-v7.3');
+save(fullfile(runLogDir, 'Agent_Initial.mat'), 'Agent_Stage2', checkpointFileVersion);
 copyfile([mfilename('fullpath') '.m'], fullfile(runLogDir, 'training_script_snapshot.m'));
 clear training_stage2;
 if executionMode=="serial",fprintf('Serial training ready: no worker pool; device=%s\n',trainingDevice);end
@@ -452,7 +454,7 @@ try
 catch trainingError
     % Best effort for MATLAB exceptions only, not process termination.
     try
-        save(fullfile(runLogDir, 'Agent_OnError.mat'), 'Agent_Stage2', '-v7.3');
+        save(fullfile(runLogDir, 'Agent_OnError.mat'), 'Agent_Stage2', checkpointFileVersion);
     catch saveError
         warning('Training:SaveFailed', '%s', saveError.message);
     end
@@ -468,7 +470,7 @@ training_stage2.TrainingOptions = optionsForDisk;
 % 先完整保存 agent＋歷史，才用保存邊界的數據判定 guard／課程。
 checkpoint_save_final(fullfile(saveDir,'Agent_Final.mat'),Agent_Stage2,training_stage2);
 copyfile(fullfile(saveDir,'Agent_Final.mat'),fullfile(runLogDir,'Agent_Final.mat'));
-save(fullfile(saveDir, 'TrainingResults.mat'), 'training_stage2', '-v7.3');
+save(fullfile(saveDir, 'TrainingResults.mat'), 'training_stage2', checkpointFileVersion);
 if isempty(curriculumContext)
     successSummary = checkpoint_mark_success(saveDir, training_stage2.EpisodeReward, ...
         targetReward, averageWindow);
