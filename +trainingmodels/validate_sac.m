@@ -8,7 +8,17 @@ for k=1:numel(nets)
     for j=1:numel(layers)
         if isa(layers(j),'nnet.cnn.layer.LSTMLayer'),units(end+1)=layers(j).NumHiddenUnits;end %#ok<AGROW>
     end
-    assert(isequal(units,spec.lstmUnits),'Modular:ArchitectureMismatch','SAC recurrent size mismatch.');
+    if spec.lstmUnits>0
+        expected=spec.lstmUnits;
+    else
+        expected=[];
+        fc=layers(arrayfun(@(x) isa(x,'nnet.cnn.layer.FullyConnectedLayer'),layers));
+        widths=[fc.OutputSize];
+        assert(isfield(spec,'hiddenUnits') && any(widths==spec.hiddenUnits) && ...
+            all(widths==spec.hiddenUnits | widths==1), ...
+            'Modular:ArchitectureMismatch','SAC feedforward widths mismatch.');
+    end
+    assert(isequal(units,expected),'Modular:ArchitectureMismatch','SAC recurrent size mismatch.');
 end
 opts=agent.AgentOptions;
 fields={'SampleTime','DiscountFactor','MiniBatchSize','SequenceLength', ...

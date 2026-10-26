@@ -25,8 +25,13 @@ opts.InfoToSave.ExperienceBuffer=true;
 opts.InfoToSave.Optimizer=true;
 opts.InfoToSave.Target=true;
 opts.InfoToSave.PolicyState=true; % Preserve learned SAC entropy weight on resume.
+useRNN=spec.lstmUnits>0;units=spec.lstmUnits;
+if ~useRNN
+    assert(isfield(spec,'hiddenUnits') && spec.sequenceLength==1,'Modular:Architecture','Feedforward SAC requires hiddenUnits and sequenceLength1.');
+    units=spec.hiddenUnits;
+end
 agent=rlSACAgent(obs,act,rlAgentInitializationOptions( ...
-    'NumHiddenUnit',spec.lstmUnits,'UseRNN',true),opts);
+    'NumHiddenUnit',units,'UseRNN',useRNN),opts);
 actor=getActor(agent); actor.UseDevice=device; agent=setActor(agent,actor);
 critics=getCritic(agent);
 for k=1:numel(critics), critics(k).UseDevice=device; end

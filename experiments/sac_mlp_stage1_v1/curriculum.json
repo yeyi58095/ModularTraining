@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "environment": "spatial_v2",
+  "model": "sac_mlp128",
+  "stages": [
+    {
+      "id": "straight_calm",
+      "trajectory": {
+        "type": "mat",
+        "file": "../progressive_v2/assets/straight.mat",
+        "waypoints_variable": "waypoints",
+        "velocity_variable": "velocity"
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 2000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 1200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2700
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.8
+          }
+        ]
+      },
+      "max_episodes": 2000,
+      "on_limit": "pause"
+    }
+  ]
+}
