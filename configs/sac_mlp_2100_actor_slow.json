@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "checkpoint_episode": 2100,
+  "expected_actor_learning_rate": 0.00005,
+  "actor_learning_rate_scale": 0.2,
+  "experience_buffer_length": 100000,
+  "continuous_training": false,
+  "episodes_per_process": 500,
+  "max_additional_episodes": 500,
+  "guard": {
+    "schema_version": 1,
+    "window": 100,
+    "patience": 3,
+    "reward_ratio": 0.5,
+    "steps_ratio": 0.5,
+    "min_reference_reward": 500,
+    "min_reference_steps": 500,
+    "budget_enabled": true,
+    "regression_action": "pause"
+  }
+}

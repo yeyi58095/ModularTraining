@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 三份MLP凍結報告已收、complete且weights_unchanged：2100／2300／2500關探索分別3000／120／3000步，後10秒原路線最大偏差3.488／50.065／17.945m。選2100作新子run來源，原run保持paused。新增actor1e-5（原5e-5）有界500回合配方，serialCPU、checkpoint100、maxAttempts1、guard退步pause／預算啟用；不改課程門檻，不保證根因修復。MLP兩回合fixture準備／保存載入驗證通過，未啟動訓練。下一步使用者核來源SHA後prepare並retry，最高2600，可提早停止。[證據、限制與執行規格](sac-mlp-frozen-next-2026-10-27.md)。
+
 - 2026-10-27 MLP長跑child的2100單checkpoint凍結評估完成：Stage1 seed101關探索，reward2839.49、3000步、step_limit、environment_done=false；已讀使用者diary並核SHA歸檔artifacts/incoming/sac-mlp-frozen-2100-20261027。尚未收到evaluation.json及trace，不能報獨立路線距離或多seed穩健。先前MATLAB關閉原因未明，沒有crash report可定位；單次成功不證明記憶體或評估器問題已修復。下一步先分別單checkpoint跑2300／2500關探索，打包三份完整報告，再決定探索測試；保持訓練paused，不重跑已完成2100。[補充紀錄](sac-mlp-2500-2026-10-26.md)。
 
 - 2026-10-26 MLP連續子run `20261026_203618_recovery_tp18ecff57` 已由使用者確認attempt3正常保存2500且maxAttempts paused；使用者要求停止，保持暫停。已讀完整2001–2500日誌：2200窗平均1884但窗末137步，2500窗平均917且末24次全3000步，不能以移動平均替代凍結評估。下一步2100／2300／2500 seed101有無探索共6次純sim，暫不續訓或改課程。根目錄兩份交件已核SHA歸檔，actor pair收據仍屬舊recurrent。下列1000與「未遠端實跑」為先前歷史，已由本次長跑回報更新。[分析與限制](sac-mlp-2500-2026-10-26.md)。
