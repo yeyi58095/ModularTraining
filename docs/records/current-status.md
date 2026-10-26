@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-26 新MLP run20261026_184028_tpcff39fc6_3ef5_4435_bfaa_cfffd7ebc83f完成500／82258步並maxAttempts正常paused；五個百回合reward約98–103，無跑滿，尚無明顯改善。使用者另交actor pair收據屬舊recurrent分支，不用於此run。日誌／兩份狀態已歸檔。下一步先Agent500 seed101有無探索凍結基準兩次，再同run不改參數續一段最多500至1000，保留guard及總2000上限。[分析](sac-mlp-500-2026-10-26.md)。
+
 - 2026-10-26 已準備獨立從頭sac_mlp128前饋試驗，Stage1-only課程sac_mlp_stage1_v1；保留直線／無風／reward／isDone／原門檻，總預算2000、先500、checkpoint100、serialCPU。架構與SequenceLength1一起變，非等計算量LSTM因果驗證，無收斂保證。64步合成學習及原recurrent建構回歸通過；本機兩真實回合242/148步保存接續與5步凍結評估通過。舊run不變；下一步使用者遠端prepare_sac_mlp_trial後只開第一段。[驗證](sac-mlp-preparation-2026-10-26.md)、[指令](../guides/sac-mlp-stage1-2026-10-26.md)。
 
 - 2026-10-26 actor兩組2100凍結評估已收：低LR候選有無探索6次全3000步，但後10秒原路線偏離6.65–7.18m，劣於父1600約0.98–1.38m；原LR對照全110–111步distance_threshold。兩組paused／exit0；實際耗時4h28m17.5s與5h33m56.4s，含啟停吞吐約32.34／32.29步秒。建議封存此輪、不再盲目接續；同配方重開可能重複問題，新從頭實驗需版本化變因與有界穩定性評估。未新增課程或啟動。[最終結果與重開判斷](sac-actor-final-evaluation-2026-10-26.md)。
