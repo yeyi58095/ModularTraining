@@ -1,0 +1,23 @@
+# 10/27 meeting 文件與單一簡報入口
+
+已依使用者要求沿用10/14的離線docs結構，在output/meeting_sac_20261027/docs建立截至10/27的專案文件快照；搜尋首頁重新內嵌全部現有Markdown，不沿用10/19的舊搜尋資料。流程及架構HTML保留既有內容與歷史範圍，未宣稱已更新為完整SAC架構。
+
+唯一維護的PPT為output/meeting_sac_20261027/dist/SAC_Meeting_20261027.pptx，內容採已完成原生PowerPoint驗證的AxisFixed版本，SHA256為6d9c077662aec4ccd7770d66229f431111d72218cd6971a6555be1ac22bc6994。先前紀錄中的AxisFixed路徑為歷史交付位置。本次不改投影片內容；多份PPTX先封存至build/pptx-history-20261027.zip並逐項核驗再移除，日後只更新固定檔名。
+
+重建文件：執行tools/package_meeting_docs.py。docs-manifest.json記錄來源相對路徑與SHA256，index.html為重新產生的例外。文件中的專案外部相對連結仍需完整專案；本資料夾不是可直接續訓的run封存。
+
+## USB 壓縮交付
+
+已建立 `output/SAC_Meeting_20261027_USB.zip`，包含唯一PPT、離線docs、使用說明與逐檔SHA清單，共147檔；排除build、舊稿封存與chart-data暫存。ZIP CRC及全部成員逐位元讀回核對通過。大小3773134 bytes；SHA256 `7102099541f6b394e07c34dac19e15a0eaf8e3ce7b7c4dd071a5d87af96049aa`。請完整解壓後開啟dist簡報或docs/index.html；專案外部相對連結的依賴未打包。
+
+## SAC 主題修正與新版 USB
+
+使用者指出原包的架構仍是PPO，已改為SAC專用首頁、互動元件架構、LSTM／MLP設定比較、五步訓練流程與內嵌實際原文、六張既有實驗圖及凍結結果。完整歷史文件移至library.html；USB主線不再納入舊PPO圖形資產。新增START_HERE.html方便解壓後開啟。PPT SHA保持6d9c077662aec4ccd7770d66229f431111d72218cd6971a6555be1ac22bc6994，仍只有一份。
+
+核對來源：build_sac、sac_lstm128、sac_mlp128、serial配方、MLP課程、progress_callback、training_engine、outcome與評估工具。來源原文及SHA內嵌／列於docs/sac-source-manifest.json；這是本機當前版本，不代替歷史run快照。演算法參考MathWorks官方SAC說明與SAC Algorithms and Applications；現行文件不當作R2024b全部功能證明。未修改訓練runtime或啟動MATLAB。
+
+驗證：Archify architecture通過9項artifact checks、0 errors／warnings。初次Chrome沙箱啟動失敗；經允許在沙箱外執行後，visual-check於1440×900、1600×1000、1920×1080及2048×1320通過，明暗截圖已目視檢查。架構規格SHA 6a9a85d3cebbb0ba753a1fee16eb6fec016597ad5034983fa4fb5a3b6b6539cd；HTML SHA 778f4128daae229db7be4d76f1254892285d3b208ed50b563e86dde80fc7665f。檢視器固定UI為英文，介紹為繁體中文。
+
+主頁Chrome離線檢查涵蓋5種尺寸（含390×844）×6章節、5步流程全部原文選單、6圖載入、入口重新導向及文件搜尋。修復窄螢幕原文欄溢出，以及原文件打包器替換DOCS時誤刪搜尋初始化的問題。首頁／流程明暗截圖目視核對，腳本及收據在output/meeting_sac_20261027/build。
+
+重建：先以Archify deliver tools/meeting_sac/architecture.json至docs/architecture.html，再執行tools/build_sac_meeting_docs.py。ZIP固定更新output/SAC_Meeting_20261027_USB.zip；逐項CRC及bytes核對，收據build/sac-usb-receipt.json。核心頁面與圖表離線可讀；外部官方參考需網路，歷史Markdown中的外部專案檔案不包含在包中。
