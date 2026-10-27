@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 MLP動作Q曲線核對：2100的min雙Q網格峰值正負分布，2200全16點偏好-1，2500有13點峰值轉正而actor仍強烈負向；僅小樣本off-policy，非高估／根因證明。準備從低actor子run2100（SHA63a549...，v7）另建critic1e-4→2e-5、actor維持1e-5的500回合有界試驗，guard保留。optimizer/replay保留、v7載入、16步合成更新與MLP分支準備測試通過。下一步使用者prepare並retry；其餘保持paused。[設計與證據](sac-mlp-critic-pilot-2026-10-27.md)。
+
 - 2026-10-27 MLP共用輸入報告已核SHA／權重不變：良好歷史輸入上Gaussian mean絕對值0.556→2.947→2.909，策略明顯改變；但Q只評歷史動作，不能據此證明critic支持錯誤新動作或高估。新增有界probe_sac_action_values：同16觀測×33動作×雙critic，純推論，本機小MLP通過。下一步遠端動作Q曲線，不retry／盲調。[分析](sac-mlp-shared-2026-10-27.md)。
 
 - 2026-10-27 MLP三快照內部診斷已核對：alpha0.002713／0.002012／0.002357，網路／近期reward無非有限值，optimizer與replay均保存。critic-target參數差擴大、近期terminal markers4／21／78，但非TD誤差／根因證明。新增probe_sac_mlp_checkpoints，讓三模型對相同兩段歷史輸入做唯讀策略／雙Q推論；本機小fixture通過，下一步遠端執行，不train/sim、不retry。[分析與限制](sac-mlp-state-2026-10-27.md)。

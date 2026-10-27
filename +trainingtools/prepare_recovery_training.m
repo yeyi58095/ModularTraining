@@ -54,6 +54,11 @@ assert(episode==settings.checkpoint_episode,'Recovery:Episode','History/episode 
 parentHash=checkpointreview.sha256(checkpoint);
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
 isSAC=strcmp(spec.algorithm,'SAC');
+if isfield(settings,'critic_learning_rate_scale')
+    assert(isSAC && ~continuous && settings.actor_learning_rate_scale==1 && ...
+        settings.experience_buffer_length==spec.experienceBufferLength, ...
+        'Recovery:CriticScope','Critic-rate pilot must preserve actor and replay in bounded SAC mode.');
+end
 assert(isSAC || strcmp(spec.algorithm,'PPO'),'Recovery:Algorithm','Unsupported algorithm.');
 if isSAC
     assert(~isfield(settings,'exploration_std_scale'), ...
@@ -110,6 +115,15 @@ if isSAC
         agent=trainingtools.set_sac_actor_rate(agent,spec.actorLearnRate);
     end
     spec.experienceBufferLength=settings.experience_buffer_length;
+    if isfield(settings,'critic_learning_rate_scale')
+        validateattributes(settings.critic_learning_rate_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
+        assert(~continuous && settings.actor_learning_rate_scale==1 && ...
+            settings.experience_buffer_length==agent.AgentOptions.ExperienceBufferLength, ...
+            'Recovery:CriticScope','Critic-rate pilot requires bounded mode and unchanged actor/replay.');
+        assert(spec.criticLearnRate==settings.expected_critic_learning_rate,'Unexpected source critic rate.');
+        spec.criticLearnRate=spec.criticLearnRate*settings.critic_learning_rate_scale;
+        agent=trainingtools.set_sac_critic_rate(agent,spec.criticLearnRate);
+    end
 else
     agent.AgentOptions.ActorOptimizerOptions.LearnRate=spec.actorLearnRate;
 end
