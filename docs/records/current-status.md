@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 MLP低LR子run20261027_015231_recovery_tpbbe84468正常v7保存至2500，guard suspected_regression paused。完整日誌新增400回合／290091步，前82次全跑滿，2183起崩落，最後300次無滿長；低actor LR未防止本輪退步。舊actor-pair收據再次歸檔，非本輪來源。下一步僅child2500關探索凍結評估並收recovery／計時資料，不解鎖retry或繼續盲調。[結果](sac-mlp-slow-result-2026-10-27.md)。
+
 - 2026-10-27 遠端2100 v7獨立probe已核對passed／來源SHA一致／optimizer-replay-weights-history統計保留。新增每run明確checkpoint_storage.json，舊run缺設定仍v7.3；低LR新分支配方選v7，準備、週期、初始及段末保存一致。本機兩短回合跨程序保存續載、v7檔頭及5步凍結評估通過；不證明長期收斂或根治原生當機。下一步pull後重新建立全新2100低LR分支並retry最多500（至2600），保留原paused及失敗.preparing。[驗證與限制](sac-v7-storage-2026-10-27.md)。
 
 - 2026-10-27 遠端低LR分支準備當機、尚未retry；ZIP兩份原生dump分別為HDF5讀取存取違規與寫入abort/assert。未完成.preparing只有約67MB暫存checkpoint，保留不發布。新增獨立probe_sac_v7_save診斷替代格式，不改正式保存流程／來源；下一步先遠端2100單次保存讀回核對，暫停先前retry指令。不能由stack直接認定RAM不足或已修復。[證據與限制](sac-hdf5-crash-2026-10-27.md)。
