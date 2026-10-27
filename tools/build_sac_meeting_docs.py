@@ -11,6 +11,7 @@ from pathlib import Path
 import zipfile
 
 from package_meeting_docs import main as refresh_library
+from meeting_sac.explorer import build_explorers
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / 'output/meeting_sac_20261027'
@@ -79,20 +80,26 @@ def main():
     for marker, value in [('__SOURCES__', sources), ('__STEPS__', STEPS)]:
         template = template.replace(marker, json.dumps(value, ensure_ascii=False).replace('</', '<\\/'))
     template = template.replace('__CHARTS__', '\n'.join(figures))
-    (DOCS / 'index.html').write_text(template, encoding='utf-8')
-    (DOCS / 'diagrams/training-explorer.html').write_text('''<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAC 訓練流程與原文</title><meta http-equiv="refresh" content="0;url=../index.html#flow"><p><a href="../index.html#flow">開啟 SAC 訓練流程與原文</a></p></html>''', encoding='utf-8')
-    manifest = dict(date='2026-10-27', sources={k:dict(sha256=v['sha256']) for k,v in sources.items()}, charts=chart_sources,
+    template = template.replace('<nav aria-label="報告章節">','<p><a href="index.html">← 系統架構圖</a> · <a href="lstm-explorer.html">SAC＋LSTM</a> · <a href="mlp-explorer.html">純 SAC（MLP）</a></p><nav aria-label="報告章節">')
+    (DOCS / 'report.html').write_text(template, encoding='utf-8')
+    explorer_sources = build_explorers(DOCS)
+    (DOCS / 'diagrams/training-explorer.html').write_text('''<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAC 系統架構與原文</title><meta http-equiv="refresh" content="0;url=../index.html"><p><a href="../index.html">開啟 SAC 系統架構與原文</a></p></html>''', encoding='utf-8')
+    manifest = dict(date='2026-10-27', explorer_sources=explorer_sources,
+                    maps={name:digest((DOCS/name).read_bytes()) for name in ['system-map.html','lstm-map.html','mlp-map.html']},
+                    sources={k:dict(sha256=v['sha256']) for k,v in sources.items()}, charts=chart_sources,
                     architecture_sha256=architecture_sha, architecture_spec_sha256=digest((INPUTS/'architecture.json').read_bytes()),
                     pptx_sha256=ppt_sha, note='Local code snapshot, not evidence of every historical run version. Charts copied from reviewed evidence; no new training/evaluation.')
     (DOCS / 'sac-source-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
     (PACKAGE / 'README.md').write_text('''# 2026-10-27 SAC meeting
 
-- [SAC 報告首頁](docs/index.html)：模型、SAC演算法、LSTM／MLP比較、訓練流程與原文、實驗結果。
-- [SAC 互動架構](docs/architecture.html)
+- [SAC 系統架構首頁](docs/index.html)：點圖中方塊查看責任、原文及行號，沿用10/14展示方式。
+- [SAC＋LSTM 架構](docs/lstm-explorer.html)：遞迴actor與雙Q、序列回放。
+- [純 SAC（MLP）架構](docs/mlp-explorer.html)：前饋actor與雙Q、單步回放。
+- [補充說明／結果](docs/report.html)：演算法、LSTM／MLP比較與既有結果。
 - [唯一維護的簡報](dist/SAC_Meeting_20261027.pptx)
 - [完整文件庫](docs/library.html)：含歷史PPO資料，與本次SAC主線分開。
 
-USB：完整解壓縮後開啟 START_HERE.html。核心介紹、圖表及程式原文可離線閱讀；官方參考連結需網路，歷史文件中的專案外部相對連結可能不包含在封包內。
+USB：完整解壓縮後開啟 START_HERE.html，或從PPT最後一頁的連結開啟。請整個資料夾一起搬移並保留dist與docs的相對位置。核心圖表及原文可離線閱讀；官方參考連結需網路，歷史文件中的專案外部相對連結可能不包含在封包內。
 來源與SHA：docs/sac-source-manifest.json。只展示資料，不啟動訓練。
 ''', encoding='utf-8')
     (PACKAGE / 'START_HERE.html').write_text('''<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>SAC meeting</title><meta http-equiv="refresh" content="0;url=docs/index.html"><p><a href="docs/index.html">開啟 SAC 報告首頁</a></p></html>''', encoding='utf-8')

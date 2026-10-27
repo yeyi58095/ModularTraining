@@ -1,0 +1,31 @@
+{
+ "schema_version":1,"diagram_type":"architecture",
+ "meta":{"title":"SAC 訓練系統架構","quality_profile":"showcase","viewBox":[1390,750]},
+ "components":[
+  {"id":"entry","type":"frontend","label":"retry 入口","sublabel":"新建或接續 run","pos":[40,80],"size":[230,80]},
+  {"id":"snapshot","type":"database","label":"Run 快照與控制","sublabel":"模型 · 課程 · 環境 SHA","pos":[410,80],"size":[230,80]},
+  {"id":"supervisor","type":"backend","label":"Supervisor","sublabel":"管理 attempt 與停止條件","pos":[780,80],"size":[230,80]},
+  {"id":"engine","type":"backend","label":"SAC 訓練引擎","sublabel":"agent + Simulink + train","pos":[1150,80],"size":[230,80]},
+  {"id":"checkpoint","type":"database","label":"Checkpoint 保存","sublabel":"agent · replay · history","pos":[1150,350],"size":[230,80]},
+  {"id":"guard","type":"security","label":"Guard 檢查","sublabel":"退步／預算 → pause","pos":[780,350],"size":[230,80]},
+  {"id":"curriculum","type":"backend","label":"課程判定","sublabel":"advance · continue · pause","pos":[410,350],"size":[230,80]},
+  {"id":"evaluation","type":"external","label":"凍結評估","sublabel":"CPU sim · 權重不變核對","pos":[1150,580],"size":[230,80]}
+ ],
+ "connections":[
+  {"from":"entry","to":"snapshot","label":"準備／讀取"},
+  {"from":"snapshot","to":"supervisor","label":"啟動管理"},
+  {"from":"supervisor","to":"engine","label":"新程序 attempt"},
+  {"from":"engine","to":"checkpoint","label":"週期／段末保存","labelDy":100},
+  {"from":"checkpoint","to":"guard","label":"保存後判定"},
+  {"from":"guard","to":"curriculum","label":"無 guard 結果"},
+  {"from":"checkpoint","to":"evaluation","label":"手動選取模型","labelDy":100}
+ ],
+ "cards":[
+  {"dot":"cyan","title":"SAC 分支","items":["LSTM128 或 MLP128；新實驗獨立初始化。","既有 run 載入同一 agent，不改寫快照。"]},
+  {"dot":"amber","title":"暫停邊界","items":["serial 配方每段最多500回合，每100保存。","callback可提早返回；保存後才正式判定。"]},
+  {"dot":"emerald","title":"評估另行執行","items":["凍結評估由使用者手動發起，不是自動訓練分支。","3000步、課程過關與多路線穩健分開判讀。"]}
+ ]
+}
+
+
+

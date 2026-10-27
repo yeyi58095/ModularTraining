@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "純 SAC（MLP）架構",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      730
+    ]
+  },
+  "components": [
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "MLP actor",
+      "sublabel": "128 units · Gaussian mean / std",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "flight",
+      "type": "external",
+      "label": "spatial_v2 環境",
+      "sublabel": "空間循跡 · 保留 isDone",
+      "pos": [
+        510,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "replay",
+      "type": "database",
+      "label": "Replay buffer",
+      "sublabel": "SequenceLength = 1 · 100k",
+      "pos": [
+        960,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "learner",
+      "type": "backend",
+      "label": "SAC 學習更新",
+      "sublabel": "mini-batch 64 · γ = 0.98",
+      "pos": [
+        960,
+        330
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "critics",
+      "type": "backend",
+      "label": "MLP 雙 critic",
+      "sublabel": "Q1、Q2 · 128 units",
+      "pos": [
+        510,
+        330
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "targets",
+      "type": "backend",
+      "label": "Target critics",
+      "sublabel": "MLP 雙 Q 的目標網路",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "temperature",
+      "type": "backend",
+      "label": "熵溫度 α",
+      "sublabel": "初值 0.1 · 目標熵 −1",
+      "pos": [
+        960,
+        580
+      ],
+      "size": [
+        240,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "policy",
+      "to": "flight",
+      "label": "動作 a ∈ [−1, 1]"
+    },
+    {
+      "from": "flight",
+      "to": "replay",
+      "label": "(s, a, r, s′, done)"
+    },
+    {
+      "from": "replay",
+      "to": "learner",
+      "label": "單步抽樣（1步）",
+      "labelDy": 90
+    },
+    {
+      "from": "learner",
+      "to": "critics",
+      "label": "更新 Q 參數"
+    },
+    {
+      "from": "critics",
+      "to": "targets",
+      "label": "軟更新 τ = 0.005"
+    },
+    {
+      "from": "temperature",
+      "to": "learner",
+      "label": "熵項權重"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "策略與價值共同學習",
+      "items": [
+        "學習更新也優化 actor 與 α。",
+        "新建 sac_mlp128；不是轉換其他架構 checkpoint。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "前饋基準",
+      "items": [
+        "UseRNN = false；MLP128。",
+        "SequenceLength = 1；不使用LSTM記憶。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "目標與證據範圍",
+      "items": [
+        "Bellman 目標使用 target 雙 Q 的較小值及熵項。",
+        "此圖呈現元件關係；未畫出所有梯度／回饋線。"
+      ]
+    }
+  ]
+}
