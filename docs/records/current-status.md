@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 使用者回報meeting圖表座標軸重疊，已在原生PowerPoint重現並清除20個圖表的25個空白軸標題；另存 `output/meeting_sac_20261027/dist/SAC_Meeting_20261027_AxisFixed.pptx`。PowerPoint唯讀匯出24頁、13個圖表頁逐張核對，數據／20份內嵌工作表及全部非chart-XML部件不變；原版保留。前次Artifact預覽未顯示預設占位文字，這次補上原生驗證。新增修復工具與回歸測試。[修正紀錄](sac-meeting-axis-fix-2026-10-27.md)。
+
 - 2026-10-27 已依使用者個人Fixed-Wing UAV Lab Paper Review模板完成SAC meeting簡報：`output/meeting_sac_20261027/dist/SAC_Meeting_20261027.pptx`，24頁（20主報告含封面＋4附錄）、20可編輯圖表／內嵌資料表、12表格，逐頁中文講者備註與來源。依實驗時序整理SAC+LSTM／純SAC問題、調整與結果；24頁最終render及結構／字型／數據檢查通過，未在原生PowerPoint UI測試。模板及原有簡報未改，未啟訓練。[交付與驗證](sac-meeting-presentation-2026-10-27.md)。
 
 - 2026-10-27 SAC完整證據ZIP已收並核SHA：809檔全通過，9 issues全為slprj快取略過。已補齊MLP1001–2000、舊parallel至3000，18個attempt與18份評估均納入；新版圖片統一於 `artifacts/meeting/sac_charts_20261027_complete/`（18重畫＋8原圖）。慢critic2200關探索3000步／後10秒最大偏離6.182m，2500僅163步／50.359m；兩報告complete、weights_unchanged，保持paused，不宣稱修復。原ZIP歸檔 `artifacts/incoming/sac-evidence-20261027-124013/`，短檔名索引保留原路徑。未開訓練／新評估／製作PPT。[完整核對與圖表入口](sac-evidence-full-review-2026-10-27.md)。
