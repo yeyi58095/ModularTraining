@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 MLP三快照內部診斷已核對：alpha0.002713／0.002012／0.002357，網路／近期reward無非有限值，optimizer與replay均保存。critic-target參數差擴大、近期terminal markers4／21／78，但非TD誤差／根因證明。新增probe_sac_mlp_checkpoints，讓三模型對相同兩段歷史輸入做唯讀策略／雙Q推論；本機小fixture通過，下一步遠端執行，不train/sim、不retry。[分析與限制](sac-mlp-state-2026-10-27.md)。
+
 - 2026-10-27 低LR MLP child2500凍結報告complete／weights_unchanged：關探索僅133步，reward85.66、原路線最大偏差50.23m，確認本輪未保住2100能力。recovery來源SHA／v7／actor1e-5均核對；400回合290091步耗時1334.7秒（約217步秒含啟停保存），不是從01:52建立起算。保持guard paused；下一步僅讀child2100／2200／2500內部狀態，不retry或盲調課程。[完整核對](sac-mlp-slow-frozen-2026-10-27.md)。
 
 - 2026-10-27 MLP低LR子run20261027_015231_recovery_tpbbe84468正常v7保存至2500，guard suspected_regression paused。完整日誌新增400回合／290091步，前82次全跑滿，2183起崩落，最後300次無滿長；低actor LR未防止本輪退步。舊actor-pair收據再次歸檔，非本輪來源。下一步僅child2500關探索凍結評估並收recovery／計時資料，不解鎖retry或繼續盲調。[結果](sac-mlp-slow-result-2026-10-27.md)。
