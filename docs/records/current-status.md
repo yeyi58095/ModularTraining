@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 SAC完整證據ZIP已收並核SHA：809檔全通過，9 issues全為slprj快取略過。已補齊MLP1001–2000、舊parallel至3000，18個attempt與18份評估均納入；新版圖片統一於 `artifacts/meeting/sac_charts_20261027_complete/`（18重畫＋8原圖）。慢critic2200關探索3000步／後10秒最大偏離6.182m，2500僅163步／50.359m；兩報告complete、weights_unchanged，保持paused，不宣稱修復。原ZIP歸檔 `artifacts/incoming/sac-evidence-20261027-124013/`，短檔名索引保留原路徑。未開訓練／新評估／製作PPT。[完整核對與圖表入口](sac-evidence-full-review-2026-10-27.md)。
+
 - 2026-10-27 已新增 `tools/collect_sac_evidence.ps1` 一次收集SAC+LSTM／純SAC所有可識別run與attempt證據，附lineage、逐檔SHA、排除清單及驗證ZIP；評估軌跡可加`-IncludeEvaluationTraces`。不改來源或操作訓練鎖；活動日誌屬非原子快照。Windows PS5.1合成封包／並行append測試與本機preview通過，尚未遠端全量實跑。下一步使用者收集並交回ZIP再補圖。[指令](../guides/sac-evidence-collection.md)、[驗證](sac-evidence-collector-2026-10-27.md)。
 
 - 2026-10-27 SAC meeting 圖片已集中 `artifacts/meeting/sac_charts_20261027/`：16張重畫PNG＋1張原截圖、JPG總覽及HTML瀏覽頁，涵蓋SAC+LSTM／純SAC的訓練、調參、凍結評估與唯讀診斷。17 PNG開檔核驗、38來源前後SHA一致；未製作PPT或啟停訓練。MLP1001–2000完整逐回合日誌仍缺、圖上留白；慢critic2200／2500凍結評估尚未收，不能稱所有歷程／評估已齊全。[出圖紀錄](sac-meeting-charts-2026-10-27.md)。

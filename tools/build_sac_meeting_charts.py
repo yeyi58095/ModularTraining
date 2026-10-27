@@ -45,7 +45,8 @@ def source(p):
 
 
 def load(pattern):
-    matches = sorted(INCOMING.glob(pattern))
+    candidate = Path(pattern)
+    matches = ([candidate] if candidate.is_file() else []) if candidate.is_absolute() else sorted(INCOMING.glob(pattern))
     if len(matches) != 1:
         raise ValueError(f'Expected one source: {pattern}, got {len(matches)}')
     p = source(matches[0])
