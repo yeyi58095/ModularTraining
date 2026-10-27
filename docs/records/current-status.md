@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 critic慢速子run20261027_095822_recovery_tpbc5e6c87已正常v7保存2500、guard退步paused。完整400回合414603步，前119次全滿、2220首次短回合，最後100無滿長；比低actor組多37個初始滿長回合，但多42.92%步數，不證明穩定改善。來源SHA與配方核對；三交件已歸檔。下一步2200／2500各一次關探索凍結評估，保持paused、不再盲降LR。[分析](sac-mlp-critic-result-2026-10-27.md)。
+
 - 2026-10-27 MLP動作Q曲線核對：2100的min雙Q網格峰值正負分布，2200全16點偏好-1，2500有13點峰值轉正而actor仍強烈負向；僅小樣本off-policy，非高估／根因證明。準備從低actor子run2100（SHA63a549...，v7）另建critic1e-4→2e-5、actor維持1e-5的500回合有界試驗，guard保留。optimizer/replay保留、v7載入、16步合成更新與MLP分支準備測試通過。下一步使用者prepare並retry；其餘保持paused。[設計與證據](sac-mlp-critic-pilot-2026-10-27.md)。
 
 - 2026-10-27 MLP共用輸入報告已核SHA／權重不變：良好歷史輸入上Gaussian mean絕對值0.556→2.947→2.909，策略明顯改變；但Q只評歷史動作，不能據此證明critic支持錯誤新動作或高估。新增有界probe_sac_action_values：同16觀測×33動作×雙critic，純推論，本機小MLP通過。下一步遠端動作Q曲線，不retry／盲調。[分析](sac-mlp-shared-2026-10-27.md)。
