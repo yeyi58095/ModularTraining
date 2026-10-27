@@ -58,6 +58,7 @@ tests/output/
 # Meeting authoring intermediates and duplicate unpacked offline resources.
 /.meeting-build/
 /output/meeting_training_20261014/
+/output/meeting_sac_20261027/
 /output/Meeting_Training_20261014_Offline.zip
 /output/meeting_training_labstyle_20261014/docs/
 /output/meeting_training_labstyle_20261014/assets/

@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 已依使用者個人Fixed-Wing UAV Lab Paper Review模板完成SAC meeting簡報：`output/meeting_sac_20261027/dist/SAC_Meeting_20261027.pptx`，24頁（20主報告含封面＋4附錄）、20可編輯圖表／內嵌資料表、12表格，逐頁中文講者備註與來源。依實驗時序整理SAC+LSTM／純SAC問題、調整與結果；24頁最終render及結構／字型／數據檢查通過，未在原生PowerPoint UI測試。模板及原有簡報未改，未啟訓練。[交付與驗證](sac-meeting-presentation-2026-10-27.md)。
+
 - 2026-10-27 SAC完整證據ZIP已收並核SHA：809檔全通過，9 issues全為slprj快取略過。已補齊MLP1001–2000、舊parallel至3000，18個attempt與18份評估均納入；新版圖片統一於 `artifacts/meeting/sac_charts_20261027_complete/`（18重畫＋8原圖）。慢critic2200關探索3000步／後10秒最大偏離6.182m，2500僅163步／50.359m；兩報告complete、weights_unchanged，保持paused，不宣稱修復。原ZIP歸檔 `artifacts/incoming/sac-evidence-20261027-124013/`，短檔名索引保留原路徑。未開訓練／新評估／製作PPT。[完整核對與圖表入口](sac-evidence-full-review-2026-10-27.md)。
 
 - 2026-10-27 已新增 `tools/collect_sac_evidence.ps1` 一次收集SAC+LSTM／純SAC所有可識別run與attempt證據，附lineage、逐檔SHA、排除清單及驗證ZIP；評估軌跡可加`-IncludeEvaluationTraces`。不改來源或操作訓練鎖；活動日誌屬非原子快照。Windows PS5.1合成封包／並行append測試與本機preview通過，尚未遠端全量實跑。下一步使用者收集並交回ZIP再補圖。[指令](../guides/sac-evidence-collection.md)、[驗證](sac-evidence-collector-2026-10-27.md)。
