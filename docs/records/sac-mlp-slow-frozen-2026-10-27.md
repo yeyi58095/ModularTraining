@@ -1,0 +1,13 @@
+# Low-rate MLP frozen failure confirmed
+
+Received tp9f431124_5e8b_4294_b867_2456a1b9e984.zip; inspected12 entries and archived with original/destination/SHA manifest and verified move under artifacts/incoming/sac-mlp-slow-frozen-20261027. Includes complete frozen report/trace, correct recovery/model/control/storage/guard/status and supervisor timing.
+
+Child20261027_015231_recovery_tpbbe84468 Agent2500 SHAe2c93c4336604813cba608bf2e2cf34890275df5e2a80edad145f9f45a6706ce. Evaluation complete, weights_unchanged=true, Stage1 seed101, exploration false. Reward85.6577,133 steps, environment_done with distance_threshold evidence. Independent finite-route max50.2278m at13.3seconds; after10s RMS38.3943m. Parent2100 frozen previously3000steps/max3.488m after10s. Same environment and curriculum SHA; engine changed for v7 storage, so do not call this identical historical runtime.
+
+Recovery confirms exact parent2100 SHA03bb547cb232810fec17566e535808219247d4f1ff680430bed6c42421df06e1, child initial SHA63a549db69ba20f1aef31428cc2bfd5552ea76f859fb3056434afbf346fe1f40. Actor1e-5,critic1e-4,entropy1e-4,gamma.98,batch64,replay100k,frequency32,one minibatch. v7,500 additional budget,regression pause. Parent provenance is now received rather than inferred from an unrelated pair receipt.
+
+worker_attempts.csv reports exit0,1334.7seconds, actual workers0(serial).400 new episodes/290091steps from preceding full stdout = approximately217.35steps/s including startup/shutdown/save. Real attempt2026-10-27 00:30:56Z–00:53:11Z =08:30:56–08:53:11 Asia/Taipei. Supervisor.log misleadingly prints local08:30 with a literalZ; use ISO timestamps in diagnostics. Run creation at01:52 is not training start. This does not establish v7 speedup or GPU comparison.
+
+Conclusion: this pilot did not retain tracking; sampled exploration alone does not explain the failure. Do not resume guarded child, lower LR again blindly, change curriculum thresholds or restart identical experiment. Preserve parent2100 reference. Root cause still unresolved; Q0 alone cannot diagnose overestimation.
+
+Next bounded read-only action: inspect_sac_checkpoint on child's2100,2200,2500 sequentially. Existing inspector locks paused run, hashes source before/after, reads stored entropy/options/network and target parameter summaries/recent10k replay statistics. No simulation or train. Interpret alpha as entropy weight, not policy standard deviation; target parameter gap is not TD error; recent10k terminal markers are not whole-buffer episode failure rate. This triage may guide later shared-input/Q diagnostic; it does not promise to recover missing historical losses. No runtime changes or training this turn.
