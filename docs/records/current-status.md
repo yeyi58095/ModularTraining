@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-27 已新增 `tools/collect_sac_evidence.ps1` 一次收集SAC+LSTM／純SAC所有可識別run與attempt證據，附lineage、逐檔SHA、排除清單及驗證ZIP；評估軌跡可加`-IncludeEvaluationTraces`。不改來源或操作訓練鎖；活動日誌屬非原子快照。Windows PS5.1合成封包／並行append測試與本機preview通過，尚未遠端全量實跑。下一步使用者收集並交回ZIP再補圖。[指令](../guides/sac-evidence-collection.md)、[驗證](sac-evidence-collector-2026-10-27.md)。
+
 - 2026-10-27 SAC meeting 圖片已集中 `artifacts/meeting/sac_charts_20261027/`：16張重畫PNG＋1張原截圖、JPG總覽及HTML瀏覽頁，涵蓋SAC+LSTM／純SAC的訓練、調參、凍結評估與唯讀診斷。17 PNG開檔核驗、38來源前後SHA一致；未製作PPT或啟停訓練。MLP1001–2000完整逐回合日誌仍缺、圖上留白；慢critic2200／2500凍結評估尚未收，不能稱所有歷程／評估已齊全。[出圖紀錄](sac-meeting-charts-2026-10-27.md)。
 
 - 2026-10-27 critic慢速子run20261027_095822_recovery_tpbc5e6c87已正常v7保存2500、guard退步paused。完整400回合414603步，前119次全滿、2220首次短回合，最後100無滿長；比低actor組多37個初始滿長回合，但多42.92%步數，不證明穩定改善。來源SHA與配方核對；三交件已歸檔。下一步2200／2500各一次關探索凍結評估，保持paused、不再盲降LR。[分析](sac-mlp-critic-result-2026-10-27.md)。
