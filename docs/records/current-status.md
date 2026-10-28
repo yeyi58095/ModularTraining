@@ -4,6 +4,8 @@
 
 ## 已完成
 
+- 2026-10-28 恢復分析critic慢速分支ZIP：2200凍結關探索3000步／reward2734.76／後10秒偏差max6.18m；2500僅163步／reward96.08／max50.36m。兩報告complete且權重不變，model確認critic2e-5。實際1645.5秒／414603步，正常exit0；較晚崩落未變成穩定改善，原2100在既有單一路線評估仍較佳。封存此LR試驗，所有guard保持paused，不直接retry或再盲降LR。[分析與限制](sac-mlp-critic-frozen-2026-10-28.md)。
+
 - 2026-10-28 依10/14展示方式重整meeting：首頁為互動系統架構，另分SAC＋LSTM／純SAC（MLP）架構及補充報告。唯一PPT新增第25頁四個相對HTML連結；舊24頁與圖表原部件不變，原生PowerPoint與離線Chrome驗證通過，USB包同名更新。[交付與驗證](sac-architecture-demo-2026-10-28.md)。
 
 - 2026-10-27 已依回饋將meeting HTML改為SAC專用介紹、架構及互動訓練原文，加入LSTM／MLP比較與既有結果；PPO只留歷史文件庫。新版USB包固定同名、附START_HERE.html，PPT不變。離線Chrome操作／圖表／搜尋與架構四尺寸檢查通過。[修正與驗證](meeting-package-2026-10-27.md)。
