@@ -8,6 +8,10 @@ assert(numel(rewards)>=context.state.start_episode,'Curriculum:Rollback','Checkp
 stageRewards=rewards(first:end); stageSteps=steps(first:end);
 decision=trainingcurriculum.decide(context.stage,stageRewards,stageSteps);
 action=decision.action;
+if strcmp(action,'advance') && isfield(context.stage,'frozen_gate') && ...
+        ~trainingcurriculum.frozen_gate(context,agentFile)
+    action='pause';decision.reason='frozen_evaluation_required';
+end
 if strcmp(action,'advance') && context.state.stage_index==context.stageCount, action='complete'; end
 average=[]; if ~isempty(stageRewards), average=mean(stageRewards(max(1,end-49):end)); end
 result=struct('success',strcmp(action,'complete'),'pause',strcmp(action,'pause'), ...

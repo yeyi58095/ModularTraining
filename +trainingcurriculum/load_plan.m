@@ -19,7 +19,7 @@ must(~isempty(plan.stages),'At least one stage is required.');
 ids = strings(0);
 for i=1:numel(plan.stages)
     s=plan.stages{i};
-    keys(s,{'id','trajectory','wind','advance_when','max_episodes','on_limit'}, ...
+    keys(s,{'id','trajectory','wind','advance_when','max_episodes','on_limit','frozen_gate'}, ...
         {'id','trajectory','wind','advance_when','max_episodes','on_limit'});
     must(ischar(s.id) && ~isempty(regexp(s.id,'^[a-z][a-z0-9_]*$','once')),'Invalid stage id.');
     must(~any(ids==string(s.id)),'Stage ids must be unique.'); ids(end+1)=string(s.id); %#ok<AGROW>
@@ -32,8 +32,13 @@ for i=1:numel(plan.stages)
         case 'fixed_builtin'
             keys(t,{'type'},{'type'});
         case 'random'
-            keys(t,{'type','refresh_every_worker_episodes'},{'type','refresh_every_worker_episodes'});
+            keys(t,{'type','refresh_every_worker_episodes','seed_range'},{'type','refresh_every_worker_episodes'});
             positiveInteger(t.refresh_every_worker_episodes,'refresh_every_worker_episodes');
+            if isfield(t,'seed_range')
+                v=t.seed_range;
+                must(isnumeric(v) && numel(v)==2 && all(isfinite(v)) && all(fix(v)==v) && ...
+                    v(1)>=0 && v(1)<=v(2) && v(2)<=2^32-1,'Invalid route seed range.');
+            end
         case 'mat'
             keys(t,{'type','file','waypoints_variable','velocity_variable'}, ...
                 {'type','file','waypoints_variable','velocity_variable'});
@@ -57,6 +62,17 @@ for i=1:numel(plan.stages)
     end
     must(all(s.wind.turbulence>=0 & s.wind.turbulence<=2),'Turbulence levels must be within 0..2.');
     validateCondition(s.advance_when,0);
+    if isfield(s,'frozen_gate')
+        g=s.frozen_gate;
+        keys(g,{'seeds','max_distance_m','max_rms_m'},{'seeds','max_distance_m','max_rms_m'});
+        must(isnumeric(g.seeds) && ~isempty(g.seeds) && numel(unique(g.seeds))==numel(g.seeds) && ...
+            all(isfinite(g.seeds)) && all(fix(g.seeds)==g.seeds) && all(g.seeds>=0 & g.seeds<=2^32-1),'Invalid gate seeds.');
+        for key={'max_distance_m','max_rms_m'}
+            v=g.(key{1});must(isnumeric(v) && isscalar(v) && isfinite(v) && v>0,'Invalid gate distance.');
+        end
+        must(strcmp(t.type,'random') && isfield(t,'seed_range'),'Gate requires seeded random routes.');
+        must(all(g.seeds<t.seed_range(1) | g.seeds>t.seed_range(2)),'Gate seeds overlap training seeds.');
+    end
 end
 end
 

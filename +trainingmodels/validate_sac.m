@@ -5,6 +5,10 @@ assert(numel(critics)==2,'Modular:ArchitectureMismatch','Expected twin Q critics
 nets={getModel(getActor(agent)),getModel(critics(1)),getModel(critics(2))};
 for k=1:numel(nets)
     layers=nets{k}.Layers; units=[];
+    if isfield(spec,'layerNormalization') && spec.layerNormalization
+        assert(sum(arrayfun(@(x) isa(x,'nnet.cnn.layer.LayerNormalizationLayer'),layers))==2, ...
+            'Modular:ArchitectureMismatch','Expected two normalization layers.');
+    end
     for j=1:numel(layers)
         if isa(layers(j),'nnet.cnn.layer.LSTMLayer'),units(end+1)=layers(j).NumHiddenUnits;end %#ok<AGROW>
     end

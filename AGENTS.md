@@ -45,6 +45,9 @@
 
 ## 目前接續邊界
 
+- 2026-10-29 新授權：meeting已結束，暫不製作／修改簡報；主線為sac_random_route_v1全新SAC64、從每回合隨機路線開始，四階段逐步加風。已授權程式／文件／必要有界驗證與commit/push，遠端仍由使用者啟動。預設GPU、同步6workers且minWorkers=6，首段500、checkpoint100、maxAttempts1；不得把本機能力檢查當遠端6workers/GPU性能驗證。
+- 新組路徑收據為artifacts/sac-random-route-v1-run.txt；監看／畫圖均先核model=sac_paper64，勿使用舊SAC收據。論文參考配方採固定LR3e-4，沒有線性LR排程；新的凍結升階驗證不改原run快照。詳見docs/guides/sac-random-route-2026-10-29.md。
+
 - 2026-10-21 夜間授權：SAC run `20261021_200746_tpecf075ee_586a_4d3b_b636_4c63d8cea43b` 已正常保存至1000且paused。使用者授權遠端夜間連續接續；仍由使用者執行，不由代理連線啟動。採同run、serial CPU、每attempt500、checkpoint100、maxAttempts=0，保留原課程／預算／錯誤停止條件；不等同continuous_training分支，不關閉guard或改寫快照。
 - 使用者偏好在 MATLAB 查看 `training_status(sacDir,50)`；先以 `artifacts/sac-serial-500-run.txt` 收據取得當前SAC路徑，不只依工作區殘留變數猜測。
 - 使用者偏好 PowerShell 即時圖：`python .\tools\plot_training_rewards.py "$session" --watch 6 --view`。優先由同一SAC收據取得session並核對model／environment，勿套用progressive_v2最新run的舊搜尋範例而畫到PPO。腳本已移至tools，不使用根目錄plot_training_rewards.py。提供可直接貼上的遠端指令，含正常暫停方式。

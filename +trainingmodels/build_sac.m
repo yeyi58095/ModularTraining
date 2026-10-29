@@ -30,8 +30,13 @@ if ~useRNN
     assert(isfield(spec,'hiddenUnits') && spec.sequenceLength==1,'Modular:Architecture','Feedforward SAC requires hiddenUnits and sequenceLength1.');
     units=spec.hiddenUnits;
 end
-agent=rlSACAgent(obs,act,rlAgentInitializationOptions( ...
-    'NumHiddenUnit',units,'UseRNN',useRNN),opts);
+if isfield(spec,'layerNormalization') && spec.layerNormalization
+    [actor,critics]=trainingmodels.paper_sac_networks(spec,obs,act,device);
+    agent=rlSACAgent(actor,critics,opts);
+else
+    agent=rlSACAgent(obs,act,rlAgentInitializationOptions( ...
+        'NumHiddenUnit',units,'UseRNN',useRNN),opts);
+end
 actor=getActor(agent); actor.UseDevice=device; agent=setActor(agent,actor);
 critics=getCritic(agent);
 for k=1:numel(critics), critics(k).UseDevice=device; end

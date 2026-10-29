@@ -1,8 +1,14 @@
 # 目前狀態與接續入口
 
-更新：2026-10-28。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-10-29。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
 
 ## 已完成
+
+- 2026-10-29 新sac_random_route_v1已實作：SAC64＋LayerNorm、每回合seeded random路線、4階段無風至±3m/s分量及turbulence0..2；固定LR3e-4／buffer50k／batch256／frequency1，非論文完整復現。預設GPU／6workers／每段500／checkpoint100／maxAttempts1／v7，訓練門檻後需當前stage與無風的固定5路線凍結驗證。合成學習／保存回歸、課程測試、GPU建構、單worker兩真實回合80/96步接續、Agent_Final精確5步評估及8項圖表測試通過；未驗證遠端6worker性能或收斂。新收據artifacts/sac-random-route-v1-run.txt。[交付日誌](sac-random-route-delivery-2026-10-29.md)、[遠端操作](../guides/sac-random-route-2026-10-29.md)。
+
+- 2026-10-28 已讀本機Dally2022 arXiv v1全文並核對關鍵頁：27次串級訓練成功率26%（nMAE5%門檻），Fig.6僅成功試驗中的5 seeds，文中承認後期退步。方法為前饋雙SAC串級、增量動作、先內後外訓練；主要故障評估權重固定，非在線學習。與本案相似現象不證明相同根因；未改訓練。[全文筆記與頁碼](../research/dally-sac-flight-control-review-2026-10-28.md)。
+
+- 2026-10-28 SAC結果綜合與飛控文獻初篩：目前支持「已有可用Stage1策略，但繼續更新反覆退步」，不能確診LSTM、Q高估或entropy根因；擴buffer及降actor／critic LR尚未建立穩定解法。整理5篇SAC飛控／學習一致性／循跡reward研究，僅摘要與書目初篩，未完成全文配方核對；未改執行程式或啟動訓練。[結論與文獻](../research/sac-flight-control-literature-2026-10-28.md)。
 
 - 2026-10-28 恢復分析critic慢速分支ZIP：2200凍結關探索3000步／reward2734.76／後10秒偏差max6.18m；2500僅163步／reward96.08／max50.36m。兩報告complete且權重不變，model確認critic2e-5。實際1645.5秒／414603步，正常exit0；較晚崩落未變成穩定改善，原2100在既有單一路線評估仍較佳。封存此LR試驗，所有guard保持paused，不直接retry或再盲降LR。[分析與限制](sac-mlp-critic-frozen-2026-10-28.md)。
 
@@ -139,7 +145,7 @@
 
 ## 下一步
 
-最新優先：使用者同步最新程式後，依[MLP長跑指令](../guides/sac-mlp-continuous-100k-2026-10-26.md)從 paused Agent1000 準備獨立子run；檢視lineage與快照後，再由使用者明確啟動。最大100000新增回合，原課程成功條件仍可提早結束；未驗證前不得宣稱此長跑路徑已實跑成功。
+最新優先：保持舊run paused，遠端同步後依[隨機路線SAC指令](../guides/sac-random-route-2026-10-29.md)preflight／prepare全新run，核對6workers＋GPU配方後由使用者啟動首段最多500回合。讀新收據查看training_status／即時圖，段末依實際保存回合評估。meeting暫不繼續；下方舊SAC／PPO待辦保留為歷史，不是本次啟動指令。
 
 2026-10-20後續：已收到根目錄paired-review ZIP，完成四份MAT軌跡唯讀抽取與路線疊圖。16000兩次於左下轉彎附近失敗，17200無探索在左側向北路段、有探索在右側向南路段失敗，並非共同單一彎點。見[軌跡初步核對](round3-paired-review-2026-10-20.md)。建議下一輪獨立SAC限1 attempt／最多1000回合，由使用者遠端執行；不必等待完整PPO因果分析。尚未收到SAC正式啟動回報。
 

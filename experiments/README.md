@@ -4,6 +4,7 @@
 
 | 課程 | 已登錄成果 |
 | --- | --- |
+| [sac_random_route_v1](sac_random_route_v1/README.md) | 論文參考SAC64；隨機路線四階段風場、固定路線凍結升階檢查；尚無收斂成果 |
 | [progressive_v2](progressive_v2/README.md) | 39300 回合完成模型、無探索與探索評估 |
 | [sac_spatial_v2](sac_spatial_v2/README.md) | 獨立SAC候選；短測通過，尚無正式收斂成果 |
 

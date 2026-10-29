@@ -17,6 +17,14 @@ function checkpoint_attempt(configFile)
         'trainingPlots',"none",'closePoolOnExit',true, ...
         'poolDiagnosticDir',cfg.attemptDir);
     outcome=[];
+    protocolFile=fullfile(cfg.sessionDir,'experiment_protocol.json');
+    if isfile(protocolFile)
+        protocol=jsondecode(fileread(protocolFile));
+        if isfield(protocol,'training_seed')
+            validateattributes(protocol.training_seed,{'numeric'},{'scalar','integer','>=',0,'<=',1e9});
+            checkpointOverrides.baseSeed=mod(protocol.training_seed+cfg.attempt*10000,2^32-cfg.numWorkers-1);
+        end
+    end
     checkpointOverrides.executionMode=string(cfg.executionMode);
     if isfield(cfg,'fastRestart'),checkpointOverrides.fastRestart=string(cfg.fastRestart);end
     if isfield(cfg,'modularRoot')

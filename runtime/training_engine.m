@@ -335,12 +335,15 @@ if fid == -1, error('Training:WindLog', 'Cannot create wind log.'); end
 fprintf(fid, 'WorkerEpisode,Wind_E,Wind_N,Turb,Worker\n');
 fclose(fid);
 memoryLogFile = fullfile(runLogDir, 'memory_log.csv');
+routeLogFile=fullfile(runLogDir,'route_seeds.csv');
+fid=fopen(routeLogFile,'w');assert(fid~=-1,'Cannot create route log.');
+fprintf(fid,'WorkerEpisode,Worker,RouteSeed,Points\n');fclose(fid);
 fid = fopen(memoryLogFile, 'w');
 if fid == -1, error('Training:MemoryLog', 'Cannot create memory log.'); end
 fprintf(fid, 'WorkerEpisode,Worker,Time,MATLABUsedBytes,AvailablePhysicalBytes\n');
 fclose(fid);
 dq = parallel.pool.DataQueue;
-logListener = afterEach(dq, @(event) writeWorkerLog(event, windLogFile, memoryLogFile));
+logListener = afterEach(dq, @(event) writeWorkerLog(event, windLogFile, memoryLogFile,routeLogFile));
 randomstart_stage2([], dq, true);
 % 將此階段的 trajectory／wind 傳入每回合 ResetFcn，不重建 agent。
 environmentConfig=[];
@@ -497,13 +500,15 @@ function releaseTrainingPool(pool, closeOnExit)
     end
 end
 
-function writeWorkerLog(event, windFile, memoryFile)
+function writeWorkerLog(event, windFile, memoryFile,routeFile)
 % 依 DataQueue 事件種類分流風場與記憶體 CSV，集中由 client 寫檔。
     % Only the client writes these shared files, as in the original script.
     if strcmp(event.kind, 'wind')
         appendWindRow(windFile, event.row);
     elseif strcmp(event.kind, 'memory')
         appendWindRow(memoryFile, event.row);
+    elseif strcmp(event.kind,'route')
+        appendWindRow(routeFile,event.row);
     end
 end
 
@@ -637,7 +642,17 @@ function in = randomstart_stage2(in, dq, resetState, environmentConfig)
                 lastwaypoints=environmentConfig.trajectory.waypoints;
                 lastvelocity=environmentConfig.trajectory.velocity;
             case 'random'
-                [lastwaypoints,lastvelocity]=createPath_Stage2();
+                if isfield(environmentConfig.trajectory,'seed_range')
+                    routeSeed=randi(environmentConfig.trajectory.seed_range(:)');
+                    routeRng=rng;routeGuard=onCleanup(@() rng(routeRng));
+                    rng(routeSeed,'twister');
+                    [lastwaypoints,lastvelocity]=createPath_Stage2();
+                    clear routeGuard
+                    send(dq,struct('kind','route','row',sprintf('%d,%d,%.0f,%d', ...
+                        localEpisodeCounter+1,wid,routeSeed,size(lastwaypoints,1))));
+                else
+                    [lastwaypoints,lastvelocity]=createPath_Stage2();
+                end
             otherwise
                 error('Curriculum:Trajectory','Unknown trajectory type.');
         end

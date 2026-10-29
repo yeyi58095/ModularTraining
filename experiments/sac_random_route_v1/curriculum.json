@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "environment": "spatial_v2",
+  "model": "sac_paper64",
+  "stages": [
+    {
+      "id": "random_calm",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 1,
+        "seed_range": [
+          1,
+          1000000000
+        ]
+      },
+      "wind": {
+        "east_mps": [
+          0,
+          0
+        ],
+        "north_mps": [
+          0,
+          0
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 1000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 5000,
+      "on_limit": "pause",
+      "frozen_gate": {
+        "seeds": [
+          2000000101,
+          2000000102,
+          2000000103,
+          2000000104,
+          2000000105
+        ],
+        "max_distance_m": 20,
+        "max_rms_m": 10
+      }
+    },
+    {
+      "id": "random_weak_wind",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 1,
+        "seed_range": [
+          1,
+          1000000000
+        ]
+      },
+      "wind": {
+        "east_mps": [
+          -1,
+          1
+        ],
+        "north_mps": [
+          -1,
+          1
+        ],
+        "turbulence": [
+          0,
+          0
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 1000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 5000,
+      "on_limit": "pause",
+      "frozen_gate": {
+        "seeds": [
+          2000000101,
+          2000000102,
+          2000000103,
+          2000000104,
+          2000000105
+        ],
+        "max_distance_m": 20,
+        "max_rms_m": 10
+      }
+    },
+    {
+      "id": "random_moderate_wind",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 1,
+        "seed_range": [
+          1,
+          1000000000
+        ]
+      },
+      "wind": {
+        "east_mps": [
+          -2,
+          2
+        ],
+        "north_mps": [
+          -2,
+          2
+        ],
+        "turbulence": [
+          0,
+          1
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 1000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 5000,
+      "on_limit": "pause",
+      "frozen_gate": {
+        "seeds": [
+          2000000101,
+          2000000102,
+          2000000103,
+          2000000104,
+          2000000105
+        ],
+        "max_distance_m": 20,
+        "max_rms_m": 10
+      }
+    },
+    {
+      "id": "random_full_wind",
+      "trajectory": {
+        "type": "random",
+        "refresh_every_worker_episodes": 1,
+        "seed_range": [
+          1,
+          1000000000
+        ]
+      },
+      "wind": {
+        "east_mps": [
+          -3,
+          3
+        ],
+        "north_mps": [
+          -3,
+          3
+        ],
+        "turbulence": [
+          0,
+          2
+        ]
+      },
+      "advance_when": {
+        "all": [
+          {
+            "metric": "stage_episodes",
+            "at_least": 1000
+          },
+          {
+            "metric": "reward_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2200
+          },
+          {
+            "metric": "steps_mean",
+            "window": 100,
+            "consecutive_windows": 3,
+            "at_least": 2800
+          },
+          {
+            "metric": "full_length_rate",
+            "window": 100,
+            "consecutive_windows": 3,
+            "steps_at_least": 3000,
+            "at_least": 0.9
+          }
+        ]
+      },
+      "max_episodes": 5000,
+      "on_limit": "pause",
+      "frozen_gate": {
+        "seeds": [
+          2000000101,
+          2000000102,
+          2000000103,
+          2000000104,
+          2000000105
+        ],
+        "max_distance_m": 20,
+        "max_rms_m": 10
+      }
+    }
+  ]
+}

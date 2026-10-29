@@ -7,6 +7,7 @@ arguments
     sessionDir (1,1) string
     opt.episodes (1,:) double {mustBeInteger,mustBePositive} = [6100 10600]
     opt.includeLatest (1,1) logical = true
+    opt.finalCheckpoint (1,1) logical = false
     opt.stages (1,:) double {mustBeInteger,mustBePositive} = [1 2 3]
     opt.seeds (1,:) double {mustBeInteger,mustBeNonnegative} = 101
     opt.maxSteps (1,1) double {mustBeInteger,mustBePositive} = 3000
@@ -54,6 +55,14 @@ assert(numel(offset)==1 && strcmp(strrep(strtrim(engine(offset:end)),char(13),''
     'Evaluation:PathDrift','Fixed-path implementation changed; update evaluator before comparison.');
 % 候選回合由 checkpoint 內歷史核對，latest 也必須是真實可讀進度。
 paths=strings(0); episodes=[];
+if opt.finalCheckpoint
+    assert(isempty(opt.episodes) && ~opt.includeLatest,'Evaluation:Selection', ...
+        'finalCheckpoint requires episodes=[] and includeLatest=false.');
+    f=fullfile(sessionDir,'Agent_Final.mat');
+    assert(isfile(f),'Evaluation:Missing','Missing final checkpoint.');
+    checkpoint_select_agent(f);[~,actual]=checkpoint_resume_state(f);
+    paths=f;episodes=actual;
+end
 for ep=unique(opt.episodes,'stable')
     f=fullfile(sessionDir,'checkpoints',sprintf('Agent%d.mat',ep));
     assert(isfile(f),'Evaluation:Missing','Missing checkpoint: %s',f);
