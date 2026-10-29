@@ -6,6 +6,8 @@
 
 ## 已完成
 
+- 2026-10-29 已唯讀核對 Flower 歷史：9/23日誌記載9/22六worker／授權問題及6→4→2備援，README與watchdog已有5008處理；尚未找到九月明確R2024b／R2026b版本不一致事件。保留下次meeting報告素材、使用者首次觀察GPU頻繁活動（未量測），以及未來確認學長原始版本後獨立重跑的待辦；未啟動原版訓練、未修改Flower或簡報。[歷史證據與後續計畫](flower-licensing-history-and-rerun-plan-2026-10-29.md)。
+
 - 2026-10-29 遠端新隨機SAC run20261029_185919_tp424f6b90_db57_4eef_8c45_cdf6367cf580前兩次attempt建池失敗並保護paused；授權排查後attempt 3已成功以6 workers進入訓練，詳見上方最新狀態。Job1／2的10/14舊crash不作為本次根因證據。[故障與修復紀錄](sac-random-pool-failure-2026-10-29.md)。
 
 - 2026-10-29 新sac_random_route_v1已實作：SAC64＋LayerNorm、每回合seeded random路線、4階段無風至±3m/s分量及turbulence0..2；固定LR3e-4／buffer50k／batch256／frequency1，非論文完整復現。預設GPU／6workers／每段500／checkpoint100／maxAttempts1／v7，訓練門檻後需當前stage與無風的固定5路線凍結驗證。合成學習／保存回歸、課程測試、GPU建構、單worker兩真實回合80/96步接續、Agent_Final精確5步評估及8項圖表測試通過；未驗證遠端6worker性能或收斂。新收據artifacts/sac-random-route-v1-run.txt。[交付日誌](sac-random-route-delivery-2026-10-29.md)、[遠端操作](../guides/sac-random-route-2026-10-29.md)。
