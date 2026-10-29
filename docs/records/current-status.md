@@ -2,7 +2,11 @@
 
 更新：2026-10-29。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
 
+遠端建池診斷補充：Job1／2與最新crash檔均為10/14歷史證據，不能用status-1073741819解釋10/29的status1。下一步獨立目錄單worker建池測試；原run保持paused，尚未確診根因。
+
 ## 已完成
+
+- 2026-10-29 遠端新隨機SAC run20261029_185919_tp424f6b90_db57_4eef_8c45_cdf6367cf580首attempt建6workers失敗：PoolRunValidation／worker status1、建池13.84秒、ActualWorkers0，無完成回合且已保護paused。GTX1660建構preflight通過不代表pool成功；保留run與crash jobs，先讀worker日誌，不直接retry或判定RAM/GPU根因。[故障紀錄](sac-random-pool-failure-2026-10-29.md)。
 
 - 2026-10-29 新sac_random_route_v1已實作：SAC64＋LayerNorm、每回合seeded random路線、4階段無風至±3m/s分量及turbulence0..2；固定LR3e-4／buffer50k／batch256／frequency1，非論文完整復現。預設GPU／6workers／每段500／checkpoint100／maxAttempts1／v7，訓練門檻後需當前stage與無風的固定5路線凍結驗證。合成學習／保存回歸、課程測試、GPU建構、單worker兩真實回合80/96步接續、Agent_Final精確5步評估及8項圖表測試通過；未驗證遠端6worker性能或收斂。新收據artifacts/sac-random-route-v1-run.txt。[交付日誌](sac-random-route-delivery-2026-10-29.md)、[遠端操作](../guides/sac-random-route-2026-10-29.md)。
 
