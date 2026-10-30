@@ -1,6 +1,8 @@
 # 目前狀態與接續入口
 
-更新：2026-10-29。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-10-30。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+
+最新交件已確認首500回合stdout正常保存、下一程序載入Agent_Final並再次六workers接到512；累計972341步。301–400／401–500平均reward2100.50／1974.51、滿長率74%／66%，屬改善後局部回落，未證實持續退化或升階。使用者希望目前attempt結束後暫停，本次只分析，未核實遠端control設定；無時間戳不能可靠估計完工時間。[首段分析](sac-paper64-first500-analysis-2026-10-30.md)。
 
 遠端建池問題已於本次恢復：Service Host 記錄 5008／Release not found in wallet／R2024b Update 10，視窗卻顯示 R2026b。提供關閉 MATLAB、備份改名 .mwlicx、連網重開取得授權流程後，使用者交回原 SAC run attempt 3：6 workers 已連線、完成 6 episodes／554 steps，狀態 running。尚未取得第 100 回合 checkpoint 保存或長期穩定證據；不需為本次日誌更新中斷遠端訓練。[完整修復步驟與證據](sac-random-pool-failure-2026-10-29.md)。
 
