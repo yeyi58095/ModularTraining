@@ -1,6 +1,10 @@
 # 目前狀態與接續入口
 
-更新：2026-11-04。這是專案狀態摘要，不是遠端即時監控或所有聊天室的逐字備份。
+更新：2026-11-05。遠端 SAC attempt 6 已從 Agent1100 接續至 1600，正常保存並依設定暫停，仍在 random_calm。證據包已歸檔並核對遠端 SHA256。[第六段分析及來源](sac-paper64-attempt6-2026-11-05.md)。
+
+11/04最新XML已定位系統提交上限耗盡：故障時97.8159/97.8416GiB（99.9737%），僅剩26.32MiB；實體RAM使用46.11/95.84GiB。分頁檔手動限E槽512–2048MB，與事件僅多2GiB提交上限相符。建議使用者將E槽改為系統管理並依提示重啟，尚未執行確認；高提交量來源仍待監測，不能稱leak已修好。Agent1100仍需載入驗證，不直接無限續跑。[最新證據](sac-paper64-memory-review-2026-11-04.md)。
+
+11/04後續證據更新：Windows Event2004於11/01 07:19:38明確診斷虛擬記憶體不足，與attempt5錯誤同秒；列出三個MATLAB約4.09／3.71／3.70GiB，非全系統總量。Agent1100.mat已存在（5720029 bytes，04:09:46），可讀性待驗；1186不是已保存進度。stderr僅exit0xffffffff，仍無堆疊。下一步查提交上限、pagefile與可用RAM；尚未確診96GB為何不足，非已證明GPU OOM／leak。[更新分析](sac-paper64-memory-review-2026-11-04.md)。
 
 11/04最新交件：SAC paper64 attempt5於11/01 07:19呈error「記憶體資源不足」，stdout到1186／2618813步；Saved decision僅到1000，不等於最後checkpoint清單。使用者遠端96GB RAM；尚無stderr／堆疊／資源耗盡事件，不能確診RAM、GPU或leak。CSV1186列連續且累計步數一致，末100回合1973.90／2506.06步／66%滿長，學習為平台震盪而非已證實持續崩落，Stage1未過。先取attempt5 stderr、checkpoint清單與Windows Event2004，不直接retry。[完整分析](sac-paper64-memory-review-2026-11-04.md)。
 

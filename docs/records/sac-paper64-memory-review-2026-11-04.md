@@ -4,6 +4,24 @@
 
 ## 結論與進度邊界
 
+### Event XML與分頁檔確認（最新）
+
+使用者後續附件4cb0d5d6-ef9e-490f-a6bf-6411cf8599e7提供當次Event2004 XML及目前CIM查詢。故障時SystemCommitLimit=105056624640 bytes（97.8416GiB），SystemCommitCharge=105029025792（97.8159GiB），剩27598848 bytes（26.32MiB），使用率99.9737%。PhysicalMemorySize=95.8416GiB，PhysicalMemoryUsage=46.1110GiB。由此確認當時是系統提交上限耗盡，並非96GB實體RAM全滿；此事件不是GPU顯存耗盡證據。
+
+目前AutomaticManagedPagefile=False，E:/pagefile.sys InitialSize512MB、MaximumSize2048MB、AllocatedBaseSize2047MB；事件提交上限恰比實體記憶體多2GiB，與此配置相符。E槽目前剩163.87GiB，沒有顯示目前磁碟滿。CurrentUsage257MB與PeakUsage1573MB是目前pagefile快照，不等於故障當時數值，也不是全系統提交量。現在CommittedBytes約37.64GiB，不能否定歷史97.82GiB的耗盡。
+
+事件ProcessCommitCharge約45.01GiB、paged pool約5.86GiB、nonpaged pool約2.36GiB；這些欄位不能簡單相加後把差額全稱為洩漏，尚未取得完整記憶體分類與時間序列。三個MATLAB不是全部耗用，仍未確診哪個程序／共享提交／核心資源導致總提交成長。限制2GB的pagefile使提交餘裕很小，是可直接處理的容量限制；擴充pagefile不等於證明或修好洩漏。
+
+建議由使用者在遠端確認沒有活動訓練、保存其他工作後，將E槽分頁檔從512–2048MB改成系統管理大小，按設定並依Windows提示重開機；不設定任意固定超大值、不由代理操作。重新開機後核對Win32_PageFileUsage及CommitLimit；系統管理可動態增長，不保證立即顯示特定容量。之後先驗Agent1100、進行有界續跑並監測提交量及各程序PrivateBytes，再決定長跑。尚未收到變更或重啟完成證據。
+
+### 後續新證據（優先於下方初步假設）
+
+使用者補交Windows System Event2004，時間2026-11-01 07:19:38，與supervisor錯誤同秒；事件明確診斷虛擬記憶體不足。這確認系統曾發生低虛擬記憶體／提交資源不足，優先查系統提交上限與pagefile，不再只是泛稱可能OOM。事件列出MATLAB PID32804=4395106304 bytes（約4.09GiB）、PID40312=3983683584（3.71GiB）、PID22828=3974815744（3.70GiB），合計約11.51GiB；這只是摘要列出的三個程序，非全系統使用量，也不是可直接相加視為實體RAM resident用量。尚缺事件XML的SystemCommitCharge／SystemCommitLimit等欄位（若有）、其他程序、分頁檔設定、Windows實際可用RAM，不能解釋為何96GB機器達限，更未證明記憶體洩漏或GPU OOM。
+
+stderr只有`ERROR: MATLAB error Exit Status: 0xffffffff`，沒有MATLAB例外堆疊；result.json未輸出內容，不能區分不存在或空檔。Exit Status本身不能定位原因或證明supervisor強制結束。checkpoint清單確認Agent1100.mat存在，5720029 bytes，2026-11-01 04:09:46；Agent1000.mat為5718741 bytes，10/31 06:12:10。1100是最新列出候選恢復點，仍需載入驗證，未取得SHA或checkpoint內容。1101–1186共86回合只有stdout證據，不能當成已保存。
+
+600、700、800、900、1000的保存時間依序為10/30 16:27:34、19:50:57、23:07:17、10/31 02:35:52、06:12:10；相鄰百回合約3小時16分至3小時36分（含訓練／保存等），可描述該段歷史速度，不能把1000→1100跨越停機／重啟的時間當純訓練耗時。下一步唯讀查看事件XML、提交量／上限、pagefile設定與實際可用RAM，確認後再規劃修復；暫不直接續訓或硬指定分頁檔大小。
+
 同run `20261029_185919_tp424f6b90_db57_4eef_8c45_cdf6367cf580`，attempt5，state=error，更新時間2026-11-01T07:19:38.9528714+08:00，訊息「記憶體資源不足，無法完成此作業。」stdout最新1186，2618813累計steps，Stage1 random_calm。Saved decision through Episode1000不是最後checkpoint檔案清單；不能由此斷言1100沒保存，也不能認定1186可恢復。需核對checkpoints檔案與可讀性，未提供resume指令。
 
 使用者確認遠端96GB RAM。這不排除Windows提交記憶體上限、個別程序／系統資源不足、GPU顯存或其他資源問題；目前沒有耗用量、錯誤識別碼或堆疊足以分類。不是已確診RAM耗盡、GPU OOM或memory leak，也無證據說這次與之前5008授權問題相同。
