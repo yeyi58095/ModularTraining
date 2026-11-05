@@ -24,6 +24,11 @@ if isfile(recoveryFile)
     end
 end
 folders=dir(fullfile(sessionDir,'attempt_*')); rows=zeros(0,4);
+ids=regexp({folders.name},'^attempt_(\d+)$','tokens','once');
+folders=folders(~cellfun(@isempty,ids));
+ids=ids(~cellfun(@isempty,ids));
+[~,order]=sort(cellfun(@(id) str2double(id{1}),ids));
+folders=folders(order);
 number='[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?';
 pattern=['Episode:\s*(\d+)\s*/\s*\d+\s*\|\s*Episode reward:\s*(' number ...
     ')\s*\|\s*Episode steps:\s*(\d+)\s*\|\s*Average reward:\s*' number ...
@@ -34,6 +39,11 @@ for i=1:numel(folders)
     if isempty(token) || ~folders(i).isdir || ~isfile(logFile), continue; end
     lines=regexp(fileread(logFile),'\n','split');
     for j=1:numel(lines)-1 % ignore incomplete final row
+        resume=regexp(strtrim(lines{j}),'^Continuing with episode (\d+)\.$','tokens','once');
+        if ~isempty(resume)
+            rows(rows(:,1)>=str2double(resume{1}),:)=[];
+            continue
+        end
         values=regexp(lines{j},pattern,'tokens','once');
         if isempty(values), continue; end
         ep=str2double(values{1});

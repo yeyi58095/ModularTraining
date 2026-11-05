@@ -51,6 +51,13 @@ class LineageTests(unittest.TestCase):
         segments, _ = read_history(self.c, False)
         self.assertEqual([r['episode'] for r in segments[0]['rows']], list(range(1, 10)))
 
+    def test_resume_discards_abandoned_tail_before_first_new_episode(self):
+        attempt = self.a / 'attempt_2'
+        attempt.mkdir()
+        (attempt / 'stdout.log').write_text('Continuing with episode 6.\n')
+        segments, _ = read_history(self.a)
+        self.assertEqual([r['episode'] for r in segments[0]['rows']], list(range(1, 6)))
+
     # 驗證 attempt 覆蓋僅限同 run，並忽略尚未完成的日誌列。
     def test_latest_attempt_only_within_run_and_incomplete_line_ignored(self):
         attempt = self.a / 'attempt_2'

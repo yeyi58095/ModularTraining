@@ -170,6 +170,11 @@ def read_episodes(session):
             for line in stream:
                 if not line.endswith("\n"):
                     continue
+                resume = re.fullmatch(r"Continuing with episode (\d+)\.", line.strip())
+                if resume:
+                    first = int(resume[1])
+                    episodes = {ep: row for ep, row in episodes.items() if ep < first}
+                    continue
                 match = EPISODE.search(line)
                 if not match:
                     continue
