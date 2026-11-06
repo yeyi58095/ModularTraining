@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/06 使用者選定先批次評估已保存的弱風子 checkpoint 1000–1500。新增 trainingtools.review_sac_wind_history，逐份完成後自動收集 JSON、情境和 MAT 軌跡，支援核對後略過已完成項目。R2024b 合成批次／重跑／損毀檢查通過，尚未遠端執行 120 次飛行。[執行、監看與 ZIP 指令](../guides/sac-wind-history-batch.md)
+
 11/06 父子 Agent1500 配對已完成。新十條路線上，父組無風與弱風都 10/10 跑滿，弱風子組兩者皆 5/10，且在相同五條路線提早終止。這次子組表現較差，先保留 paused，尚未調參。[配對數據與限制](sac-wind-paired1500-2026-11-06.md)
 
 11/06 弱風子 run 20261105_210649_recovery_tpb199bcee 已保存至 1500，因 500 回合 recovery_budget 正常 paused。CSV 1500 筆連續、父 1000／子 500，與狀態終點一致。接著比較父子 Agent1500 的凍結飛行。[統計與交件來源](sac-weak-wind-1500-2026-11-06.md)
