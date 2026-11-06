@@ -52,6 +52,10 @@ checkpoint_select_agent(checkpoint);
 [history,episode]=checkpoint_resume_state(checkpoint);
 assert(episode==settings.checkpoint_episode,'Recovery:Episode','History/episode mismatch.');
 parentHash=checkpointreview.sha256(checkpoint);
+if isfield(settings,'expected_checkpoint_sha256')
+    assert(strcmpi(parentHash,settings.expected_checkpoint_sha256), ...
+        'Recovery:SourceHash','Checkpoint differs from the selected source.');
+end
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
 isSAC=strcmp(spec.algorithm,'SAC');
 if isfield(settings,'critic_learning_rate_scale')
