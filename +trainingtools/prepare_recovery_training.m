@@ -101,6 +101,24 @@ end
 forkState=struct('stage_index',stage,'start_episode',startEpisode, ...
     'completed',{completed(1:stage-1)});
 weakWindPilot=isfield(settings,'pilot') && strcmp(settings.pilot,'sac_weak_wind_1000');
+extendSlowWind=isfield(settings,'pilot') && strcmp(settings.pilot,'sac_wind_actor_half_extend');
+if extendSlowWind
+    saved=jsondecode(fileread(fullfile(sourceSession,'curriculum_outcome.json')));
+    guardState=jsondecode(fileread(fullfile(sourceSession,'training_guard_state.json')));
+    [~,sourceId]=fileparts(sourceSession);
+    assert(strcmp(sourceId,settings.expected_run) && strcmp(status.state,'paused') && ...
+        saved.episodes==episode && strcmp(saved.curriculumReason,'recovery_budget') && ...
+        guardState.paused && strcmp(guardState.reason,'recovery_budget'), ...
+        'Recovery:Source','Expected completed budget pause on the selected parent.');
+    assert(stage==2 && state.stage_index==2 && startEpisode==1000 && ...
+        strcmp(plan.stages{2}.id,'random_weak_wind') && strcmp(plan.environment,'spatial_v2') && ...
+        strcmp(spec.name,'sac_paper64') && spec.actorLearnRate==1.5e-4 && ...
+        spec.criticLearnRate==3e-4 && settings.actor_learning_rate_scale==1 && ...
+        ~isfield(settings,'critic_learning_rate_scale') && settings.experience_buffer_length==spec.experienceBufferLength && ...
+        strcmp(cfg.trainingDevice,'gpu') && strcmp(cfg.executionMode,'parallel') && ...
+        cfg.numWorkers==6 && cfg.minWorkers==6 && cfg.checkpointEvery==100, ...
+        'Recovery:Settings','Unexpected continuation settings.');
+end
 if weakWindPilot
     assert(stage==1 && state.stage_index==1 && episode==1000 && strcmp(status.state,'paused') && ...
         strcmp(parentHash,settings.expected_checkpoint_sha256) && strcmp(spec.name,'sac_paper64') && ...
@@ -130,7 +148,7 @@ actorBefore=getLearnableParameters(getActor(agent)); criticBefore=criticParamete
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 if isSAC
     assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
-    if ~weakWindPilot
+    if ~weakWindPilot && ~extendSlowWind
         agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
     end
     if settings.actor_learning_rate_scale~=1
@@ -202,7 +220,7 @@ assert(any(strcmp(storage,{'-v7','-v7.3'})),'Recovery:Storage','Unsupported MAT 
 trainingcurriculum.write_json(fullfile(staging,'checkpoint_storage.json'), ...
     struct('schema_version',1,'version',storage));
 target=fullfile(staging,'checkpoints',sprintf('Agent%d.mat',episode));
-if weakWindPilot
+if weakWindPilot || extendSlowWind
     copyfile(checkpoint,target);
     assert(strcmp(checkpointreview.sha256(target),parentHash),'Recovery:Copy','Checkpoint copy mismatch.');
 else
@@ -218,7 +236,7 @@ assert(mod(settings.guard.window,cfg.checkpointEvery)==0, ...
     'Recovery:Window','Guard windows must align with checkpoint boundaries.');
 cfg.averageWindow=min(cfg.averageWindow,cfg.episodesPerProcess);
 cfg.maxAttempts=0;
-if weakWindPilot, cfg.maxAttempts=1; end
+if weakWindPilot || extendSlowWind, cfg.maxAttempts=1; end
 trainingcurriculum.write_json(fullfile(staging,'control.json'),cfg);
 rules=settings.guard; rules.origin_episode=episode;
 rules.max_additional_episodes=settings.max_additional_episodes;
