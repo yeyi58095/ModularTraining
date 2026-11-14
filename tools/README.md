@@ -7,6 +7,7 @@
 | 模型與評估封存 | `python tools/training_artifacts.py --help` |
 | 訓練曲線 | `python tools/plot_training_rewards.py --help` |
 | 全部 SAC attempt／分支證據收集 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/collect_sac_evidence.ps1 -IncludeEvaluationTraces`；[範圍、預覽與交件](../docs/guides/sac-evidence-collection.md) |
+| 本輪半速 SAC 自動評估／選擇／有界續訓 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sac_review_cycle.ps1`；[規則、升階、取消與ZIP](../docs/guides/sac-review-cycle-2026-11-14.md) |
 | SAC完整收件版圖表 | `python tools/build_sac_collected_charts.py <intake-folder> --output <new-folder>`；[完整收件與驗證紀錄](../docs/records/sac-evidence-full-review-2026-10-27.md) |
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |

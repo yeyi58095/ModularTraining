@@ -102,12 +102,15 @@ forkState=struct('stage_index',stage,'start_episode',startEpisode, ...
     'completed',{completed(1:stage-1)});
 weakWindPilot=isfield(settings,'pilot') && strcmp(settings.pilot,'sac_weak_wind_1000');
 extendSlowWind=isfield(settings,'pilot') && strcmp(settings.pilot,'sac_wind_actor_half_extend');
-if extendSlowWind
+reviewedWind=isfield(settings,'pilot') && strcmp(settings.pilot,'sac_wind_review_selected');
+if extendSlowWind || reviewedWind
     saved=jsondecode(fileread(fullfile(sourceSession,'curriculum_outcome.json')));
     guardState=jsondecode(fileread(fullfile(sourceSession,'training_guard_state.json')));
     [~,sourceId]=fileparts(sourceSession);
     assert(strcmp(sourceId,settings.expected_run) && strcmp(status.state,'paused') && ...
-        saved.episodes==episode && strcmp(saved.curriculumReason,'recovery_budget') && ...
+        ((extendSlowWind && saved.episodes==episode) || ...
+         (reviewedWind && saved.episodes>=episode && episode>=1500 && episode<=2000 && mod(episode,100)==0)) && ...
+        strcmp(saved.curriculumReason,'recovery_budget') && ...
         guardState.paused && strcmp(guardState.reason,'recovery_budget'), ...
         'Recovery:Source','Expected completed budget pause on the selected parent.');
     assert(stage==2 && state.stage_index==2 && startEpisode==1000 && ...
@@ -118,6 +121,12 @@ if extendSlowWind
         strcmp(cfg.trainingDevice,'gpu') && strcmp(cfg.executionMode,'parallel') && ...
         cfg.numWorkers==6 && cfg.minWorkers==6 && cfg.checkpointEvery==100, ...
         'Recovery:Settings','Unexpected continuation settings.');
+    if reviewedWind
+        assert(strcmp(sourceId,'20261107_132924_recovery_tp578fea3e') && ...
+            saved.episodes==2000 && settings.max_additional_episodes==500 && ...
+            settings.episodes_per_process==500 && isfield(settings,'expected_checkpoint_sha256'), ...
+            'Recovery:ReviewScope','Unexpected automated review source or budget.');
+    end
 end
 if weakWindPilot
     assert(stage==1 && state.stage_index==1 && episode==1000 && strcmp(status.state,'paused') && ...
@@ -148,7 +157,7 @@ actorBefore=getLearnableParameters(getActor(agent)); criticBefore=criticParamete
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 if isSAC
     assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
-    if ~weakWindPilot && ~extendSlowWind
+    if ~weakWindPilot && ~extendSlowWind && ~reviewedWind
         agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
     end
     if settings.actor_learning_rate_scale~=1
@@ -220,7 +229,7 @@ assert(any(strcmp(storage,{'-v7','-v7.3'})),'Recovery:Storage','Unsupported MAT 
 trainingcurriculum.write_json(fullfile(staging,'checkpoint_storage.json'), ...
     struct('schema_version',1,'version',storage));
 target=fullfile(staging,'checkpoints',sprintf('Agent%d.mat',episode));
-if weakWindPilot || extendSlowWind
+if weakWindPilot || extendSlowWind || reviewedWind
     copyfile(checkpoint,target);
     assert(strcmp(checkpointreview.sha256(target),parentHash),'Recovery:Copy','Checkpoint copy mismatch.');
 else
@@ -236,7 +245,7 @@ assert(mod(settings.guard.window,cfg.checkpointEvery)==0, ...
     'Recovery:Window','Guard windows must align with checkpoint boundaries.');
 cfg.averageWindow=min(cfg.averageWindow,cfg.episodesPerProcess);
 cfg.maxAttempts=0;
-if weakWindPilot || extendSlowWind, cfg.maxAttempts=1; end
+if weakWindPilot || extendSlowWind || reviewedWind, cfg.maxAttempts=1; end
 trainingcurriculum.write_json(fullfile(staging,'control.json'),cfg);
 rules=settings.guard; rules.origin_episode=episode;
 rules.max_additional_episodes=settings.max_additional_episodes;
@@ -250,6 +259,10 @@ lineage=struct('schema_version',1,'status','prepared','parent_session',char(sour
     'actor_learning_rate_before',oldRate,'actor_learning_rate_after',spec.actorLearnRate, ...
     'weights_preserved',true,'settings',settings, ...
     'selection','User-selected candidate; not automatic evaluation-best selection');
+if reviewedWind
+    lineage.selection='Bounded automated frozen-review selection; see selection_evidence';
+    lineage.selection_evidence=settings.selection_evidence;
+end
 lineage.parent_curriculum_sha256=checkpointreview.sha256(fullfile(sourceSession,'curriculum.json'));
 lineage.parent_model_sha256=checkpointreview.sha256(fullfile(sourceSession,'model.json'));
 lineage.child_checkpoint_sha256=checkpointreview.sha256(target);
