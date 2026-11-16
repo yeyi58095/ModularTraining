@@ -9,6 +9,7 @@
 | 全部 SAC attempt／分支證據收集 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/collect_sac_evidence.ps1 -IncludeEvaluationTraces`；[範圍、預覽與交件](../docs/guides/sac-evidence-collection.md) |
 | 本輪半速 SAC 自動評估／選擇／有界續訓 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sac_review_cycle.ps1`；[規則、升階、取消與ZIP](../docs/guides/sac-review-cycle-2026-11-14.md) |
 | 新child 1600–2100凍結回溯（不訓練） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1`；[端點重用、診斷與ZIP](../docs/guides/sac-child-history-2026-11-16.md) |
+| 同一1600的actor LR短對照（會訓練） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -ActorPilot`；[兩臂各100回合與交件](../docs/guides/sac-actor-pilot-2026-11-16.md) |
 | SAC完整收件版圖表 | `python tools/build_sac_collected_charts.py <intake-folder> --output <new-folder>`；[完整收件與驗證紀錄](../docs/records/sac-evidence-full-review-2026-10-27.md) |
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |

@@ -1,11 +1,13 @@
-param([switch]$PackageOnly,[switch]$Probe)
-# Frozen review only. Never retry, train, update Git, or change run locks/state.
+param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot)
+# History/Probe are read-only; explicit ActorPilot runs the bounded two-arm trial.
 $ErrorActionPreference='Stop'
+if($Probe -and $ActorPilot){throw 'Choose only one mode.'}
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
 $bundleName='sac-child-history-20261116';$entryPoint='review_sac_child_history';$zipPrefix='sac-child-history-'
 if($Probe){$bundleName='sac-child-probe-20261116';$entryPoint='probe_sac_child';$zipPrefix='sac-child-probe-'}
+if($ActorPilot){$bundleName='sac-actor-pilot-20261116';$entryPoint='run_sac_actor_pilot';$zipPrefix='sac-actor-pilot-'}
 $bundle=Join-Path $root "artifacts/packages/$bundleName"
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $launcher=[IO.File]::Open((Join-Path $bundle 'launcher.lock'),'OpenOrCreate','ReadWrite','None')
@@ -23,6 +25,7 @@ try {
     $lock=[IO.File]::Open((Join-Path $bundle 'review.lock'),'OpenOrCreate','ReadWrite','None')
     $lines=@('# Child checkpoint frozen review','', 'No training or stage transition. These are previously inspected diagnostic routes, not an independent generalization claim.','')
     if($Probe){$lines=@('# SAC 1600 vs 1700 saved-state and shared-input probe','', 'No training or simulation. See state_1600/1700.json, shared_inputs/ and action_values/. Replay prefixes are samples, not identified failure trajectories. Gaussian outputs are pre-transform; Q values are not measured returns or proof of overestimation.','')}
+    if($ActorPilot){$lines=@('# SAC actor learning-rate short pilot','', 'Two sequential branches, maximum 100 new episodes each. Read review.json for training outcomes. Both remain paused. Group 1 = existing diagnostic routes; group 2 = fresh fixed routes. One trial per recipe, not a causal or convergence proof.','')}
     if(Test-Path (Join-Path $bundle 'review.json')){
         $state=Get-Content (Join-Path $bundle 'review.json') -Raw|ConvertFrom-Json
         $lines+="Status: $($state.status); completed: $($state.completed_episodes -join ', ')"
@@ -31,6 +34,11 @@ try {
         $rows=Get-Content (Join-Path $bundle 'summary.json') -Raw|ConvertFrom-Json
         $lines+=@('','| Episode | Calm full / 10 | Weak full / 10 | Actual wind full / count | Calm mean steps | Weak mean steps |','|---|---|---|---|---|---|')
         foreach($r in $rows){$lines+="| $($r.episode) | $($r.full_counts[0]) | $($r.full_counts[1]) | $($r.actual_wind_full)/$($r.actual_wind_count) | $($r.mean_steps[0]) | $($r.mean_steps[1]) |"}
+    }
+    if($ActorPilot -and (Test-Path (Join-Path $bundle 'comparison.json'))){
+        $rows=Get-Content (Join-Path $bundle 'comparison.json') -Raw|ConvertFrom-Json
+        $lines+=@('','| Arm | Stage | Seed group | Full/count | Mean steps | Actual wind full/count |','|---|---|---|---|---|---|')
+        foreach($r in $rows){$lines+="| $($r.arm) | $($r.stage) | $($r.seed_group) | $($r.full_count)/$($r.count) | $($r.mean_steps) | $($r.actual_wind_full)/$($r.actual_wind_count) |"}
     }
     [IO.File]::WriteAllLines((Join-Path $bundle 'RESULTS.md'),$lines,[Text.UTF8Encoding]::new($false))
     $name=$zipPrefix+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)+'.zip'
@@ -52,7 +60,7 @@ try {
         $n++;if($n%25 -eq 0){Write-Output "Packing $n/$($files.Count) files"}
     }
     $writer=[IO.StreamWriter]::new($zip.CreateEntry('package_manifest.json').Open())
-    try{$writer.Write((@{scope='Only this child frozen review; no training checkpoints';files=@($files.ToArray())}|ConvertTo-Json -Depth 6))}finally{$writer.Dispose()}
+    try{$writer.Write((@{scope='Only this selected operation; ActorPilot mode includes its new final checkpoints';files=@($files.ToArray())}|ConvertTo-Json -Depth 6))}finally{$writer.Dispose()}
     $zip.Dispose();$zip=$null
     Write-Output 'Verifying ZIP payload hashes...'
     $zip=[IO.Compression.ZipFile]::OpenRead($pending)
