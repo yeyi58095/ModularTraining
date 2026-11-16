@@ -13,7 +13,7 @@ lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
 guard=onCleanup(@() lock.Dispose()); %#ok<NASGU>
 status=jsondecode(fileread(fullfile(sessionDir,'status.json')));assert(strcmp(status.state,'paused'));
 spec=jsondecode(fileread(fullfile(sessionDir,'model.json')));
-assert(strcmp(spec.name,'sac_mlp128') && spec.lstmUnits==0);
+assert(any(strcmp(spec.name,{'sac_mlp128','sac_paper64'})) && spec.lstmUnits==0);
 d=load(inputFile,'sequences','sources');e=d.sequences{1};
 assert(strcmpi(checkpointreview.sha256(d.sources{1}.file),d.sources{1}.sha256));
 assert(strcmpi(char(java.io.File(d.sources{1}.file).getCanonicalPath()), ...

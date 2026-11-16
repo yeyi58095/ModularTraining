@@ -13,7 +13,7 @@ guard=onCleanup(@() lock.Dispose()); %#ok<NASGU>
 s=jsondecode(fileread(fullfile(sessionDir,'status.json')));
 assert(strcmp(s.state,'paused'),'Source must be paused.');
 spec=jsondecode(fileread(fullfile(sessionDir,'model.json')));
-assert(strcmp(spec.name,'sac_mlp128') && spec.lstmUnits==0,'MLP only.');
+assert(any(strcmp(spec.name,{'sac_mlp128','sac_paper64'})) && spec.lstmUnits==0,'Feedforward SAC only.');
 out=string(tempname(fullfile(root,'artifacts')));mkdir(out);
 sequences=cell(1,2);sources=cell(1,2);
 sourceEpisodes=[episodes(1),episodes(end)];

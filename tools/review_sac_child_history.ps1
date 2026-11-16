@@ -1,10 +1,12 @@
-param([switch]$PackageOnly)
+param([switch]$PackageOnly,[switch]$Probe)
 # Frozen review only. Never retry, train, update Git, or change run locks/state.
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
-$bundle=Join-Path $root 'artifacts/packages/sac-child-history-20261116'
+$bundleName='sac-child-history-20261116';$entryPoint='review_sac_child_history';$zipPrefix='sac-child-history-'
+if($Probe){$bundleName='sac-child-probe-20261116';$entryPoint='probe_sac_child';$zipPrefix='sac-child-probe-'}
+$bundle=Join-Path $root "artifacts/packages/$bundleName"
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $launcher=[IO.File]::Open((Join-Path $bundle 'launcher.lock'),'OpenOrCreate','ReadWrite','None')
 $lock=$null;$zip=$null;$failure=$null
@@ -13,13 +15,14 @@ try {
         try {
             $matlab=(Get-Command matlab.exe -ErrorAction Stop).Source
             $escaped=$root.Replace("'","''")
-            & $matlab -wait -logfile (Join-Path $bundle 'matlab.log') -batch "cd('$escaped'); addpath(pwd); trainingtools.review_sac_child_history();"
+            & $matlab -wait -logfile (Join-Path $bundle 'matlab.log') -batch "cd('$escaped'); addpath(pwd); trainingtools.$entryPoint();"
             if($LASTEXITCODE -ne 0){$failure="MATLAB exit $LASTEXITCODE; see review.json and matlab.log."}
         }catch{$failure=$_.Exception.Message}
         [IO.File]::WriteAllText((Join-Path $bundle 'launcher_result.json'),(@{error=$failure;ended_at=(Get-Date).ToString('o')}|ConvertTo-Json))
     }
     $lock=[IO.File]::Open((Join-Path $bundle 'review.lock'),'OpenOrCreate','ReadWrite','None')
     $lines=@('# Child checkpoint frozen review','', 'No training or stage transition. These are previously inspected diagnostic routes, not an independent generalization claim.','')
+    if($Probe){$lines=@('# SAC 1600 vs 1700 saved-state and shared-input probe','', 'No training or simulation. See state_1600/1700.json, shared_inputs/ and action_values/. Replay prefixes are samples, not identified failure trajectories. Gaussian outputs are pre-transform; Q values are not measured returns or proof of overestimation.','')}
     if(Test-Path (Join-Path $bundle 'review.json')){
         $state=Get-Content (Join-Path $bundle 'review.json') -Raw|ConvertFrom-Json
         $lines+="Status: $($state.status); completed: $($state.completed_episodes -join ', ')"
@@ -30,7 +33,7 @@ try {
         foreach($r in $rows){$lines+="| $($r.episode) | $($r.full_counts[0]) | $($r.full_counts[1]) | $($r.actual_wind_full)/$($r.actual_wind_count) | $($r.mean_steps[0]) | $($r.mean_steps[1]) |"}
     }
     [IO.File]::WriteAllLines((Join-Path $bundle 'RESULTS.md'),$lines,[Text.UTF8Encoding]::new($false))
-    $name='sac-child-history-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)+'.zip'
+    $name=$zipPrefix+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)+'.zip'
     $target=Join-Path (Split-Path $bundle -Parent) $name;$pending=$target+'.partial'
     $files=New-Object 'System.Collections.Generic.List[object]'
     $stack=New-Object 'System.Collections.Generic.Stack[string]';$stack.Push($bundle)
