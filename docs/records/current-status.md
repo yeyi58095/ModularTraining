@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/17 已分析既有120條pilot飛行軌跡：兩臂在配對同時長各38/40的guidance RMS變差，但動作變化大多降低；相同初始觀測的第一動作由−0.983變+0.058／+0.977。尚未確診學習退步根因。下一個有界實驗為固定三模型、四seed、兩風況的探索開／關比較，重用off、僅新增24次CPU sim，不訓練。隔離流程／打包驗證通過，待遠端實跑。[分析](sac-pilot-failure-traces-2026-11-17.md)、[新指令](../guides/sac-pilot-exploration-2026-11-17.md)
+
 11/17 actor pilot後診斷20檔核驗歸檔，遠端complete且來源SHA與前次評估一致。相同256筆輸入核驗通過；兩臂actor LR確實不同，策略均明顯改變，alpha各+42.45%／+22.14%，無網路NaN／Inf，仍未證明根因。保留1600、所有分支paused；本輪不再重跑同類probe或盲降LR，後續優先用已收配對軌跡分析。[診斷與限制](sac-actor-pilot-probe-result-2026-11-17.md)。既有22頁PPT未更動。
 
 11/17 actor短對照ZIP 177檔SHA核驗歸檔：來源1600凍結跑滿38/40，基準1700為11/40、actor再半速為7/40，兩臂正常budget paused且未升階。沒有可直接延長的勝者，保留1600；下一步僅兩臂保存狀態／共同輸入診斷，不再盲降LR。20261119 meeting PPT已完成22頁、原生PowerPoint逐頁檢視，無HTML演示。[結果與PPT](sac-actor-pilot-result-2026-11-17.md)、[下一步指令](../guides/sac-actor-pilot-next-2026-11-17.md)

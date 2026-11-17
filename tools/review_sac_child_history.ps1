@@ -1,7 +1,7 @@
-param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot,[switch]$PilotProbe)
+param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot,[switch]$PilotProbe,[switch]$ExplorationCheck)
 # History/Probe are read-only; explicit ActorPilot runs the bounded two-arm trial.
 $ErrorActionPreference='Stop'
-if(([int]$Probe.IsPresent + [int]$ActorPilot.IsPresent + [int]$PilotProbe.IsPresent) -gt 1){throw 'Choose only one mode.'}
+if(([int]$Probe.IsPresent + [int]$ActorPilot.IsPresent + [int]$PilotProbe.IsPresent + [int]$ExplorationCheck.IsPresent) -gt 1){throw 'Choose only one mode.'}
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
@@ -9,6 +9,7 @@ $bundleName='sac-child-history-20261116';$entryPoint='review_sac_child_history';
 if($Probe){$bundleName='sac-child-probe-20261116';$entryPoint='probe_sac_child';$zipPrefix='sac-child-probe-'}
 if($ActorPilot){$bundleName='sac-actor-pilot-20261116';$entryPoint='run_sac_actor_pilot';$zipPrefix='sac-actor-pilot-'}
 if($PilotProbe){$bundleName='sac-actor-pilot-probe-20261117';$entryPoint='probe_sac_actor_pilot';$zipPrefix='sac-actor-pilot-probe-'}
+if($ExplorationCheck){$bundleName='sac-pilot-exploration-20261117';$entryPoint='review_sac_pilot_exploration';$zipPrefix='sac-pilot-exploration-'}
 $bundle=Join-Path $root "artifacts/packages/$bundleName"
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $launcher=[IO.File]::Open((Join-Path $bundle 'launcher.lock'),'OpenOrCreate','ReadWrite','None')
@@ -27,6 +28,7 @@ try {
     $lines=@('# Child checkpoint frozen review','', 'No training or stage transition. These are previously inspected diagnostic routes, not an independent generalization claim.','')
     if($Probe){$lines=@('# SAC 1600 vs 1700 saved-state and shared-input probe','', 'No training or simulation. See state_1600/1700.json, shared_inputs/ and action_values/. Replay prefixes are samples, not identified failure trajectories. Gaussian outputs are pre-transform; Q values are not measured returns or proof of overestimation.','')}
     if($PilotProbe){$lines=@('# SAC actor pilot diagnosis','', 'Read-only 1600/1700 probes within baseline and actor_half arms. No training, simulation, pool, stage transition or automatic parameter change. Replay prefixes are samples, not identified failure trajectories. Compare common input sets only; Q estimates are not measured returns.','')}
+    if($ExplorationCheck){$lines=@('# SAC frozen exploration comparison','', 'At most 24 new CPU simulations. Reuses prior deterministic reports. No training or stage transition. Failure-selected diagnostic routes; one stochastic rollout per model/stage/route, not generalization or independent turbulence trials. See comparison.json.','')}
     if($ActorPilot){$lines=@('# SAC actor learning-rate short pilot','', 'Two sequential branches, maximum 100 new episodes each. Read review.json for training outcomes. Both remain paused. Group 1 = existing diagnostic routes; group 2 = fresh fixed routes. One trial per recipe, not a causal or convergence proof.','')}
     if(Test-Path (Join-Path $bundle 'review.json')){
         $state=Get-Content (Join-Path $bundle 'review.json') -Raw|ConvertFrom-Json
@@ -41,6 +43,16 @@ try {
         $rows=Get-Content (Join-Path $bundle 'comparison.json') -Raw|ConvertFrom-Json
         $lines+=@('','| Arm | Stage | Seed group | Full/count | Mean steps | Actual wind full/count |','|---|---|---|---|---|---|')
         foreach($r in $rows){$lines+="| $($r.arm) | $($r.stage) | $($r.seed_group) | $($r.full_count)/$($r.count) | $($r.mean_steps) | $($r.actual_wind_full)/$($r.actual_wind_count) |"}
+    }
+    if($ExplorationCheck -and (Test-Path (Join-Path $bundle 'comparison.json'))){
+        $rows=Get-Content (Join-Path $bundle 'comparison.json') -Raw|ConvertFrom-Json
+        $lines+=@('','| Arm | Paired scenarios | Off full | On full | Off failed, on full | Off full, on failed |','|---|---|---|---|---|---|')
+        foreach($group in ($rows|Group-Object arm)){
+            $items=@($group.Group);$off=@($items|Where-Object {$_.off_full}).Count;$on=@($items|Where-Object {$_.on_full}).Count
+            $rescued=@($items|Where-Object {-not $_.off_full -and $_.on_full}).Count
+            $lost=@($items|Where-Object {$_.off_full -and -not $_.on_full}).Count
+            $lines+="| $($group.Name) | $($items.Count) | $off | $on | $rescued | $lost |"
+        }
     }
     [IO.File]::WriteAllLines((Join-Path $bundle 'RESULTS.md'),$lines,[Text.UTF8Encoding]::new($false))
     $name=$zipPrefix+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)+'.zip'

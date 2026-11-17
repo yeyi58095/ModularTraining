@@ -11,6 +11,7 @@
 | 新child 1600–2100凍結回溯（不訓練） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1`；[端點重用、診斷與ZIP](../docs/guides/sac-child-history-2026-11-16.md) |
 | 同一1600的actor LR短對照（會訓練） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -ActorPilot`；[兩臂各100回合與交件](../docs/guides/sac-actor-pilot-2026-11-16.md) |
 | Actor短對照後的兩臂診斷（不訓練） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -PilotProbe`；[11/17決策與操作](../docs/guides/sac-actor-pilot-next-2026-11-17.md) |
+| Pilot探索開／關比較（最多24次CPU模擬） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -ExplorationCheck`；[失敗情境診斷與交件](../docs/guides/sac-pilot-exploration-2026-11-17.md) |
 | SAC完整收件版圖表 | `python tools/build_sac_collected_charts.py <intake-folder> --output <new-folder>`；[完整收件與驗證紀錄](../docs/records/sac-evidence-full-review-2026-10-27.md) |
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |
