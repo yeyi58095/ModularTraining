@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/17 actor pilot後診斷20檔核驗歸檔，遠端complete且來源SHA與前次評估一致。相同256筆輸入核驗通過；兩臂actor LR確實不同，策略均明顯改變，alpha各+42.45%／+22.14%，無網路NaN／Inf，仍未證明根因。保留1600、所有分支paused；本輪不再重跑同類probe或盲降LR，後續優先用已收配對軌跡分析。[診斷與限制](sac-actor-pilot-probe-result-2026-11-17.md)。既有22頁PPT未更動。
+
 11/17 actor短對照ZIP 177檔SHA核驗歸檔：來源1600凍結跑滿38/40，基準1700為11/40、actor再半速為7/40，兩臂正常budget paused且未升階。沒有可直接延長的勝者，保留1600；下一步僅兩臂保存狀態／共同輸入診斷，不再盲降LR。20261119 meeting PPT已完成22頁、原生PowerPoint逐頁檢視，無HTML演示。[結果與PPT](sac-actor-pilot-result-2026-11-17.md)、[下一步指令](../guides/sac-actor-pilot-next-2026-11-17.md)
 
 11/16 probe交件11檔核驗並歸檔：alpha約+2.35%、網路數值有限，但共同輸入策略與雙Q動作偏好改變，尚無根因證明。下一步準備同一1600的新基準／actor7.5e-5候選各100回合短對照，總上限200、順序執行、各凍結評估原診斷與新路線，不自動續訓勝者。[證據](sac-child-probe-result-2026-11-16.md)、[執行指令](../guides/sac-actor-pilot-2026-11-16.md)
