@@ -1,13 +1,14 @@
-param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot)
+param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot,[switch]$PilotProbe)
 # History/Probe are read-only; explicit ActorPilot runs the bounded two-arm trial.
 $ErrorActionPreference='Stop'
-if($Probe -and $ActorPilot){throw 'Choose only one mode.'}
+if(([int]$Probe.IsPresent + [int]$ActorPilot.IsPresent + [int]$PilotProbe.IsPresent) -gt 1){throw 'Choose only one mode.'}
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
 $bundleName='sac-child-history-20261116';$entryPoint='review_sac_child_history';$zipPrefix='sac-child-history-'
 if($Probe){$bundleName='sac-child-probe-20261116';$entryPoint='probe_sac_child';$zipPrefix='sac-child-probe-'}
 if($ActorPilot){$bundleName='sac-actor-pilot-20261116';$entryPoint='run_sac_actor_pilot';$zipPrefix='sac-actor-pilot-'}
+if($PilotProbe){$bundleName='sac-actor-pilot-probe-20261117';$entryPoint='probe_sac_actor_pilot';$zipPrefix='sac-actor-pilot-probe-'}
 $bundle=Join-Path $root "artifacts/packages/$bundleName"
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $launcher=[IO.File]::Open((Join-Path $bundle 'launcher.lock'),'OpenOrCreate','ReadWrite','None')
@@ -25,6 +26,7 @@ try {
     $lock=[IO.File]::Open((Join-Path $bundle 'review.lock'),'OpenOrCreate','ReadWrite','None')
     $lines=@('# Child checkpoint frozen review','', 'No training or stage transition. These are previously inspected diagnostic routes, not an independent generalization claim.','')
     if($Probe){$lines=@('# SAC 1600 vs 1700 saved-state and shared-input probe','', 'No training or simulation. See state_1600/1700.json, shared_inputs/ and action_values/. Replay prefixes are samples, not identified failure trajectories. Gaussian outputs are pre-transform; Q values are not measured returns or proof of overestimation.','')}
+    if($PilotProbe){$lines=@('# SAC actor pilot diagnosis','', 'Read-only 1600/1700 probes within baseline and actor_half arms. No training, simulation, pool, stage transition or automatic parameter change. Replay prefixes are samples, not identified failure trajectories. Compare common input sets only; Q estimates are not measured returns.','')}
     if($ActorPilot){$lines=@('# SAC actor learning-rate short pilot','', 'Two sequential branches, maximum 100 new episodes each. Read review.json for training outcomes. Both remain paused. Group 1 = existing diagnostic routes; group 2 = fresh fixed routes. One trial per recipe, not a causal or convergence proof.','')}
     if(Test-Path (Join-Path $bundle 'review.json')){
         $state=Get-Content (Join-Path $bundle 'review.json') -Raw|ConvertFrom-Json

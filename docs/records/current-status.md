@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/17 actor短對照ZIP 177檔SHA核驗歸檔：來源1600凍結跑滿38/40，基準1700為11/40、actor再半速為7/40，兩臂正常budget paused且未升階。沒有可直接延長的勝者，保留1600；下一步僅兩臂保存狀態／共同輸入診斷，不再盲降LR。20261119 meeting PPT已完成22頁、原生PowerPoint逐頁檢視，無HTML演示。[結果與PPT](sac-actor-pilot-result-2026-11-17.md)、[下一步指令](../guides/sac-actor-pilot-next-2026-11-17.md)
+
 11/16 probe交件11檔核驗並歸檔：alpha約+2.35%、網路數值有限，但共同輸入策略與雙Q動作偏好改變，尚無根因證明。下一步準備同一1600的新基準／actor7.5e-5候選各100回合短對照，總上限200、順序執行、各凍結評估原診斷與新路線，不自動續訓勝者。[證據](sac-child-probe-result-2026-11-16.md)、[執行指令](../guides/sac-actor-pilot-2026-11-16.md)
 
 11/16 下一步選擇先唯讀比較新child1600／1700，不續訓。新增`-Probe`一鍵狀態／共同replay輸入／雙Q動作曲線診斷及ZIP；paper64隔離真實模型CPU推論測試通過，未train/sim/pool。保留1600作候選來源，尚未決定調參；Q估計不直接證明高估或根因。[指令與限制](../guides/sac-child-probe-2026-11-16.md)
