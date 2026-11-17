@@ -1,5 +1,6 @@
-function test_sac_actor_pilot_preparation()
+function test_sac_actor_pilot_preparation(mode)
 % Real archived Agent1600; prepare only, never launch train or sim.
+if nargin==0,mode="actor";end
 root=fileparts(fileparts(mfilename('fullpath')));addpath(root,fullfile(root,'runtime'));
 f=jsondecode(fileread(fullfile(root,'tests','output','sac-paper-probe-fixture.json')));
 source=string(f.folder);archive=fullfile(root,'artifacts','incoming','sac-actor-half-1500-package-20261107','20261107_002801_recovery_tpbb65eb4c');
@@ -16,10 +17,13 @@ trainingcurriculum.write_json(fullfile(source,'control.json'),cfg);
 file=fullfile(source,'checkpoints','Agent1600.mat');hash=checkpointreview.sha256(file);
 v=whos('-file',file);name='saved_agent';if ~any(strcmp({v.name},name)),name='Agent_Stage2';end
 d=load(file,name);before=saveobj(d.(name));clear d;
-for scale=[1 .5]
+scales=[1 .5];capacities=[50000 50000];
+if mode=="replay_retention",scales=[1 1];capacities=[50000 500000];end
+for trial=1:2
+    scale=scales(trial);capacity=capacities(trial);
     r=struct('schema_version',1,'checkpoint_episode',1600,'expected_checkpoint_sha256',hash, ...
         'actor_learning_rate_scale',scale,'expected_actor_learning_rate',1.5e-4, ...
-        'experience_buffer_length',50000,'episodes_per_process',100,'max_additional_episodes',100, ...
+        'experience_buffer_length',capacity,'episodes_per_process',100,'max_additional_episodes',100, ...
         'guard',struct('schema_version',1,'window',100,'patience',3,'reward_ratio',.5,'steps_ratio',.5, ...
         'min_reference_reward',500,'min_reference_steps',500));
     recipe=string(tempname(fullfile(root,'tests','output')))+".json";trainingcurriculum.write_json(recipe,r);
@@ -36,9 +40,10 @@ for scale=[1 .5]
     end
     [x,xi]=getLastNData(before.ExperienceBuffer,50000);[y,yi]=getLastNData(after.ExperienceBuffer,50000);
     assert(isequaln(x,y) && isequaln(xi,yi));
+    assert(after.ExperienceBuffer.MaxLength==capacity && after.ExperienceBuffer.Length==50000);
     g=jsondecode(fileread(fullfile(info.sessionDir,'training_guard.json')));
     assert(g.origin_episode==1600 && g.max_additional_episodes==100 && isfile(fullfile(info.sessionDir,'STOP')));
     assert(strcmp(hash,checkpointreview.sha256(file)) && isempty(dir(fullfile(info.sessionDir,'attempt_*'))));
 end
-fprintf('ACTOR_PILOT_PREP_OK: real source weights, replay, optimizer moments and alpha retained; only candidate actor LR changes; no training.\n');
+fprintf('PILOT_PREP_OK (%s): real source weights, replay chronology, optimizer moments and alpha retained after prepare/save/reload; no training.\n',mode);
 end
