@@ -61,9 +61,21 @@ write(fullfile(s,'control.json'),struct('trainingDevice','gpu','executionMode','
 b=trainingtools.run_sac_actor_pilot(mode);q=jsondecode(fileread(fullfile(b,'review.json')));
 assert(strcmp(q.status,'complete') && numel(q.children)==2 && all([q.children.added_episodes]==100));
 assert(numel(jsondecode(fileread(fullfile(b,'comparison.json'))))==12);
-if mode=="replay_retention"
+if any(mode==["replay_retention","replay_replication"])
     protocol=jsondecode(fileread(fullfile(b,'protocol.json')));
     assert(isequal(protocol.replay_capacities(:)',[50000 500000]) && all(protocol.actor_rates==1.5e-4));
+    assert(isequal(protocol.diagnostic_seeds(:)',2000011501:2000011510));
+    assert(isequal(protocol.fresh_seeds(:)',2000011801:2000011810));
+    if mode=="replay_replication"
+        assert(protocol.training_seed==20261119 && protocol.previous_training_seed==20261118);
+        assert(endsWith(b,'sac-replay-replication-20261118') && isfield(protocol,'route_set_scope'));
+    else
+        assert(protocol.training_seed==20261118 && endsWith(b,'sac-replay-retention-20261118'));
+    end
+    for child=reshape(q.children,1,[])
+        childProtocol=jsondecode(fileread(fullfile(child.session,'experiment_protocol.json')));
+        assert(childProtocol.training_seed==protocol.training_seed);
+    end
     assert(isfile(fullfile(b,'retained500k_final_replay.json')));
     screening=jsondecode(fileread(fullfile(b,'screening.json')));
     assert(~screening.screen_pass && ~screening.automatic_continuation, ...

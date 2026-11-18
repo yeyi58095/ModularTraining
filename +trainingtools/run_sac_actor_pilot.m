@@ -1,13 +1,14 @@
 function bundle=run_sac_actor_pilot(mode)
 % Two sequential, independently forked 100-episode trials. Never long-run.
 arguments
-    mode (1,1) string {mustBeMember(mode,["actor","replay_retention"])} = "actor"
+    mode (1,1) string {mustBeMember(mode,["actor","replay_retention","replay_replication"])} = "actor"
 end
-replayPilot=mode=="replay_retention";
+replayPilot=any(mode==["replay_retention","replay_replication"]);
 root=fileparts(fileparts(mfilename('fullpath')));old=path;c=onCleanup(@() path(old)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
 bundle=fullfile(root,'artifacts','packages','sac-actor-pilot-20261116');
 if replayPilot,bundle=fullfile(root,'artifacts','packages','sac-replay-retention-20261118');end
+if mode=="replay_replication",bundle=fullfile(root,'artifacts','packages','sac-replay-replication-20261118');end
 if ~isfolder(bundle),mkdir(bundle);end
 lock=System.IO.File.Open(fullfile(bundle,'review.lock'),System.IO.FileMode.OpenOrCreate, ...
     System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);unlock=onCleanup(@() lock.Dispose()); %#ok<NASGU>
@@ -43,6 +44,7 @@ try
         actorRates=[1.5e-4 1.5e-4];capacities=[50000 500000];trainingSeed=20261118;
         labels={'baseline50k','retained500k'};
     end
+    if mode=="replay_replication",trainingSeed=20261119;end
     protocol=struct('source',source,'source_sha256',sha,'episodes_per_branch',100, ...
         'actor_rates',actorRates,'replay_capacities',capacities,'critic_rate',3e-4,'training_seed',trainingSeed, ...
         'diagnostic_seeds',seeds(1:10),'fresh_seeds',seeds(11:20), ...
@@ -50,6 +52,11 @@ try
     if replayPilot
         protocol.hypothesis='Retaining initial replay may preserve frozen performance; capacity also changes sampling distribution, so this does not isolate every replay mechanism.';
         protocol.screening='No auto continuation. Candidate: each stage full count no more than one below reference and mean steps >=95% reference, plus more pooled full flights than fresh 50k baseline. Single training seed is not confirmation.';
+    end
+    if mode=="replay_replication"
+        protocol.replication_of='sac-replay-retention-20261118';
+        protocol.previous_training_seed=20261118;
+        protocol.route_set_scope='Both route groups were already inspected in the first replay trial. fresh_seeds is a legacy field name, not a new holdout. Only requested training seed changes; independent random streams are not proven.';
     end
     write(fullfile(bundle,'protocol.json'),protocol);
     comparison={};
@@ -206,5 +213,5 @@ report=struct('arms',{{'reference1600','baseline50k','retained500k'}},'stages',{
     'full_counts',full,'mean_steps',steps,'source_count_preserved',countGate, ...
     'source_steps_preserved',stepsGate,'more_full_than_baseline',baselineGate, ...
     'screen_pass',countGate && stepsGate && baselineGate,'automatic_continuation',false, ...
-    'interpretation','Predeclared feasibility screen, not statistical evidence, original stage qualification, or authorization to continue. Review fresh-route subgroup and distance metrics separately.');
+    'interpretation','Predeclared feasibility screen, not statistical evidence, original stage qualification, or authorization to continue. Review route group 2 and distance metrics separately; consult protocol for prior use of routes.');
 end
