@@ -30,3 +30,5 @@ Python 模組 `curriculum_progress.py`、`learning_health.py` 與 CLI 放在一�
 MATLAB 工具改用 `trainingtools.<原函式名>(...)`，詳見 [+trainingtools](../+trainingtools/README.md)。歷史紀錄中的舊根目錄指令不改寫；依此對照使用新入口。根目錄不保留同名轉接檔，以實際減少檔案數量。
 
 SAC replay 第二個訓練 seed 複驗：`review_sac_child_history.ps1 -ReplayRepeat`，會新建兩臂各最多100回合；[指令、看圖與正常取消](../docs/guides/sac-replay-replication-2026-11-18.md)。`-PackageOnly` 僅補包。
+
+SAC replay 新路線凍結評估：`review_sac_child_history.ps1 -ReplayHoldout`，80次CPU sim，不訓練；[指令與範圍](../docs/guides/sac-replay-holdout-2026-11-19.md)。
