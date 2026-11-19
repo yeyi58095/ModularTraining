@@ -1,7 +1,7 @@
-param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot,[switch]$PilotProbe,[switch]$ExplorationCheck,[switch]$ReplayPilot,[switch]$ReplayRepeat,[switch]$ReplayHoldout)
-# ActorPilot/ReplayPilot/ReplayRepeat train bounded branches; other modes only inspect/evaluate.
+param([switch]$PackageOnly,[switch]$Probe,[switch]$ActorPilot,[switch]$PilotProbe,[switch]$ExplorationCheck,[switch]$ReplayPilot,[switch]$ReplayRepeat,[switch]$ReplayHoldout,[switch]$ReplayExtend)
+# ActorPilot/ReplayPilot/ReplayRepeat/ReplayExtend train bounded branches; other modes only inspect/evaluate.
 $ErrorActionPreference='Stop'
-if(([int]$Probe.IsPresent + [int]$ActorPilot.IsPresent + [int]$PilotProbe.IsPresent + [int]$ExplorationCheck.IsPresent + [int]$ReplayPilot.IsPresent + [int]$ReplayRepeat.IsPresent + [int]$ReplayHoldout.IsPresent) -gt 1){throw 'Choose only one mode.'}
+if(([int]$Probe.IsPresent + [int]$ActorPilot.IsPresent + [int]$PilotProbe.IsPresent + [int]$ExplorationCheck.IsPresent + [int]$ReplayPilot.IsPresent + [int]$ReplayRepeat.IsPresent + [int]$ReplayHoldout.IsPresent + [int]$ReplayExtend.IsPresent) -gt 1){throw 'Choose only one mode.'}
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
@@ -13,6 +13,7 @@ if($ExplorationCheck){$bundleName='sac-pilot-exploration-20261117';$entryPoint='
 if($ReplayPilot){$bundleName='sac-replay-retention-20261118';$entryPoint='run_sac_replay_retention';$zipPrefix='sac-replay-retention-'}
 if($ReplayRepeat){$bundleName='sac-replay-replication-20261118';$entryPoint='run_sac_replay_replication';$zipPrefix='sac-replay-replication-'}
 if($ReplayHoldout){$bundleName='sac-replay-holdout-20261119';$entryPoint='review_sac_replay_holdout';$zipPrefix='sac-replay-holdout-'}
+if($ReplayExtend){$bundleName='sac-replay-extension-20261119';$entryPoint='run_sac_replay_extension';$zipPrefix='sac-replay-extension-'}
 $bundle=Join-Path $root "artifacts/packages/$bundleName"
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $launcher=[IO.File]::Open((Join-Path $bundle 'launcher.lock'),'OpenOrCreate','ReadWrite','None')
@@ -35,6 +36,7 @@ try {
     if($ReplayPilot -or $ReplayRepeat){$lines=@('# SAC replay retention pilot','', 'Two sequential 100-episode training branches from the same 1600. Replay 50k vs 500k; actor and critic rates unchanged. Source, baseline, candidate each have 40 frozen evaluations. No automatic continuation. Read prepared/final replay audits; prefix retention is not a convergence proof.','')}
     if($ReplayRepeat){$lines+=@('New requested training seed 20261119; both evaluation route groups were previously inspected. Same screening thresholds; not a new holdout.','')}
     if($ReplayHoldout){$lines=@('# SAC replay new-route frozen review','','No training. Source1600 vs selected 500k1700; 20 new route seeds x two stages x two agents = 80 CPU simulations. Read comparison.json for late distance RMS/max and precision counts; full duration is not precision or stage qualification.','')}
+    if($ReplayExtend){$lines=@('# SAC replay 50-episode extension','','One new child from reviewed 500k1700, at most 50 episodes to1750, then80 frozen flights. Complete source replay must remain retained; no automatic continuation or stage advancement. Precision table is descriptive.','')}
     if($ActorPilot){$lines=@('# SAC actor learning-rate short pilot','', 'Two sequential branches, maximum 100 new episodes each. Read review.json for training outcomes. Both remain paused. Group 1 = existing diagnostic routes; group 2 = fresh fixed routes. One trial per recipe, not a causal or convergence proof.','')}
     if(Test-Path (Join-Path $bundle 'review.json')){
         $state=Get-Content (Join-Path $bundle 'review.json') -Raw|ConvertFrom-Json
@@ -45,12 +47,12 @@ try {
         $lines+=@('','| Episode | Calm full / 10 | Weak full / 10 | Actual wind full / count | Calm mean steps | Weak mean steps |','|---|---|---|---|---|---|')
         foreach($r in $rows){$lines+="| $($r.episode) | $($r.full_counts[0]) | $($r.full_counts[1]) | $($r.actual_wind_full)/$($r.actual_wind_count) | $($r.mean_steps[0]) | $($r.mean_steps[1]) |"}
     }
-    if(($ActorPilot -or $ReplayPilot -or $ReplayRepeat -or $ReplayHoldout) -and (Test-Path (Join-Path $bundle 'comparison.json'))){
+    if(($ActorPilot -or $ReplayPilot -or $ReplayRepeat -or $ReplayHoldout -or $ReplayExtend) -and (Test-Path (Join-Path $bundle 'comparison.json'))){
         $rows=Get-Content (Join-Path $bundle 'comparison.json') -Raw|ConvertFrom-Json
         $lines+=@('','| Arm | Stage | Seed group | Full/count | Mean steps | Actual wind full/count |','|---|---|---|---|---|---|')
         foreach($r in $rows){$lines+="| $($r.arm) | $($r.stage) | $($r.seed_group) | $($r.full_count)/$($r.count) | $($r.mean_steps) | $($r.actual_wind_full)/$($r.actual_wind_count) |"}
     }
-    if($ReplayHoldout -and (Test-Path (Join-Path $bundle 'comparison.json'))){
+    if(($ReplayHoldout -or $ReplayExtend) -and (Test-Path (Join-Path $bundle 'comparison.json'))){
         $rows=Get-Content (Join-Path $bundle 'comparison.json') -Raw|ConvertFrom-Json
         $lines+=@('','Distance after the first 10 seconds; joint precision count is descriptive, not stage qualification.','', '| Arm | Stage | Mean route RMS m | Worst route max m | Full and RMS <=10m and max <=20m /20 |','|---|---|---|---|---|')
         foreach($r in $rows){$lines+="| $($r.arm) | $($r.stage) | $($r.late_rms_mean_m) | $($r.late_max_m) | $($r.full_and_rms10_max20_count) |"}

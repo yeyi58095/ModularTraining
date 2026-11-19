@@ -48,6 +48,12 @@ status=jsondecode(fileread(fullfile(sourceSession,'status.json')));
 assert(any(strcmp(status.state,{'stopped','paused','success','error'})), ...
     'Recovery:Active','Parent must be stopped.');
 checkpoint=fullfile(sourceSession,'checkpoints',sprintf('Agent%d.mat',settings.checkpoint_episode));
+preserveFinal=isfield(settings,'checkpoint_source') && strcmp(settings.checkpoint_source,'final');
+if isfield(settings,'checkpoint_source')
+    assert(preserveFinal && isfield(settings,'expected_checkpoint_sha256'), ...
+        'Recovery:FinalScope','Only explicitly hashed final checkpoint selection is supported.');
+    checkpoint=fullfile(sourceSession,'Agent_Final.mat');
+end
 checkpoint_select_agent(checkpoint);
 [history,episode]=checkpoint_resume_state(checkpoint);
 assert(episode==settings.checkpoint_episode,'Recovery:Episode','History/episode mismatch.');
@@ -58,6 +64,12 @@ if isfield(settings,'expected_checkpoint_sha256')
 end
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
 isSAC=strcmp(spec.algorithm,'SAC');
+if preserveFinal
+    assert(isSAC && ~continuous && settings.actor_learning_rate_scale==1 && ...
+        settings.experience_buffer_length==spec.experienceBufferLength && ...
+        ~isfield(settings,'critic_learning_rate_scale') && ~isfield(settings,'exploration_std_scale') && ...
+        ~isfield(settings,'pilot'),'Recovery:FinalScope','Final selection must preserve the complete SAC agent without recipe changes.');
+end
 if isfield(settings,'critic_learning_rate_scale')
     assert(isSAC && ~continuous && settings.actor_learning_rate_scale==1 && ...
         settings.experience_buffer_length==spec.experienceBufferLength, ...
@@ -157,7 +169,7 @@ actorBefore=getLearnableParameters(getActor(agent)); criticBefore=criticParamete
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 if isSAC
     assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
-    if ~weakWindPilot && ~extendSlowWind && ~reviewedWind
+    if ~weakWindPilot && ~extendSlowWind && ~reviewedWind && ~preserveFinal
         agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
     end
     if settings.actor_learning_rate_scale~=1
@@ -229,7 +241,7 @@ assert(any(strcmp(storage,{'-v7','-v7.3'})),'Recovery:Storage','Unsupported MAT 
 trainingcurriculum.write_json(fullfile(staging,'checkpoint_storage.json'), ...
     struct('schema_version',1,'version',storage));
 target=fullfile(staging,'checkpoints',sprintf('Agent%d.mat',episode));
-if weakWindPilot || extendSlowWind || reviewedWind
+if weakWindPilot || extendSlowWind || reviewedWind || preserveFinal
     copyfile(checkpoint,target);
     assert(strcmp(checkpointreview.sha256(target),parentHash),'Recovery:Copy','Checkpoint copy mismatch.');
 else
