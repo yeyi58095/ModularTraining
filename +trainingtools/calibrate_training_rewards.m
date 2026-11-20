@@ -9,7 +9,8 @@ end
 root=fileparts(fileparts(mfilename('fullpath'))); old=path;
 cleanup=onCleanup(@()path(old)); %#ok<NASGU>
 addpath(root);
-evaluationDir=absolute(evaluationDir,root);outputDir=absolute(outputDir,root);
+evaluationDir=absolute(evaluationDir,root);
+outputDir=trainingtools.local_data_path(root,outputDir);
 assert(~isfolder(outputDir) && ~isfile(outputDir),'RewardCalibration:OutputExists', ...
     'Use a new output directory; existing calibration results are preserved.');
 sourceFile=fullfile(evaluationDir,'evaluation.json');

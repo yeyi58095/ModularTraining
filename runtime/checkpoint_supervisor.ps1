@@ -18,11 +18,23 @@ $ErrorActionPreference = 'Stop'
 # [Text.UTF8Encoding]::new($false) 呼叫 .NET 建構子；false 表示輸出不加 BOM。
 $utf8 = [Text.UTF8Encoding]::new($false)
 # Get-Content -Raw 讀成整段文字；管線接 ConvertFrom-Json 轉為物件，可用 .欄位名稱取值。
+$ConfigFile = (Resolve-Path -LiteralPath $ConfigFile).ProviderPath
+$sessionDir = [IO.Path]::GetDirectoryName($ConfigFile)
+$scriptDir = [IO.Path]::GetFullPath($PSScriptRoot)
+$projectRoot = [IO.Path]::GetDirectoryName($scriptDir)
+function Assert-ControlBinding($control) {
+    if ([IO.Path]::GetFullPath([string]$control.sessionDir).TrimEnd('\','/') -ne $sessionDir -or
+        [IO.Path]::GetFullPath([string]$control.scriptDir).TrimEnd('\','/') -ne $scriptDir -or
+        ($control.modularRoot -and [IO.Path]::GetFullPath([string]$control.modularRoot).TrimEnd('\','/') -ne $projectRoot)) {
+        throw 'Control file belongs to another run or checkout. Prepare this local run with retry(resume=...,start=false) before launching.'
+    }
+}
 $initial = Get-Content -LiteralPath $ConfigFile -Raw | ConvertFrom-Json
-# [IO.Path]::GetFullPath 是 .NET 靜態方法，將位置規範成絕對路徑；:: 呼叫型別方法，. 呼叫物件成員。
-$sessionDir = [IO.Path]::GetFullPath($initial.sessionDir)
-# [IO.Path]::GetFullPath 是 .NET 靜態方法，將位置規範成絕對路徑；:: 呼叫型別方法，. 呼叫物件成員。
-$scriptDir = [IO.Path]::GetFullPath($initial.scriptDir)
+Assert-ControlBinding $initial
+$projectVolume = [IO.Path]::GetPathRoot($projectRoot)
+if ([IO.Path]::GetPathRoot($sessionDir) -ne $projectVolume) {
+    throw 'Run is on another volume. Select a run on the same volume as this checkout.'
+}
 $matlabExe = [string]$initial.matlabExe
 $stopFile = Join-Path $sessionDir 'STOP'
 $logFile = Join-Path $sessionDir 'supervisor.log'
@@ -44,6 +56,16 @@ if ($null -ne $initial.diagnosticRoot) {
 }
 if ($null -ne $initial.diagnosticDir) {
     $diagnosticDir = [string]$initial.diagnosticDir
+}
+if (-not [IO.Path]::IsPathRooted($diagnosticDir) -or
+    [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($diagnosticDir)) -ne $projectVolume) {
+    throw 'Diagnostics are outside the checkout volume. Prepare this local run with retry(resume=...,start=false).'
+}
+if (-not [string]::IsNullOrWhiteSpace([string]$initial.resumeAgentFile)) {
+    $checkpointDir = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath([string]$initial.resumeAgentFile))
+    if ($checkpointDir -notin @($sessionDir,(Join-Path $sessionDir 'checkpoints'))) {
+        throw 'Resume checkpoint belongs to another run. Use a prepared local run.'
+    }
 }
 
 # 讀 pool_ready 取得 actualWorkers，將完成 episode 列附加到診斷 CSV。
@@ -226,6 +248,7 @@ try {
         if (Test-Path -LiteralPath $stopFile) { Write-Status 'stopped' 'STOP requested.'; break }
         # Get-Content -Raw 讀成整段文字；管線接 ConvertFrom-Json 轉為物件，可用 .欄位名稱取值。
         $cfg = Get-Content -LiteralPath $ConfigFile -Raw | ConvertFrom-Json
+        Assert-ControlBinding $cfg
         # Defaults also support control.json written by older launchers.
         $startupTimeout = 600
         $stallTimeout = 1800
@@ -283,7 +306,7 @@ try {
             episodesPerProcess=$cfg.episodesPerProcess; targetReward=$cfg.targetReward;
             averageWindow=$cfg.averageWindow; trainingDevice=$cfg.trainingDevice}
         if ($null -ne $cfg.modularRoot) {
-            $payload.modularRoot = [string]$cfg.modularRoot
+            $payload.modularRoot = $projectRoot
         }
         if ($null -ne $cfg.curriculumEnabled) { $payload.curriculumEnabled = [bool]$cfg.curriculumEnabled }
         $attemptConfig = Join-Path $attemptDir 'attempt.json'
@@ -459,7 +482,7 @@ try {
     }
 # try 包住可能失敗的操作，catch 用 $_ 取得本次 ErrorRecord；throw 可將原錯誤繼續交給上層。
 } catch {
-    Write-Status 'error' $_.Exception.Message
+    if ($null -ne $lock) { Write-Status 'error' $_.Exception.Message }
     throw
 # 正常停止與錯誤都清理所屬程序、封存診斷並釋放鎖。
 # finally 無論成功、return 或例外都執行；Dispose 釋放本次鎖／串流，不代表刪除訓練成果。

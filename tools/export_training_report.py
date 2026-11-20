@@ -16,7 +16,7 @@ from pathlib import Path
 import re
 import statistics
 
-from plot_training_rewards import log_files, read_episodes, select_session
+from plot_training_rewards import log_files, project_output, read_episodes, select_session
 from learning_health import assess_learning
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -306,10 +306,10 @@ def main():
     if args.from_episode and args.to_episode and args.from_episode > args.to_episode:
         parser.error("--from-episode must not exceed --to-episode")
     try:
-        session = select_session(args.session)
+        session = select_session(ROOT / args.session.expanduser())
         default_output = (session / "reports" / "report.json").resolve()
-        output = args.output or default_output
-        output = output.expanduser().resolve()
+        output = project_output(args.output or default_output)
+        temporary = project_output(output.with_suffix(".json.tmp"))
         if output.suffix != ".json" or (output.is_relative_to(session) and output != default_output):
             raise ValueError("Within an experiment, only reports/report.json may be written; other .json outputs must be outside it.")
         health_options = dict(window=args.regression_window, patience=args.regression_patience,
@@ -320,7 +320,6 @@ def main():
         if len(payload) > MAX_BYTES:
             raise ValueError("Report exceeds 1.5 MB safety limit; no report was written.")
         output.parent.mkdir(parents=True, exist_ok=True)
-        temporary = output.with_suffix(".json.tmp")
         temporary.write_bytes(payload)
         temporary.replace(output)
         print(f"Read: {session}\nReport: {output}\nBytes: {len(payload):,}; episodes: {report['episode_count']:,}")

@@ -3,6 +3,14 @@ function checkpoint_attempt(configFile)
 % 課程／guard 可提前回傳 terminal；否則在 base workspace 執行 engine，最終將 outcome 寫入 result.json。
 % One fresh MATLAB process. Supervisor handles native process crashes.
     cfg = jsondecode(fileread(configFile));
+    root=fileparts(fileparts(mfilename('fullpath')));
+    addpath(root);
+    cfg.sessionDir=trainingtools.local_data_path(root,cfg.sessionDir);
+    cfg.scriptDir=trainingtools.local_data_path(root,cfg.scriptDir);
+    cfg.attemptDir=trainingtools.local_data_path(root,cfg.attemptDir);
+    if isfield(cfg,'modularRoot')
+        cfg.modularRoot=trainingtools.local_data_path(root,cfg.modularRoot);
+    end
     if ~isfield(cfg,'minWorkers'), cfg.minWorkers = 1; end
     if ~isfield(cfg,'executionMode'),cfg.executionMode='parallel';end
     addpath(cfg.scriptDir);

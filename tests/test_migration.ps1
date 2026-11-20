@@ -17,7 +17,8 @@ $utf8=[Text.UTF8Encoding]::new($false)
 function Put($file,$text) { [IO.File]::WriteAllText((Join-Path $source $file),$text,$utf8) }
 Put 'supervisor.lock' ''
 Put 'status.json' '{"state":"running","attempt":8}'
-Put 'control.json' ((@{sessionDir=$source;diagnosticDir=(Join-Path $source 'diagnostics');trainingDevice='gpu';numWorkers=6}) | ConvertTo-Json)
+$previousSession=Join-Path $fixture 'previous_checkout'
+Put 'control.json' ((@{sessionDir=$previousSession;diagnosticDir=(Join-Path $previousSession 'diagnostics');trainingDevice='gpu';numWorkers=6}) | ConvertTo-Json)
 Put 'curriculum.json' '{"schema_version":1}'
 Put 'curriculum_state.json' '{"stage_index":2,"start_episode":3000}'
 Put 'model.json' '{"name":"ppo_lstm128"}'

@@ -25,8 +25,7 @@ root=fileparts(mfilename('fullpath')); runtime=fullfile(root,'runtime');
 oldPath=path; oldFolder=pwd; oldRng=rng;
 restore=onCleanup(@() restoreCaller(oldPath,oldFolder,oldRng)); %#ok<NASGU>
 addpath(root,runtime);
-if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
-sessionDir=string(char(java.io.File(char(sessionDir)).getCanonicalPath()));
+sessionDir=string(trainingtools.local_data_path(root,sessionDir));
 % 取得停止 run 的排他鎖；評估期間不允許 supervisor 同時續訓。
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
@@ -152,7 +151,9 @@ fprintf('Evaluation only: %d checkpoints x %d stages x %d seeds. Output: %s\n', 
 % Keep caches and all outputs away from training artifacts.
 fileConfig=Simulink.fileGenControl('getConfig');
 fileGuard=onCleanup(@() Simulink.fileGenControl('setConfig','config',fileConfig)); %#ok<NASGU>
-cacheRoot=fullfile(tempdir,['ce_' tag]);
+cacheBase=trainingtools.local_data_path(root,fullfile('artifacts','cache'));
+if ~isfolder(cacheBase), mkdir(cacheBase); end
+cacheRoot=fullfile(cacheBase,['ce_' tag]);
 Simulink.fileGenControl('set','CacheFolder',fullfile(cacheRoot,'cache'), ...
     'CodeGenFolder',fullfile(cacheRoot,'codegen'),'createDir',true);
 report.cache_directory=cacheRoot;

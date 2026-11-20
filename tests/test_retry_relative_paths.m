@@ -23,12 +23,38 @@ legacyRoot=fullfile(root,'+trainingmodels','ppo_lstm128','runs');
 if ~isfolder(legacyRoot), mkdir(legacyRoot); end
 legacy=tempname(legacyRoot); copyfile(info.sessionDir,legacy);
 cfg=jsondecode(fileread(fullfile(legacy,'control.json')));
-cfg.diagnosticDir=fullfile(legacy,'diagnostics');
+sourceDiagnostics=cfg.diagnosticDir;
+cfg.diagnosticRoot=fileparts(sourceDiagnostics);
 trainingcurriculum.write_json(fullfile(legacy,'control.json'),cfg);
 old=retry(resume=legacy,start=false);
 assert(strcmp(old.sessionDir,legacy));
-assert(strcmp(old.diagnosticDir,cfg.diagnosticDir));
-fprintf('PASS: relative curriculum/resume anchored to project; absolute resume preserved; no training.\n');
+assert(strcmp(old.diagnosticDir,fullfile(legacy,'diagnostics')));
+assert(~strcmp(old.diagnosticDir,sourceDiagnostics));
+relocated=jsondecode(fileread(fullfile(legacy,'control.json')));
+assert(~isfield(relocated,'diagnosticRoot'));
+entries=dir(fullfile(legacy,'control_history','*.json'));
+assert(numel(entries)>0);
+previousFound=false;
+for k=1:numel(entries)
+    previous=jsondecode(fileread(fullfile(entries(k).folder,entries(k).name)));
+    previousFound=previousFound || (isfield(previous,'diagnosticRoot') && strcmp(previous.diagnosticDir,sourceDiagnostics));
+end
+assert(previousFound);
+if ispc
+    otherVolume='Z:';
+    if startsWith(root,otherVolume,IgnoreCase=true), otherVolume='Y:'; end
+    foreign=[otherVolume '\ModularTrainingPathFixture\session'];
+    rejected=false;
+    try, retry(resume=foreign,start=false); catch e, rejected=strcmp(e.identifier,'Workspace:ForeignVolume'); end
+    assert(rejected,'Retry must reject a run on another volume.');
+    addpath(fullfile(root,'runtime'));
+    attemptPath=fullfile(legacy,'stale_attempt_fixture.json');
+    trainingcurriculum.write_json(attemptPath,struct('sessionDir',foreign));
+    rejected=false;
+    try, checkpoint_attempt(attemptPath); catch e, rejected=strcmp(e.identifier,'Workspace:ForeignVolume'); end
+    assert(rejected,'An old attempt config must reject a run on another volume.');
+end
+fprintf('PASS: relative and relocated run paths, saved prior control and foreign-volume refusal. No training.\n');
 end
 
 function restore(oldPath,oldFolder)

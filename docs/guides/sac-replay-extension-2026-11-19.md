@@ -2,10 +2,9 @@
 
 **此指令會訓練。** 從已通過兩批凍結評估的500k1700 final另建子run，最多50回合至1750，GPU6workers、一次attempt；之後80次CPU凍結評估、自動打包並paused，不自動續跑／升階。保留原來源與完整replay，LR／容量不變。來源337132筆加最多150000筆仍小於500k。
 
-遠端這份副本沒有活動訓練時，在PowerShell貼上：
+先在 PowerShell 開啟要執行的本機專案根目錄，確認這份副本沒有活動訓練，再貼上：
 
 ```powershell
-Set-Location 'D:\daniel\ModularTraining'
 $ErrorActionPreference = 'Stop'
 git pull --ff-only
 if ($LASTEXITCODE -ne 0) { throw '同步失敗，請貼回錯誤。' }
@@ -23,11 +22,13 @@ Invoke-Item '.\artifacts\packages'
 等新分支開始Episode後，在另一PowerShell視窗：
 
 ```powershell
-Set-Location 'D:\daniel\ModularTraining'
 $state = Get-Content '.\artifacts\packages\sac-replay-extension-20261119\review.json' -Raw | ConvertFrom-Json
 $items = @($state.children)
 if ($items.Count -ne 1) { throw '尚未建立唯一子run，稍後再開圖。' }
 $session = $items[0].session
+if ([IO.Path]::GetPathRoot($session) -ne [IO.Path]::GetPathRoot((Get-Location).Path)) {
+    throw '此收據來自另一個副本。請先在目前副本確認本機 run 路徑，再另行開圖。'
+}
 $model = Get-Content (Join-Path $session 'model.json') -Raw | ConvertFrom-Json
 if ($model.name -ne 'sac_paper64' -or $model.experienceBufferLength -ne 500000) { throw '模型不符。' }
 python .\tools\plot_training_rewards.py "$session" --watch 6 --view
@@ -38,7 +39,6 @@ python .\tools\plot_training_rewards.py "$session" --watch 6 --view
 想完成當前50回合保存後取消後續評估，在另一視窗：
 
 ```powershell
-Set-Location 'D:\daniel\ModularTraining'
 New-Item -ItemType File -Force '.\artifacts\packages\sac-replay-extension-20261119\CANCEL'
 ```
 

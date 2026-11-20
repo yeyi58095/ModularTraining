@@ -57,7 +57,7 @@ end
 if isResume
     assert(strlength(string(opt.environment))==0,'Environment:Immutable', ...
         'Resume uses its environment snapshot; create a separate run to change it.');
-    folder = projectPath(root,opt.resume);
+    folder = trainingtools.local_data_path(root,opt.resume);
     assert(~endsWith(folder,'.preparing'),'Recovery:Incomplete','Recovery preparation is incomplete.');
     assert(isfile(fullfile(folder,'model.json')) && isfile(fullfile(folder,'control.json')), ...
         'Modular:ResumeFolder','Resume requires a ModularTraining session folder with model.json and control.json.');
@@ -184,14 +184,8 @@ else
     copyfile(fullfile(folder,'control.json'),fullfile(history,[tag '.json']));
 end
 % control 使用本專案與此 run 的絕對位置，不依賴 Flower 路徑。
+cfg=bindDiagnostics(cfg,folder,root,runtime,isResume);
 cfg.scriptDir=runtime; cfg.sessionDir=folder; cfg.modularRoot=root;
-if ~isResume
-    cfg.diagnosticDir=fullfile(folder,'diagnostics');
-elseif ~isfield(cfg,'diagnosticDir')
-    % Existing sessions retain their original diagnostic location on resume.
-    if ~isfield(cfg,'diagnosticRoot'), cfg.diagnosticRoot=fullfile(root,'training_diagnostics'); end
-    cfg.diagnosticDir=fullfile(cfg.diagnosticRoot,char(java.io.File(folder).getName()));
-end
 cfg.matlabExe=fullfile(matlabroot,'bin','matlab.exe');
 cfg.resumeAgentFile=''; % Supervisor searches only this session for newest valid checkpoints.
 writeJson(fullfile(folder,'control.json'),cfg);
@@ -215,15 +209,25 @@ fprintf('Model: %s\nSession: %s\nDiagnostics: %s\n',spec.name,folder,info.diagno
 fprintf('To stop: create an empty STOP file in this session folder.\n');
 end
 
-function resolved = projectPath(root,value)
-% 相對路徑先接到專案 root 再 canonicalize，避免 Java 工作目錄差異。
-% Java's process working directory can differ from MATLAB's Current Folder.
-% Anchor relative inputs before canonicalizing; preserve absolute inputs.
-value=char(value);
-if ~java.io.File(value).isAbsolute()
-    value=fullfile(root,value);
+function cfg = bindDiagnostics(cfg,folder,root,runtime,isResume)
+localDir=fullfile(folder,'diagnostics');
+if ~isResume || ~strcmpi(cfg.sessionDir,folder) || ~strcmpi(cfg.scriptDir,runtime)
+    % A relocated run must never inherit the old checkout's writable paths.
+    cfg.diagnosticDir=localDir;
+    if isfield(cfg,'diagnosticRoot'), cfg=rmfield(cfg,'diagnosticRoot'); end
+    return
 end
-resolved=char(java.io.File(value).getCanonicalPath());
+if ~isfield(cfg,'diagnosticDir')
+    if ~isfield(cfg,'diagnosticRoot'), cfg.diagnosticRoot=fullfile(root,'training_diagnostics'); end
+    cfg.diagnosticDir=fullfile(cfg.diagnosticRoot,char(java.io.File(folder).getName()));
+end
+try
+    cfg.diagnosticDir=trainingtools.local_data_path(root,cfg.diagnosticDir);
+catch err
+    if ~strcmp(err.identifier,'Workspace:ForeignVolume'), rethrow(err); end
+    cfg.diagnosticDir=localDir;
+    if isfield(cfg,'diagnosticRoot'), cfg=rmfield(cfg,'diagnosticRoot'); end
+end
 end
 
 function writeJson(file,value)

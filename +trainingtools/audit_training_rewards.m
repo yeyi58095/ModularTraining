@@ -5,7 +5,7 @@ arguments
 end
 root=fileparts(fileparts(mfilename('fullpath')));old=path;guard=onCleanup(@()path(old)); %#ok<NASGU>
 addpath(root);
-if ~java.io.File(char(evaluationDir)).isAbsolute(),evaluationDir=fullfile(root,evaluationDir);end
+evaluationDir=trainingtools.local_data_path(root,evaluationDir);
 report=jsondecode(fileread(fullfile(evaluationDir,'evaluation.json')));
 assert(strcmp(report.status,'complete') && isfield(report,'reward_definition'), ...
     'RewardAudit:Missing','Use a completed compare_training_checkpoints(...,rewardDiagnostics=true) evaluation.');

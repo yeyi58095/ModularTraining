@@ -9,8 +9,7 @@ end
 root=fileparts(fileparts(mfilename('fullpath'))); previous=path;
 cleanup=onCleanup(@()path(previous)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
-if ~java.io.File(char(sessionDir)).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
-sessionDir=string(char(java.io.File(char(sessionDir)).getCanonicalPath()));
+sessionDir=string(trainingtools.local_data_path(root,sessionDir));
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@()lock.Dispose()); %#ok<NASGU>

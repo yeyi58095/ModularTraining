@@ -52,20 +52,31 @@ validateattributes(maxEpisodes, {'numeric'}, {'scalar','integer','positive'});
 
 scriptDir = fileparts(mfilename('fullpath'));
 cd(scriptDir);
+projectRoot=fileparts(scriptDir);
+addpath(projectRoot);
 runRoot = fullfile(scriptDir, 'training_runs_parallel_checkpointed');
-if strlength(string(outputRoot)) > 0, runRoot = char(outputRoot); end
-if ~isfolder(runRoot), mkdir(runRoot); end
-[~, runTag] = fileparts(tempname(runRoot));
+if strlength(string(outputRoot)) > 0
+    runRoot=trainingtools.local_data_path(projectRoot,outputRoot);
+end
 % 載入實際 episode 歷史；禁止向同一 run 較舊 checkpoint 回退而覆寫新進度。
 resumeHistory = [];
 resumeEpisode = 0;
 if strlength(string(resumeAgentFile)) > 0
     [resumeHistory,resumeEpisode,saveDir] = checkpoint_resume_state(resumeAgentFile);
+    if strlength(string(outputRoot)) > 0
+        resumeDir=char(java.io.File(saveDir).getCanonicalPath());
+        expectedDir=char(java.io.File(runRoot).getCanonicalPath());
+        assert(strcmpi(resumeDir,expectedDir),'Checkpoint:OutputPath', ...
+            'Resume checkpoint belongs to another run.');
+    end
 elseif strlength(string(outputRoot)) > 0
-    saveDir = char(outputRoot);
+    saveDir = runRoot;
 else
+    if ~isfolder(runRoot), mkdir(runRoot); end
+    [~,runTag]=fileparts(tempname(runRoot));
     saveDir = fullfile(runRoot, [char(datetime('now','Format','yyyyMMdd_HHmmss')) '_' runTag]);
 end
+saveDir=trainingtools.local_data_path(projectRoot,saveDir);
 if ~isfolder(saveDir), mkdir(saveDir); end
 checkpointFileVersion=checkpoint_storage_version(saveDir);
 fprintf('Checkpoint MAT format: %s\n',checkpointFileVersion);
@@ -144,6 +155,13 @@ actInfo.UpperLimit = [1];
 %% Simulink Setup
 % 載入正式模型並建立 RL 環境，不將臨時 logging 設定保存到 SLX。
 modelName = "FAFA_Simulation";
+cacheBase=trainingtools.local_data_path(projectRoot,fullfile('artifacts','cache'));
+if ~isfolder(cacheBase), mkdir(cacheBase); end
+previousClientFileConfig=Simulink.fileGenControl('getConfig');
+clientCacheGuard=onCleanup(@() Simulink.fileGenControl('setConfig','config',previousClientFileConfig));
+clientCache=tempname(cacheBase);
+Simulink.fileGenControl('set','CacheFolder',fullfile(clientCache,'cache'), ...
+    'CodeGenFolder',fullfile(clientCache,'codegen'),'createDir',true);
 
 % Do not save changes to the original model.
 if strlength(string(environmentModelFile))==0
@@ -380,7 +398,7 @@ else
     serialModelGuard=prepareTrainingModel(modelName,disableTrainingLogging,disableUAVAnimation);
 end
 workerConfig = struct('scriptDir', scriptDir, 'modelName', modelName, ...
-    'environmentModelFile',environmentModelFile, ...
+    'environmentModelFile',environmentModelFile,'cacheBase',cacheBase, ...
     'targetSpeed', TARGET_SPEED, 'dt', DT, 'spacing', WAYPOINT_SPACING, ...
     'disableLogging', disableTrainingLogging, ...
     'disableAnimation', disableUAVAnimation);
@@ -485,6 +503,7 @@ else
             training_stage2.EpisodeSteps,fullfile(saveDir,'Agent_Final.mat'));
     end
 end
+clear clientCacheGuard
 fprintf('Training stopped normally. Saved in:\n%s\n', saveDir);
 %% Helper Functions
 % 訓練、worker 環境、回合 reset 與路徑幾何輔助函式。
@@ -537,7 +556,7 @@ function parallelWorkerState(action, config, dq)
     try
         cd(config.scriptDir);
         % Avoid multiple workers writing the same slprj/cache files.
-        cacheRoot = tempname;
+        cacheRoot = tempname(config.cacheBase);
         Simulink.fileGenControl('set', 'CacheFolder', fullfile(cacheRoot, 'cache'), ...
             'CodeGenFolder', fullfile(cacheRoot, 'codegen'), 'createDir', true);
         addpath(fileparts(config.environmentModelFile),'-begin');

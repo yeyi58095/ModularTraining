@@ -6,7 +6,7 @@ arguments
     episode (1,1) double {mustBeInteger,mustBePositive}
 end
 root=fileparts(fileparts(mfilename('fullpath')));addpath(root,fullfile(root,'runtime'));
-if ~java.io.File(char(sessionDir)).isAbsolute(),sessionDir=fullfile(root,sessionDir);end
+sessionDir=trainingtools.local_data_path(root,sessionDir);
 lock=System.IO.File.Open(char(fullfile(sessionDir,'supervisor.lock')), ...
     System.IO.FileMode.Open,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@()lock.Dispose()); %#ok<NASGU>

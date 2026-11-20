@@ -40,6 +40,13 @@ assignin('base','Agent_Stage2',agent);
 folder=fullfile(root,'artifacts','incoming');
 if ~isfolder(folder),mkdir(folder);end
 out=tempname(folder);mkdir(out);
+cacheBase=trainingtools.local_data_path(root,fullfile('artifacts','cache'));
+if ~isfolder(cacheBase),mkdir(cacheBase);end
+cacheRoot=tempname(cacheBase);
+fileConfig=Simulink.fileGenControl('getConfig');
+cacheGuard=onCleanup(@() Simulink.fileGenControl('setConfig','config',fileConfig)); %#ok<NASGU>
+Simulink.fileGenControl('set','CacheFolder',fullfile(cacheRoot,'cache'), ...
+    'CodeGenFolder',fullfile(cacheRoot,'codegen'),'createDir',true);
 copyfile(source,fullfile(out,[mdl '.slx']));
 cd(out);load_system(fullfile(out,[mdl '.slx']));
 modelGuard=onCleanup(@()close_system(mdl,0)); %#ok<NASGU>

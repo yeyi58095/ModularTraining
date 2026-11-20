@@ -46,8 +46,14 @@ try {
     }
     # Get-Content -Raw 讀成整段文字；管線接 ConvertFrom-Json 轉為物件，可用 .欄位名稱取值。
     $cfg = Get-Content -LiteralPath (Join-Path $source 'control.json') -Raw | ConvertFrom-Json
-    if ($cfg.diagnosticDir -and [IO.Path]::GetFullPath([string]$cfg.diagnosticDir).TrimEnd('\') -ne (Join-Path $source 'diagnostics')) {
-        throw 'External diagnostics require a separate migration; this tool only supports session-local diagnostics.'
+    if ($cfg.diagnosticDir) {
+        $configuredDiagnostics=[IO.Path]::GetFullPath([string]$cfg.diagnosticDir).TrimEnd('\','/')
+        $sessionDiagnostics=Join-Path $source 'diagnostics'
+        if ($cfg.sessionDir) { $savedDiagnostics=[IO.Path]::Combine([string]$cfg.sessionDir,'diagnostics') }
+        else { $savedDiagnostics=$sessionDiagnostics }
+        if ($configuredDiagnostics -notin @($sessionDiagnostics,$savedDiagnostics)) {
+            throw 'External diagnostics require a separate migration; this tool only supports session-local diagnostics.'
+        }
     }
     $items = @(Get-ChildItem -LiteralPath $source -Recurse -Force)
     # -band 是位元 AND，檢查屬性是否包含 ReparsePoint；拒絕連結避免來源走到預期範圍之外。
@@ -93,6 +99,7 @@ try {
     # Add-Member -Force 覆寫新副本物件的控制欄位；此處尚在暫存目錄，不會重寫來源 control。
     $cfg | Add-Member -Force NoteProperty scriptDir (Join-Path $root 'runtime')
     # Add-Member -Force 覆寫新副本物件的控制欄位；此處尚在暫存目錄，不會重寫來源 control。
+    $cfg.PSObject.Properties.Remove('diagnosticRoot')
     $cfg | Add-Member -Force NoteProperty diagnosticDir (Join-Path $target 'diagnostics')
     # Add-Member -Force 覆寫新副本物件的控制欄位；此處尚在暫存目錄，不會重寫來源 control。
     $cfg | Add-Member -Force NoteProperty curriculumName $CurriculumName

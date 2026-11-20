@@ -80,7 +80,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/compact_workspace.ps1 
 
 這只在該次 PowerShell 程序放行腳本，沒有永久改系統執行原則。工具詳情與舊／新入口見 [tools/README](../../tools/README.md)。第三組先依 [開訓前準備](round3-fresh-training.md) 核對，不使用歷史恢復配方。
 
-先確認該副本沒有活動訓練，再在實驗室專案根目錄執行。若專案仍位於 `D:\daniel\ModularTraining`，可先 `Set-Location -LiteralPath 'D:\daniel\ModularTraining'`；實際位置不同請替換。
+先開啟這台電腦要操作的專案根目錄，再確認該副本沒有活動訓練。實驗室使用外接碟上的副本，宿舍可從自己的 D: 副本執行。專案使用目前 checkout 和 run 位置決定寫入磁碟，MATLAB 安裝路徑獨立。歷史指南內的絕對路徑應以當前副本的位置替換。
+
+若複製來的 `control.json` 指向舊副本，supervisor 會在寫檔前停止。同一 run 確認另一份副本沒有在執行後，從目前專案用 `retry(resume=本機run路徑,start=false)` 準備本機控制設定。原控制設定保存在本機 `control_history/`；搬移的 run 使用自己的 `diagnostics/`。這個準備指令不啟動訓練。舊的來源路徑、課程及 checkpoint 保持原文。畫圖與精簡報告可讀其他磁碟的來源；此時請用 `--output` 指定本 checkout 同磁碟的輸出。訓練與評估設定的 Simulink 快取放在 `artifacts/cache/`，由 Git 忽略。
 
 ```powershell
 git status --short

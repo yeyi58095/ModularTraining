@@ -30,6 +30,15 @@ import webbrowser
 from curriculum_progress import panel as progress_panel
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def project_output(path):
+    output = (ROOT / path.expanduser()).resolve()
+    if output.anchor.casefold() != ROOT.anchor.casefold():
+        raise ValueError(f"Output must be on the checkout volume; set --output to a local path: {output}")
+    return output
+
 
 def start_viewer(output):
     """Serve only the selected PNG and a refreshing viewer on localhost."""
@@ -519,7 +528,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("session", nargs="?", type=Path,
-                        default=Path(__file__).resolve().parents[1],
+                        default=ROOT,
                         help="Session directory, or parent containing sessions (newest selected)")
     parser.add_argument("--output", type=Path, help="PNG path (default: SESSION/reports/reward_history.png)")
     parser.add_argument("--watch", type=float, default=0, metavar="SECONDS",
@@ -542,10 +551,11 @@ def main():
         parser.exit(1, "Missing matplotlib. Install with: python -m pip install matplotlib\n")
     viewer = None
     try:
-        session = select_session(args.session)
-        output = args.output.expanduser().resolve() if args.output else session / "reports" / "reward_history.png"
+        session = select_session(ROOT / args.session.expanduser())
+        output = project_output(args.output or session / "reports" / "reward_history.png")
         if output.suffix.lower() != ".png":
             parser.error("--output must end in .png")
+        project_output(output.with_suffix(".csv"))
         print(f"Reading session: {session}", flush=True)
         if args.view:
             viewer = start_viewer(output)

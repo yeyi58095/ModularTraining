@@ -6,7 +6,12 @@
 # Run BEFORE updating the remote checkout. Standalone; needs no new MATLAB code.
 # Saves CURRENT local bytes, not proof of every historical attempt's environment.
 $ErrorActionPreference='Stop'
-$session=(Resolve-Path -LiteralPath $SessionDir).Path
+$root=Split-Path $PSScriptRoot -Parent
+if (-not [IO.Path]::IsPathRooted($SessionDir)) { $SessionDir=Join-Path $root $SessionDir }
+$session=(Resolve-Path -LiteralPath $SessionDir).ProviderPath
+if ([IO.Path]::GetPathRoot($session) -ne [IO.Path]::GetPathRoot($root)) {
+    throw 'Select a run on the same volume as this checkout.'
+}
 $lock=$null
 $utf8=[Text.UTF8Encoding]::new($false)
 function Assert-FileName([string]$name) {

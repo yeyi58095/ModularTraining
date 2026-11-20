@@ -8,9 +8,7 @@ root=fileparts(fileparts(mfilename('fullpath')));
 expected='495afb97a9fa463b4500d168909ea28f649a12912f12c0631ec1e85b93c1b6be';
 assert(strcmpi(checkpointreview.sha256(fullfile(root,'runtime','FAFA_Simulation.slx')),expected), ...
     'Stage6Review:Environment','Runtime differs from the spatial-route environment. Do not mix evaluation versions.');
-if ~java.io.File(char(sessionDir)).isAbsolute()
-    sessionDir=fullfile(root,sessionDir);
-end
+sessionDir=string(trainingtools.local_data_path(root,sessionDir));
 episodes=[31600 33700 41600];
 status=jsondecode(fileread(fullfile(sessionDir,'status.json')));
 assert(any(strcmp(status.state,{'paused','stopped','success','error'})), ...

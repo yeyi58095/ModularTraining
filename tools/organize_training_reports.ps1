@@ -15,7 +15,12 @@ param(
 # PowerShell 內建變數：Stop 將可處理的命令錯誤提升成例外，使 try/catch/finally 能接住。
 $ErrorActionPreference='Stop'
 # Resolve-Path 先確認來源存在；括號取得命令回傳物件，再用 .Path 取路徑字串與 TrimEnd 去尾端分隔符。
-$session=(Resolve-Path -LiteralPath $SessionPath).Path.TrimEnd('\','/')
+$root=Split-Path $PSScriptRoot -Parent
+if (-not [IO.Path]::IsPathRooted($SessionPath)) { $SessionPath=Join-Path $root $SessionPath }
+$session=(Resolve-Path -LiteralPath $SessionPath).ProviderPath.TrimEnd('\','/')
+if ([IO.Path]::GetPathRoot($session) -ne [IO.Path]::GetPathRoot($root)) {
+    throw 'Select a run on the same volume as this checkout.'
+}
 # 先以 $null 初始化資源，finally 用它判斷本次是否真的取得程序／鎖／串流，避免對空值清理。
 $lock=$null
 # try 包住可能失敗的操作，catch 用 $_ 取得本次 ErrorRecord；throw 可將原錯誤繼續交給上層。

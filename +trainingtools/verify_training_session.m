@@ -5,9 +5,7 @@ function result = verify_training_session(sessionDir)
 root=fileparts(fileparts(mfilename('fullpath'))); old=path;
 guard=onCleanup(@() path(old)); %#ok<NASGU>
 addpath(root,fullfile(root,'runtime'));
-sessionDir=char(sessionDir);
-if ~java.io.File(sessionDir).isAbsolute(), sessionDir=fullfile(root,sessionDir); end
-sessionDir=char(java.io.File(sessionDir).getCanonicalPath());
+sessionDir=trainingtools.local_data_path(root,sessionDir);
 lock=System.IO.File.Open(fullfile(sessionDir,'supervisor.lock'), ...
     System.IO.FileMode.OpenOrCreate,System.IO.FileAccess.ReadWrite,System.IO.FileShare.None);
 lockGuard=onCleanup(@() lock.Dispose()); %#ok<NASGU>
