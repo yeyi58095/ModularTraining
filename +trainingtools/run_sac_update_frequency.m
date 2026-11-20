@@ -184,7 +184,7 @@ try
             reports{role,stage}=report;
         end
     end
-    comparison=struct([]);
+    comparison={};
     for stage=1:2
         stageRows=cellfun(@(r)structRows(r.results),reports(:,stage),'UniformOutput',false);
         common=seeds;
@@ -198,7 +198,7 @@ try
                 rows=stageRows{role};
                 isFresh=ismember([rows.seed],freshSeeds);
                 if strcmp(scope{1},'fresh'),selected=rows(isFresh);else,selected=rows(~isFresh);end
-                comparison(end+1)=summarize(selected,evalLabels{role},scope{1},common); %#ok<AGROW>
+                comparison{end+1}=summarize(selected,evalLabels{role},scope{1},common); %#ok<AGROW>
             end
         end
     end
