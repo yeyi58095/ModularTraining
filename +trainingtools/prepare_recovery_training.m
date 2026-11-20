@@ -49,8 +49,11 @@ assert(any(strcmp(status.state,{'stopped','paused','success','error'})), ...
     'Recovery:Active','Parent must be stopped.');
 checkpoint=fullfile(sourceSession,'checkpoints',sprintf('Agent%d.mat',settings.checkpoint_episode));
 preserveFinal=isfield(settings,'checkpoint_source') && strcmp(settings.checkpoint_source,'final');
+changeFrequency=isfield(settings,'checkpoint_source') && strcmp(settings.checkpoint_source,'final_learning_frequency');
+assert(changeFrequency || ~isfield(settings,'learning_frequency'), ...
+    'Recovery:FinalScope','Learning frequency requires the explicit final_learning_frequency source mode.');
 if isfield(settings,'checkpoint_source')
-    assert(preserveFinal && isfield(settings,'expected_checkpoint_sha256'), ...
+    assert((preserveFinal || changeFrequency) && isfield(settings,'expected_checkpoint_sha256'), ...
         'Recovery:FinalScope','Only explicitly hashed final checkpoint selection is supported.');
     checkpoint=fullfile(sourceSession,'Agent_Final.mat');
 end
@@ -64,11 +67,25 @@ if isfield(settings,'expected_checkpoint_sha256')
 end
 spec=jsondecode(fileread(fullfile(sourceSession,'model.json')));
 isSAC=strcmp(spec.algorithm,'SAC');
-if preserveFinal
+if preserveFinal || changeFrequency
     assert(isSAC && ~continuous && settings.actor_learning_rate_scale==1 && ...
         settings.experience_buffer_length==spec.experienceBufferLength && ...
         ~isfield(settings,'critic_learning_rate_scale') && ~isfield(settings,'exploration_std_scale') && ...
-        ~isfield(settings,'pilot'),'Recovery:FinalScope','Final selection must preserve the complete SAC agent without recipe changes.');
+        ~isfield(settings,'pilot'),'Recovery:FinalScope','This final source mode must preserve SAC rates, capacity and other pilot settings.');
+end
+if changeFrequency
+    assert(isfield(settings,'learning_frequency') && isnumeric(settings.learning_frequency) && ...
+        isequal(settings.learning_frequency,2) && spec.learningFrequency==1, ...
+        'Recovery:LearningFrequency','Expected a learning frequency change from 1 to 2.');
+    assert(settings.max_additional_episodes==settings.episodes_per_process && ...
+        settings.episodes_per_process<=50, ...
+        'Recovery:LearningFrequency','Learning frequency comparison requires one bounded segment of at most 50 episodes.');
+    assert((~isfield(settings.guard,'budget_enabled') || isequal(settings.guard.budget_enabled,true)) && ...
+        (~isfield(settings.guard,'regression_action') || strcmp(settings.guard.regression_action,'pause')), ...
+        'Recovery:LearningFrequency','Learning frequency comparison requires an enabled budget and regression pause.');
+    assert(~isfield(settings,'checkpoint_file_version') || ...
+        strcmp(settings.checkpoint_file_version,checkpoint_storage_version(sourceSession)), ...
+        'Recovery:LearningFrequency','Learning frequency comparison must retain the source checkpoint storage format.');
 end
 if isfield(settings,'critic_learning_rate_scale')
     assert(isSAC && ~continuous && settings.actor_learning_rate_scale==1 && ...
@@ -157,7 +174,7 @@ if weakWindPilot
 end
 entries=whos('-file',checkpoint); name='saved_agent';
 if ~any(strcmp({entries.name},name)), name='Agent_Stage2'; end
-data=load(checkpoint,name); agent=data.(name);
+data=load(checkpoint,name); agent=data.(name); clear data;
 addpath(fullfile(sourceSession,'model_source'),'-begin');
 trainingmodels.validate_agent(agent,spec);
 if isfield(settings,'expected_actor_learning_rate')
@@ -169,13 +186,21 @@ actorBefore=getLearnableParameters(getActor(agent)); criticBefore=criticParamete
 oldRate=spec.actorLearnRate; spec.actorLearnRate=oldRate*settings.actor_learning_rate_scale;
 if isSAC
     assert(isfield(settings,'experience_buffer_length'),'Recovery:SACScope','Specify replay capacity.');
-    if ~weakWindPilot && ~extendSlowWind && ~reviewedWind && ~preserveFinal
+    if ~weakWindPilot && ~extendSlowWind && ~reviewedWind && ~preserveFinal && ~changeFrequency
         agent=trainingtools.resize_sac_replay(agent,settings.experience_buffer_length);
     end
     if settings.actor_learning_rate_scale~=1
         agent=trainingtools.set_sac_actor_rate(agent,spec.actorLearnRate);
     end
     spec.experienceBufferLength=settings.experience_buffer_length;
+    if changeFrequency
+        buffer=agent.ExperienceBuffer;
+        assert(buffer.Length+3000*settings.max_additional_episodes<=buffer.MaxLength, ...
+            'Recovery:LearningFrequency','This budget could evict inherited replay transitions.');
+        oldFrequency=spec.learningFrequency;
+        [agent,verifyFrequencyAfterReload]=trainingtools.set_sac_learning_frequency(agent,settings.learning_frequency);
+        spec.learningFrequency=settings.learning_frequency;
+    end
     if isfield(settings,'critic_learning_rate_scale')
         validateattributes(settings.critic_learning_rate_scale,{'numeric'},{'scalar','positive','<=',1,'finite'});
         assert(~continuous && settings.actor_learning_rate_scale==1 && ...
@@ -248,6 +273,18 @@ else
     checkpoint_save_final(target,agent,history);
 end
 checkpoint_select_agent(target);
+if changeFrequency
+    reloaded=load(target,'Agent_Stage2');
+    verifyFrequencyAfterReload(reloaded.Agent_Stage2);
+    [reloadedHistory,reloadedEpisode]=checkpoint_resume_state(target);
+    assert(reloadedEpisode==episode && isequaln(history.EpisodeIndex,reloadedHistory.EpisodeIndex) && ...
+        isequaln(history.EpisodeReward,reloadedHistory.EpisodeReward) && ...
+        isequaln(history.EpisodeSteps,reloadedHistory.EpisodeSteps) && ...
+        isequaln(history.ActorGradientSteps,reloadedHistory.ActorGradientSteps) && ...
+        isequaln(history.CriticGradientSteps,reloadedHistory.CriticGradientSteps), ...
+        'Recovery:LearningFrequency','Saved training history changed.');
+    clear reloaded reloadedHistory verifyFrequencyAfterReload;
+end
 cfg.sessionDir=folder; cfg.scriptDir=fullfile(root,'runtime'); cfg.modularRoot=root;
 cfg.diagnosticDir=fullfile(folder,'diagnostics'); cfg.matlabExe=fullfile(matlabroot,'bin','matlab.exe');
 cfg.resumeAgentFile=''; cfg.curriculumEnabled=true; cfg.curriculumName=group;
@@ -257,7 +294,7 @@ assert(mod(settings.guard.window,cfg.checkpointEvery)==0, ...
     'Recovery:Window','Guard windows must align with checkpoint boundaries.');
 cfg.averageWindow=min(cfg.averageWindow,cfg.episodesPerProcess);
 cfg.maxAttempts=0;
-if weakWindPilot || extendSlowWind || reviewedWind, cfg.maxAttempts=1; end
+if weakWindPilot || extendSlowWind || reviewedWind || changeFrequency, cfg.maxAttempts=1; end
 trainingcurriculum.write_json(fullfile(staging,'control.json'),cfg);
 rules=settings.guard; rules.origin_episode=episode;
 rules.max_additional_episodes=settings.max_additional_episodes;
@@ -274,6 +311,10 @@ lineage=struct('schema_version',1,'status','prepared','parent_session',char(sour
 if reviewedWind
     lineage.selection='Bounded automated frozen-review selection; see selection_evidence';
     lineage.selection_evidence=settings.selection_evidence;
+end
+if changeFrequency
+    lineage.learning_frequency_before=oldFrequency;
+    lineage.learning_frequency_after=spec.learningFrequency;
 end
 lineage.parent_curriculum_sha256=checkpointreview.sha256(fullfile(sourceSession,'curriculum.json'));
 lineage.parent_model_sha256=checkpointreview.sha256(fullfile(sourceSession,'model.json'));
