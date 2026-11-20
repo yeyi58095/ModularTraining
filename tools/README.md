@@ -14,6 +14,7 @@
 | Pilot探索開／關比較（最多24次CPU模擬） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -ExplorationCheck`；[失敗情境診斷與交件](../docs/guides/sac-pilot-exploration-2026-11-17.md) |
 | SAC64 replay保留對照（會訓練，各最多100回合） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -ReplayPilot`；[50k／500k配對、圖與交件](../docs/guides/sac-replay-retention-2026-11-18.md) |
 | SAC 1700 更新頻率對照（會訓練，各最多 50 回合） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/review_sac_child_history.ps1 -UpdateFrequency`；[啟動、監看與取消](../docs/guides/sac-update-frequency-2026-11-20.md) |
+| SAC 從零排程四風況（會訓練，共最多 2000 回合） | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sac_fresh_schedule.ps1 -Start`；[準備、監看及獨立原門檻稽核](../docs/guides/sac-fresh-schedule-2026-11-21.md) |
 | SAC完整收件版圖表 | `python tools/build_sac_collected_charts.py <intake-folder> --output <new-folder>`；[完整收件與驗證紀錄](../docs/records/sac-evidence-full-review-2026-10-27.md) |
 | 精簡訓練報告 | `python tools/export_training_report.py --help` |
 | 已知散落檔整理 | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/organize_workspace.ps1` |
