@@ -299,6 +299,12 @@ end
 function receipt=assertPairTerminal(root)
 pair=fullfile(root,'artifacts','packages','sac-update-frequency-20261121');
 reviewFile=fullfile(pair,'review.json');
+if ~isfile(reviewFile)
+    receipt=struct('terminal_status','no_local_pair','comparison_available',false,'children',{{}}, ...
+        'scope','The prior experiment is absent from this checkout. This fresh run has no parent checkpoint.');
+    return
+end
+
 lockFile=fullfile(pair,'review.lock');
 assert(isfile(lockFile) && isfile(reviewFile),'FreshSchedule:PairBusy','The paired trial has no terminal evidence.');
 lock=openLock(lockFile,System.IO.FileMode.Open);

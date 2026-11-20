@@ -1,6 +1,6 @@
 # 從零重跑 SAC 四段風況
 
-此入口使用本機 MATLAB R2024b 與六個 Processes workers。從行程本身所在的 checkout 讀取設定。開始前既有更新頻率對照須到終止狀態，且兩個子 run 都已停止，避免兩組訓練搶資源。
+此入口使用本機 MATLAB R2024b 與六個 Processes workers。從行程本身所在的 checkout 讀取設定。若此副本已有更新頻率對照，開始前會確認它到終止狀態且兩個子 run 都已停止，避免兩組訓練搶資源。
 
 ```powershell
 Set-Location 'I:\daniel\ModularTraining'
