@@ -23,6 +23,20 @@ class ProgressTests(unittest.TestCase):
         self.assertTrue(evaluate(upper, [0]*2, [10]*2)['passed'])
         self.assertFalse(evaluate(rate, [0]*2, [10, math.nan])['passed'])
 
+    def test_quota_transition_is_described_as_scheduled(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run = Path(folder)
+            stage = dict(id='wind', max_episodes=300,
+                         advance_when=dict(metric='stage_episodes', at_least=301))
+            for decision, expected in [('advance', 'Advance to the next stage'), ('pause', 'Pause the run')]:
+                with self.subTest(decision=decision):
+                    path = run / 'curriculum.json'
+                    path.write_text(json.dumps({'stages': dict(stage, on_limit=decision)}))
+                    lines = panel(run, [], [{'index': 1, 'start': 0}])
+                    text = '\n'.join(lines)
+                    self.assertIn(f'{expected} after 300 saved episodes', text)
+                    self.assertNotIn('resolve WAIT', text)
+
     def test_branch_gap_completed_and_render(self):
         import matplotlib
         matplotlib.use('Agg')

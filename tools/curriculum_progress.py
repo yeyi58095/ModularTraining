@@ -86,7 +86,6 @@ def panel(session, rows, stages):
                    for e in range(saved['start']+1, end+1)]
         steps = [selected[e]['steps'] if e in selected else math.nan
                  for e in range(saved['start']+1, end+1)]
-        node = evaluate(stage['advance_when'], rewards, steps)
         lines = [f"Stage {saved['index']}/{len(definitions)}: {stage['id']} | data through Episode {end}",
                  f"Stage episodes {end-saved['start']}/{stage['max_episodes']} budget; missing logs: {len(rewards)-len(selected)}",
                  'LOG ESTIMATE (rounded values); formal decisions use saved checkpoint history.']
@@ -95,12 +94,23 @@ def panel(session, rows, stages):
         if outcome:
             lines.append(f"Saved decision through Episode {outcome['episodes']}: "
                          f"{outcome['curriculumDecision']} ({outcome['curriculumReason']})")
-        complete = outcome.get('success') is True
-        target = 'complete course' if saved['index'] == len(definitions) else 'enter next stage'
-        lines.append('COURSE COMPLETED (saved outcome).' if complete else
-                     f"To {target}: " + ('conditions estimated met; await checkpoint decision.' if node['passed'] and rewards
-                                         else 'resolve WAIT conditions below; ALL requires all, ANY requires one.'))
-        lines.extend(describe(node))
+        limit_action = stage.get('on_limit')
+        rule = stage['advance_when']
+        quota_only = (rule.get('metric') == 'stage_episodes' and
+                      rule.get('at_least', 0) > stage['max_episodes'] and
+                      limit_action in ('advance', 'pause'))
+        if quota_only:
+            quota = stage['max_episodes']
+            action = 'Advance to the next stage' if limit_action == 'advance' else 'Pause the run'
+            lines.append(f"Scheduled stage: {action} after {quota:,} saved episodes in this stage.")
+        else:
+            node = evaluate(rule, rewards, steps)
+            complete = outcome.get('success') is True
+            target = 'complete course' if saved['index'] == len(definitions) else 'enter next stage'
+            lines.append('COURSE COMPLETED (saved outcome).' if complete else
+                         f"To {target}: " + ('conditions estimated met; await checkpoint decision.' if node['passed'] and rewards
+                                             else 'resolve WAIT conditions below; ALL requires all, ANY requires one.'))
+            lines.extend(describe(node))
         return [part for line in lines for part in textwrap.wrap(line, 135, subsequent_indent='    ')]
     except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
         return [f'Curriculum progress unavailable: {exc}']
