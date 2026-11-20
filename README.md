@@ -1,6 +1,6 @@
 # ModularTraining
 
-先看 [目前狀態與接續入口](docs/records/current-status.md)、[配方分類](configs/README.md)及[兩端資料夾整理](docs/guides/workspace-layout.md)。
+先看 [目前狀態與接續入口](docs/records/current-status.md)、[配方分類](configs/README.md)、[Meeting 簡報](meeting/README.md)及[兩端資料夾整理](docs/guides/workspace-layout.md)。
 
 ## 課程與成果入口
 
@@ -14,7 +14,7 @@
 
 此專案由 Flower 中的 ModularTraining 複製出來，作為獨立專案維護；使用者已於 2026-10-09 告知自行放上 GitHub。執行不需要原 Flower 資料夾。
 
-雙機同步：程式碼用 Git push/pull，成功模型與完整評估用同一 repository 的 Draft Release。`tools/training_artifacts.py publish` 封裝／上傳／下載驗證，另一端 `sync --tag ...` 下載並核對 SHA256；結果放在獨立 `artifacts/results/`。首次設定與實驗室指令見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。
+實驗室端負責訓練與本機分析，宿舍端透過 Git pull 取得程式、設定與進度紀錄。需跨機分享成功模型與完整評估時，可用 `tools/training_artifacts.py publish` 發佈 Draft Release，另一端用 `sync --tag ...` 下載至 `artifacts/results/` 並核對 SHA256。詳見 [GitHub 成果同步](docs/guides/github-artifact-sync.md)。
 
 ## 課程完成與後續（2026-10-18）
 

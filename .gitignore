@@ -64,6 +64,16 @@ tests/output/
 /output/meeting_training_labstyle_20261014/docs/
 /output/meeting_training_labstyle_20261014/assets/
 
+# Keep new meeting binaries and generated resources local.
+/meeting/**/*.ppt
+/meeting/**/*.pptx
+/meeting/**/*.pptm
+/meeting/**/*.zip
+/meeting/**/build/
+/meeting/**/dist/
+/meeting/**/docs/
+/meeting/**/assets/
+
 # Share only the bounded exporter output, not arbitrary files under reports.
 /reports/*
 !/reports/README.md

@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/20 實驗室端成為主要訓練與本機分析端，宿舍端仍透過 GitHub pull 進度。本機既有 10/14 簡報、離線資源與 ZIP 由 `output/` 搬到 `meeting/`，共 76 檔逐一核對 SHA256。Git 同步程式、配方、索引和精簡紀錄，分析資料依需要封裝。已同步宿舍端提交 `9d6349e`。[Meeting 索引](../../meeting/README.md) · [目錄與同步](../guides/workspace-layout.md) · [PPO LSTM 交接筆記](../../ppo_lstm_fromgenimi.md)
+
 11/19 新路線ZIP與遠端SHA一致、90檔核驗歸檔：來源1600跑滿36/40、本輪500k1700為40/40；後段max35.21/38.60m，聯合精度10/40，改善但非全面精準／升階。選定500k1700另建50回合子run至最多1750，保留全部337132 replay，最多487132不覆蓋，之後80次凍結評估並paused。真實final位元組保留準備、50回合假引擎及打包驗證通過，未啟遠端訓練。[結果](sac-replay-holdout-result-2026-11-19.md)、[會訓練的下一步指令](../guides/sac-replay-extension-2026-11-19.md)。
 
 11/19 replay第二seed交件182檔核驗並歸檔：50k凍結8/40、500k40/40，兩臂正常1700 Stage2 paused；前輪13/40、32/40，改善方向重現。本輪500k screening通過、來源50k經驗完整保留，惟後段max仍40.39m，跑滿且RMS≤10/max≤20僅5/40，不能稱精度／升階過關或唯一根因確診。下一步已備新20seed來源1600對本輪500k1700共80次CPU凍結評估，不訓練；隔離流程與打包驗證通過，待遠端執行。[結果與圖](sac-replay-replication-result-2026-11-19.md)、[下一步指令](../guides/sac-replay-holdout-2026-11-19.md)。

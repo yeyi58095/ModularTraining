@@ -30,7 +30,8 @@ ModularTraining/
 │           └─ Agent_Success.mat 本機模型，Git 忽略
 ├─ artifacts/                  本機收件、封裝、下載與已核驗成果
 ├─ docs/                       操作、研究與紀錄
-├─ output/                     簡報及交付物
+├─ meeting/                    Meeting 簡報、離線資源與索引
+├─ output/                     舊交付路徑及其他工具產物
 └─ tests/                      驗證與可重建產物
 ```
 
@@ -43,11 +44,14 @@ ModularTraining/
 | artifacts/results/ | 已下載、驗證的成果封存；不能直接續訓 |
 | experiments/<課程>/completed_models/ | 課程內的成果入口；README 與 provenance.json 隨 Git 同步，MAT 留在本機／Release，不代表完整可續訓 run |
 | diagnostic_packages/ | 既有解壓資料與離線分析腳本，保留原位 |
-| output/ | 現有簡報與交付物，這次不搬移或刪除 |
+| [meeting/](../../meeting/README.md) | 按場次查找簡報與配套資源 |
+| output/ | 舊交付路徑及其他工具產物 |
 | tests/output/ | 可重建測試產物 |
 | docs/records/ | 工作與驗證紀錄 |
 
-新交付工作可在 output 下以任務分資料夾，將 build 中間檔與 dist 發佈檔分開；既有簡報仍依原忽略規則，不將修改或 ZIP 自動提交。舊 sessions、reports、trajectories 仍可能有相容性用途，不為目錄外觀搬動。
+新 meeting 放在 `meeting/` 的場次資料夾。需要保留建置資料時，可用 `build/` 與 `dist/` 區分中間檔和交付檔。舊 sessions、reports、trajectories 仍保留相容路徑。
+
+實驗室端直接讀 `experiments/<課程>/runs/<run-id>/` 完成本機分析，重要結論寫進 `docs/records/`，跨 run 的比較可由 `groups/` 索引。兩台電腦的 Git 同步內容以程式、配方、索引、決策紀錄與指定的精簡 `report.json` 為主。需要跨機交換或獨立封存時，再用 `artifacts/` 打包。
 
 兩台電腦各自執行（專案根目錄 PowerShell）：
 
