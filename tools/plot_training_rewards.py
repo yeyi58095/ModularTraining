@@ -40,7 +40,7 @@ def project_output(path):
     return output
 
 
-def start_viewer(output):
+def start_viewer(output, port=0):
     """Serve only the selected PNG and a refreshing viewer on localhost."""
     page = b'''<!doctype html><meta charset="utf-8"><title>Training rewards</title>
 <style>body{margin:0;background:#eee;font:16px sans-serif}p{margin:12px}
@@ -101,7 +101,7 @@ refresh();
         def log_message(self, *args):
             pass
 
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server = ThreadingHTTPServer(('127.0.0.1', port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     url = f'http://127.0.0.1:{server.server_port}/'
     print(f'Live viewer: {url}', flush=True)
@@ -338,8 +338,17 @@ def read_history(session, include_parents=True, roots=()):
     return segments, issues
 
 
+def configured_average_window(session):
+    try:
+        control = json.loads((session / 'control.json').read_text(encoding='utf-8-sig'))
+    except (OSError, ValueError):
+        return None
+    window = control.get('averageWindow') if isinstance(control, dict) else None
+    return window if type(window) is int and window > 0 else None
+
+
 # 標示來源、prepare 模型指紋及目前控制視窗；這些不證明歷史實際執行版本。
-def segment_label(segment):
+def segment_label(segment, window):
     data = segment['recovery']
     sha = data.get('prepared_runtime_model_sha256', '')
     rate = data.get('actor_learning_rate_after')
@@ -347,11 +356,7 @@ def segment_label(segment):
     details = [f"prep SLX: {sha[:8]}" if isinstance(sha, str) and sha else "prep SLX: unknown"]
     if rate is not None:
         details.append(f"actor LR: {rate}")
-    try:
-        control = json.loads((segment['session'] / 'control.json').read_text(encoding='utf-8-sig'))
-        details.append(f"configured avg window: {control.get('averageWindow', 'unknown')}")
-    except (OSError, ValueError, AttributeError):
-        details.append("configured avg window: unknown")
+    details.append(f"configured avg window: {window or 'unknown'}")
     return f"{segment['session'].name} | " + " | ".join(details)
 
 
@@ -450,7 +455,11 @@ def draw(session, output, plt, include_parents=True, roots=()):
         for i, (left, right) in enumerate(gaps):
             ax.axvspan(left, right, color='#94a3b8', alpha=0.16,
                        label='Missing episode logs' if i == 0 else None)
+        windows = [configured_average_window(s['session']) for s in segments]
+        forks = set()
         for i, segment in enumerate(segments):
+            if not segment['rows']:
+                continue
             sx, sy = [], []
             for j, row in enumerate(segment['rows']):
                 if j and row['episode'] != segment['rows'][j-1]['episode'] + 1:
@@ -459,11 +468,32 @@ def draw(session, output, plt, include_parents=True, roots=()):
                 sx.append(row['episode'])
                 sy.append(row['average_reward'])
             ax.plot(sx, sy, color=plt.get_cmap('tab10')(i % 10), linewidth=1.8,
-                    label=segment_label(segment))
+                    label=segment_label(segment, windows[i]))
             if include_parents and segment['recovery']:
                 boundary = segment['lower'] + 0.5
-                ax.axvline(boundary, color='#7c3aed', linewidth=1.2, linestyle=':',
-                           label=f"Fork at {segment['lower']:,} -> {segment['session'].name}")
+                if boundary not in forks:
+                    ax.axvline(boundary, color='#7c3aed', linewidth=1.2, linestyle=':',
+                               label='Resume from checkpoint' if not forks else None)
+                    forks.add(boundary)
+        # Mark the selected run where its first logged mean meets the lineage.
+        current = segments[-1]
+        if include_parents and current['recovery'] and current['rows']:
+            origin = current['lower']
+            first = current['rows'][0]
+            label = f"Checkpoint {origin:,} → current run"
+            if first['episode'] == origin + 1:
+                label += f" at {first['episode']:,}"
+            parent_index = next((i for i in range(len(segments) - 2, -1, -1)
+                                 if segments[i]['rows']), None)
+            if parent_index is not None and segments[parent_index]['rows'][-1]['episode'] == origin:
+                previous_window, window = windows[parent_index], windows[-1]
+                if previous_window is not None and window is not None and previous_window != window:
+                    label += f"\nConfigured average window: {previous_window:,} → {window:,} episodes"
+            ax.annotate(label, xy=(origin + 0.5, first['average_reward']), xycoords='data',
+                        xytext=(0.985, 0.94), textcoords='axes fraction', ha='right', va='top',
+                        fontsize=9, color='#5b21b6', zorder=6,
+                        bbox=dict(boxstyle='round,pad=0.4', facecolor='#faf5ff', edgecolor='#c4b5fd'),
+                        arrowprops=dict(arrowstyle='->', color='#7c3aed'))
         boundaries = [rows[i]["episode"] for i in range(1, len(rows))
                       if rows[i]['source_session'] == rows[i-1]['source_session']
                       and rows[i]["attempt"] != rows[i - 1]["attempt"]]
@@ -535,10 +565,14 @@ def main():
                         help="Refresh the same PNG and CSV periodically; Ctrl+C stops plotting only")
     parser.add_argument('--view', action='store_true',
                         help='Open an auto-refresh browser viewer; defaults to --watch 60')
+    parser.add_argument('--view-port', type=int, default=0, metavar="PORT",
+                        help='Use a specific localhost port for --view (default: automatic)')
     parser.add_argument('--no-lineage', action='store_true', help='Plot only the selected run')
     parser.add_argument('--lineage-root', action='append', type=Path, default=[],
                         help='Additional project/runs folder for relocated parents (repeatable)')
     args = parser.parse_args()
+    if not 0 <= args.view_port <= 65535 or (args.view_port and not args.view):
+        parser.error("--view-port requires --view and a port from 1 to 65535")
     if args.view and args.watch == 0:
         args.watch = 60
     if args.watch < 0 or (args.watch and args.watch < 1):
@@ -558,7 +592,7 @@ def main():
         project_output(output.with_suffix(".csv"))
         print(f"Reading session: {session}", flush=True)
         if args.view:
-            viewer = start_viewer(output)
+            viewer = start_viewer(output, args.view_port)
         while True:
             try:
                 success = draw(session, output, plt, not args.no_lineage, args.lineage_root)

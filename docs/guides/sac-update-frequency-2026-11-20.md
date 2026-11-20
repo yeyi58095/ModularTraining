@@ -30,6 +30,8 @@ if ($state.status -eq 'training' -and $current.Count -eq 1) {
 }
 ```
 
+圖上的紫色點線標示從 checkpoint 接續。最新子 run 的箭頭會顯示接續回合，兩邊平均窗口不同時也會列出各自設定。粗線使用各 run 日誌中的平均，背景細線是逐回合 reward。
+
 要在已經開始的 attempt 或凍結批次完成後停止後續工作，建立 `CANCEL`。保留當前視窗，讓現有 attempt 正常保存。
 
 ```powershell

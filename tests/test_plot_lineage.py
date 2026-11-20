@@ -124,6 +124,8 @@ class LineageTests(unittest.TestCase):
             (run/'curriculum.json').write_text(json.dumps({'stages': [{'id': 'straight'}, {'id': 'turn'}]}))
             (run/'curriculum_state.json').write_text(json.dumps(dict(stage_index=2, start_episode=3,
                 completed={'id': 'straight', 'start_episode': 0, 'end_episode': 3})))
+        (self.b/'control.json').write_text(json.dumps({'averageWindow': 100}))
+        (self.c/'control.json').write_text(json.dumps({'averageWindow': 50}))
         before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
         output = self.root / 'reward.png'
         captured = []
@@ -140,7 +142,12 @@ class LineageTests(unittest.TestCase):
         self.assertEqual([r['source_run'] for r in rows], ['A']*5 + ['B']*2 + ['C']*2)
         self.assertEqual([int(r['episode']) for r in rows], list(range(1, 10)))
         self.assertEqual(before, {p: p.read_bytes() for p in before})
-        self.assertEqual(sum('Fork at' in line.get_label() for line in captured[0].lines), 2)
+        fork_lines = [line for line in captured[0].lines if line.get_linestyle() == ':']
+        self.assertEqual([list(line.get_xdata()) for line in fork_lines], [[5.5, 5.5], [7.5, 7.5]])
+        [branch_note] = [text for text in captured[0].texts if 'Checkpoint 7' in text.get_text()]
+        self.assertEqual(branch_note.xy, (7.5, 8))
+        self.assertEqual(branch_note.get_text(),
+                         'Checkpoint 7 → current run at 8\nConfigured average window: 100 → 50 episodes')
         transitions = [line for line in captured[0].lines if line.get_label() == 'Stage transition']
         self.assertEqual(list(transitions[0].get_xdata()), [3.5, 3.5])
         self.assertEqual(len(transitions), 1)
