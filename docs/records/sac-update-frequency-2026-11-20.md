@@ -35,3 +35,9 @@
 第 7 彎重算腳本、逐步數據、同觀測推論及圖存於 `I:\daniel\ModularTraining\artifacts\incoming\sac-update-frequency-20261120\`。本輪未執行訓練；實際 GPU／6 workers、更新比例與訓練成果要在使用者啟動後核驗。[啟動與監看](../guides/sac-update-frequency-2026-11-20.md)
 
 實驗室的 `-PrepareOnly` 完整入口 exit 0，準備收據為 `artifacts/packages/sac-update-frequency-20261121/review.json`。兩個子 run 分別是 `20261120_204653_recovery_tpac648a37` 與 `20261120_204730_recovery_tp2c06e6ab`，均有 STOP、零次 attempt。MATLAB 逐一核對 22 個凍結情境的實際風及同路線速度。GPU 選項可用性與 Processes profile 6 workers 容量檢查通過，本機辨識為 NVIDIA GeForce GTX 1660。準備 ZIP 已逐項核對 SHA256。實際 worker pool、梯度比例及訓練後評估仍待使用者啟動。
+
+## 這一輪要留下的配方
+
+2026-11-20 使用者補充，這次逐輪診斷是為了找出一組下次可自行重跑的 SAC 參數，並理解哪些設定會影響學習與循跡，減少每到一個 checkpoint 就需要和 AI 討論的情況。接續的交付物應包含等條件下驗過的預設設定、適用起點與課程、固定的評估指標，以及何時繼續、停下或重驗的判讀規則。指令由使用者啟動，流程留下固定格式的結果。
+
+這次先用 1700 的兩個短接續分支驗證更新頻率是否真的改變每千步的梯度更新數，以及這個變化如何影響固定新路線的跑滿率、偏差與出彎回復。先針對適用於相似接續條件的配方，在另一個訓練 seed 檢查方向能否重現。從頭訓練用不同的初始化和空 replay，若目標是下次直接從零開始，還需用獨立新 agent 驗證。若結果隨 seed 或起點改變，就把適用條件記進配方。
