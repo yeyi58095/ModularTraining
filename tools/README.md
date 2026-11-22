@@ -29,6 +29,8 @@
 
 Python 模組 `curriculum_progress.py`、`learning_health.py` 與 CLI 放在一起。跑測試可設定 `$env:PYTHONPATH=(Resolve-Path tools).Path`，再 `python -m unittest discover -s tests -p 'test_*.py'`；畫圖依賴見根目錄 requirements-plot.txt。
 
+GitHub Actions 的 `CI` 在 `main` 收到 push 後，由實驗室 Windows runner `modulartraining-lab` 執行。檢查包括 Python 測試、PowerShell 日誌格式與路徑鎖，以及 MATLAB R2024b 的循跡距離、reward 公式、課程邊界和狀態顯示。測試 checkout 與暫存獨立位於 `I:/daniel/github-actions/modulartraining/runner`。Runner 以一般權限在 Windows 登入後啟動，需要 I 槽掛載。公開 repo 的外部 PR Actions 需維護者核准，runner 的啟動前檢查只接受本 repo 的 `main` push。 [流程設定](../.github/workflows/ci.yml)
+
 MATLAB 工具改用 `trainingtools.<原函式名>(...)`，詳見 [+trainingtools](../+trainingtools/README.md)。歷史紀錄中的舊根目錄指令不改寫；依此對照使用新入口。根目錄不保留同名轉接檔，以實際減少檔案數量。
 
 SAC replay 第二個訓練 seed 複驗：`review_sac_child_history.ps1 -ReplayRepeat`，會新建兩臂各最多100回合；[指令、看圖與正常取消](../docs/guides/sac-replay-replication-2026-11-18.md)。`-PackageOnly` 僅補包。

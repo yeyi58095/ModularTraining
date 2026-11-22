@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-tests:
+    name: Windows local checks
+    runs-on: modulartraining-lab
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Python tests
+        env:
+          MPLBACKEND: Agg
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+          PYTHONUTF8: '1'
+        run: |
+          $scratch = Join-Path $env:RUNNER_TEMP 'modulartraining-python'
+          New-Item -ItemType Directory -Path $scratch -Force | Out-Null
+          $env:TEMP = $scratch
+          $env:TMP = $scratch
+          $env:TMPDIR = $scratch
+          $env:PYTHONPATH = Join-Path $env:GITHUB_WORKSPACE 'tools'
+
+          $venv = Join-Path $scratch 'venv'
+          & $env:MODULARTRAINING_CI_PYTHON -m venv $venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $python = Join-Path $venv 'Scripts\python.exe'
+          & $python -m pip install --no-cache-dir -r requirements-plot.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python -m unittest discover -s tests -p 'test_*.py' -v
+          exit $LASTEXITCODE
+
+      - name: PowerShell diagnostics and path guards
+        run: |
+          & .\tests\test_episode_format.ps1
+          & .\tests\test_supervisor_paths.ps1
+
+      - name: MATLAB checks
+        run: |
+          $scratch = Join-Path $env:RUNNER_TEMP 'modulartraining-matlab'
+          $env:MATLAB_PREFDIR = Join-Path $scratch 'preferences'
+          New-Item -ItemType Directory -Path $env:MATLAB_PREFDIR -Force | Out-Null
+          $env:TEMP = $scratch
+          $env:TMP = $scratch
+
+          $checks = "addpath('tests'); test_route_metrics; test_spatial_reward_candidate; test_long_attempt_boundaries; test_training_progress_display;"
+          & $env:MODULARTRAINING_CI_MATLAB -wait -singleCompThread -sd $env:GITHUB_WORKSPACE -batch $checks
+          exit $LASTEXITCODE

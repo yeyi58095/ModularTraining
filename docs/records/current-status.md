@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/23 依使用者指定，GitHub Actions CI 使用實驗室 Windows self-hosted runner `modulartraining-lab`，由 `main` push 觸發。Python、PowerShell 路徑鎖與 MATLAB 合成計算測試使用 I: 的獨立 checkout。外部 PR Actions 需維護者核准。 [CI 說明](../../tools/README.md)
+
 11/22 12:48 從零 Stage 1 保存至 1000。原課程訓練數值達標，凍結無風 5/5 跑滿、聯合精度 2/5，三條後段峰值高於 20 m。約 12:53 按配額進入弱風 Stage 2。 [Stage 1 實跑結果](sac-fresh-schedule-2026-11-21.md#1122-stage-1-實跑結果)
 
 11/21 從零排程已規劃中風與強風的階段前後配對。用新 run 的 1400／1700 測同一批中風條件，1700／2000 測同一批強風條件，並以前段所保存的 checkpoint 補做各五趟。舊 1700 提供直接加風的參考。 [四階段配對計畫](sac-fresh-schedule-2026-11-21.md#中風強風的前後對照)
