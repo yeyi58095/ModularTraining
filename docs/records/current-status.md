@@ -1,5 +1,7 @@
 # 目前狀態與接續入口
 
+11/23 06:57 從零 Stage 2 保存至 1400。398/400 訓練回合跑滿，凍結 10/10 跑滿、聯合精度無風 3/5 和弱風 1/5。固定無風路線平均 RMS 8.20→6.83 m，舊 1700／新 1400 弱風 9.12→7.51 m。07:04 進入 Stage 3 中風。 [Stage 2 實跑結果](sac-fresh-schedule-2026-11-21.md#1123-stage-2-實跑結果)
+
 11/23 依使用者指定，GitHub Actions CI 使用實驗室 Windows self-hosted runner `modulartraining-lab`，由 `main` push 觸發。Python、PowerShell 路徑鎖與 MATLAB 合成計算測試使用 I: 的獨立 checkout。外部 PR Actions 需維護者核准。 [CI 說明](../../tools/README.md) 首次執行被 Windows PowerShell 的執行原則擋在啟動檢查。將 RemoteSigned 設在 runner 程序後，重跑耗時 1 分 32 秒，通過 47 項 Python、2 項 PowerShell 和 4 項 MATLAB 檢查。 [成功紀錄](https://github.com/yeyi58095/ModularTraining/actions/runs/45046549142/job/137282714248)
 
 11/22 12:48 從零 Stage 1 保存至 1000。原課程訓練數值達標，凍結無風 5/5 跑滿、聯合精度 2/5，三條後段峰值高於 20 m。約 12:53 按配額進入弱風 Stage 2。 [Stage 1 實跑結果](sac-fresh-schedule-2026-11-21.md#1122-stage-1-實跑結果)
