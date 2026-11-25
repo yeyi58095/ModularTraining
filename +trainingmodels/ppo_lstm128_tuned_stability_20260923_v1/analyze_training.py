@@ -4,7 +4,6 @@
 import csv
 import argparse
 import hashlib
-import importlib.util
 import json
 import sys
 from collections import Counter
@@ -20,9 +19,8 @@ cli.add_argument('--diagnostics', type=Path, help='Legacy diagnostics folder if 
 cli.add_argument('--output', type=Path, help='Default: SESSION/evidence.json (local full evidence)')
 args = cli.parse_args()
 source = args.session.expanduser().resolve()
-loader = importlib.util.spec_from_file_location('reward_parser', ROOT / 'plot_training_rewards.py')
-parser = importlib.util.module_from_spec(loader)
-loader.loader.exec_module(parser)
+sys.path.insert(0, str(ROOT / 'tools'))
+import plot_training_rewards as parser
 rows, duplicates, attempts = parser.read_episodes(source)
 assert rows, 'No episode data'
 assert [r['episode'] for r in rows] == list(range(1, rows[-1]['episode'] + 1)), 'Episode gaps'
@@ -49,7 +47,7 @@ with (diag / 'episode_workers.csv').open(encoding='utf-8-sig', newline='') as f:
 for r in rows:
     worker_counts[str(worker_map.get((r['attempt'], r['episode']), 'unknown'))] += 1
 best = max(rolling)
-evidence = dict(source_session=str(source), parser=str(ROOT / 'plot_training_rewards.py'),
+evidence = dict(source_session=str(source), parser=str(Path(parser.__file__).resolve()),
                 episode_count=len(rows), last_episode=rows[-1]['episode'],
                 deduplication='Latest attempt wins per episode; logged observations, not checkpoint-lineage verification.',
                 duplicate_lines=duplicates, attempts_with_episodes=attempts,

@@ -59,4 +59,4 @@ info = retry(model="ppo_lstm128_tuned_stability_20260923_v1", workers=6);
 ## 重建統計
 
 從專案根目錄執行 `python +trainingmodels/ppo_lstm128_tuned_stability_20260923_v1/analyze_training.py "原始實驗資料夾" --diagnostics "對應診斷資料夾"`。來源須有完整連續回合與 worker CSV；不再假設相鄰 Simulink。
-預設把完整 `evidence.json` 寫在指定實驗內，可用 `--output` 改位置；不自動覆蓋本資料夾保留的歷史證據。JSON 保存區間與 worker 統計及每個 stdout.log SHA-256，也保留來源路徑；適合本機追溯。若要透過 GitHub 分享，使用根目錄 `export_training_report.py`。
+預設把完整 `evidence.json` 寫在指定實驗內。唯讀分析既有 run 時，以 `--output` 指定獨立輸出位置。JSON 保存區間與 worker 統計、各份 stdout.log 的 SHA-256 和來源路徑。透過 GitHub 分享精簡報告時，使用 [tools/export_training_report.py](../../tools/export_training_report.py)。

@@ -49,7 +49,7 @@ ModularTraining/
 | tests/output/ | 可重建測試產物 |
 | docs/records/ | 工作與驗證紀錄 |
 
-新 meeting 放在 `meeting/` 的場次資料夾。需要保留建置資料時，可用 `build/` 與 `dist/` 區分中間檔和交付檔。舊 sessions、reports、trajectories 仍保留相容路徑。
+本次雙機同步的組會交付檔位於 [Meetings](https://github.com/yeyi58095/Meetings) 各場次資料夾，本專案的 [meeting/](../../meeting/README.md) 保留研究紀錄與舊交付入口。舊 sessions、reports、trajectories 仍保留相容路徑。
 
 實驗室端直接讀 `experiments/<課程>/runs/<run-id>/` 完成本機分析，重要結論寫進 `docs/records/`，跨 run 的比較可由 `groups/` 索引。兩台電腦的 Git 同步內容以程式、配方、索引、決策紀錄與指定的精簡 `report.json` 為主。需要跨機交換或獨立封存時，再用 `artifacts/` 打包。
 

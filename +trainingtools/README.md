@@ -17,5 +17,6 @@ MATLAB 切到專案根目錄（或 `addpath` 專案根目錄），用套件名�
 | 離線 reward 校準 | `trainingtools.calibrate_training_rewards(...)` |
 | 停止實驗驗證 | `trainingtools.verify_training_session(...)` |
 | 歷史 Stage6 批次評估 | `trainingtools.review_stage6_checkpoints(...)`、`trainingtools.review_stage6_candidates(...)` |
+| 歷史 PPO／SAC 診斷包的離線重算 | [入口、資料與用法](../docs/guides/historical-diagnostics.md) |
 
 根目錄保留 `retry`、`training_status`、`curriculum_plan`、`compare_training_checkpoints` 等日常入口與必要適配函式。此套件的既有函式僅變更位置與專案根路徑推導，不變更訓練、評估或恢復語意。
